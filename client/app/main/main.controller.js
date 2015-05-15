@@ -10,6 +10,7 @@ angular.module('statisticsApp')
     $scope.getTwitterStreamSampleByNumber = function() {
 
       $scope.twitterFeed = [];
+      $scope.numberReceived = 0;
 
       var num = $scope.twitterStreamSampleNumber;
       $scope.twitterStreamSampleNumber = '';
@@ -20,20 +21,38 @@ angular.module('statisticsApp')
     
     socket.on('twitter stream sample', function(tweet) {
       $scope.$apply(function() {
-        $scope.twitterFeed.push(tweet)
+        $scope.twitterFeed.push(tweet);
+        $scope.numberReceived++;
       });
     });
+
+    var topics;
+    $scope.numberReceived = 0;
+    $scope.topicsReceived = 0;
+    $scope.numberLeftOver = 0;
+    $scope.topicsNumberReceived = [];
 
     $scope.getTwitterStreamFilter = function() {
 
       $scope.twitterFeed = [];
+      $scope.numberReceived = 0;
+      $scope.topicsReceived = 0;
+      $scope.topicsNumberReceived = [];
 
       var num = $scope.twitterStreamFilterNumber;
       $scope.twitterStreamFilterNumber = '';
 
-      var topics = $scope.twitterStreamFilterTopics.split(',');
+      
+
+      topics = $scope.twitterStreamFilterTopics.split(',');
+
+      topics.forEach(function(topic, i) {
+        $scope.topicsNumberReceived[i] = {};
+        $scope.topicsNumberReceived[i].count = 0;
+        $scope.topicsNumberReceived[i].topic = topic.trim();
+      });
+
       $scope.twitterStreamFilterTopics = '';
-      console.log(topics);
 
       socket.emit('twitter stream filter', num, topics);
       return false;
@@ -41,7 +60,16 @@ angular.module('statisticsApp')
 
     socket.on('twitter stream filter', function(tweet) {
       $scope.$apply(function() {
-        $scope.twitterFeed.push(tweet)
+        $scope.twitterFeed.push(tweet);
+        $scope.numberReceived++;
+        topics.forEach(function(topic, i) {
+
+          if (tweet.text.toLowerCase().indexOf(topic.toLowerCase()) !== -1) {
+            $scope.topicsNumberReceived[i].count++;
+            $scope.topicsReceived++;
+          }
+        });
+        $scope.numberLeftOver = $scope.numberReceived - $scope.topicsReceived;
       });
     });
 

@@ -24,11 +24,17 @@
   <button class="btn btn-primary">Submit</button>
 </form>
 
+Number of tweets received: {{numberReceived}}<br>
+<div ng-repeat="topicNumberReceived in topicsNumberReceived">
+  {{topicNumberReceived.topic}}: {{topicNumberReceived.count}}
+</div>
+Random tweets: {{numberLeftOver}}
+
 <ol>
-  <li ng-repeat="item in twitterFeed">{{item}}</li>
+  <li ng-repeat="item in twitterFeed">{{item.text}}</li>
 </ol>
 
-<div class="twitterDisplay"></div>
+
 
 <footer class="footer">
   <div class="container">

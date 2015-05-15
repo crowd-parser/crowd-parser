@@ -10,9 +10,11 @@ module.exports = function(io, T) {
       var stream = T.stream('statuses/sample');
 
       stream.on('tweet', function(tweet) {
-        io.emit('twitter stream sample', tweet);
-        
-        count++;
+
+        if (tweet.lang === 'en') {
+          io.emit('twitter stream sample', tweet);
+          count++;
+        }
 
         if (count === target) {
           stream.stop();

@@ -5,6 +5,6 @@ var controller = require('./twitter-stream-sample.controller');
 
 var router = express.Router();
 
-router.get('/', controller.index);
+router.get('/:id', controller.index);
 
 module.exports = router;

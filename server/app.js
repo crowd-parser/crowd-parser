@@ -12,6 +12,11 @@ var config = require('./config/environment');
 // Setup server
 var app = express();
 var server = require('http').createServer(app);
+
+var io = require('socket.io')(server);
+var T = require('./config/socketioconfig');
+require('./ioroutes')(io, T);
+
 require('./config/express')(app);
 require('./routes')(app);
 

@@ -1,23 +1,34 @@
 <div ng-include="'components/navbar/navbar.html'"></div>
 
-<header class="hero-unit" id="banner">
-  <div class="container">
-    <h1>'Allo, 'Allo!</h1>
-    <p class="lead">Kick-start your next web app with Angular Fullstack</p>
-    <img src="assets/images/yeoman.png" alt="I'm Yeoman">
-  </div>
-</header>
+<h2>Twitter Stream Sample</h2>
 
-<div class="container">
-  <div class="row">
-    <div class="col-lg-12">
-      <h1 class="page-header">Features:</h1>
-      <ul class="nav nav-tabs nav-stacked col-md-4 col-lg-4 col-sm-6" ng-repeat="thing in awesomeThings">
-        <li><a href="#" tooltip="{{thing.info}}">{{thing.name}}</a></li>
-      </ul>
-    </div>
+<form ng-submit="getTwitterStreamSampleByNumber()">
+  <div class="form-group">
+    <label for="twitter-stream-sample-number">How many Tweets do you want to analyze?</label>
+    <input type="number" class="form-control" ng-model="twitterStreamSampleNumber">
   </div>
-</div>
+  <button class="btn btn-primary">Submit</button>
+</form>
+
+<h2>Twitter Stream Filter</h2>
+
+<form ng-submit="getTwitterStreamFilter()">
+  <div class="form-group">
+    <label for="twitter-stream-filter-number">How many Tweets do you want to analyze?</label>
+    <input type="number" class="form-control" ng-model="twitterStreamFilterNumber">
+  </div>
+  <div class="form-group">
+    <label for="twitter-stream-filter-topics">What topics do you want to analyze? (separate by commas</label>
+    <input type="text" class="form-control" ng-model="twitterStreamFilterTopics">
+  </div>
+  <button class="btn btn-primary">Submit</button>
+</form>
+
+<ol>
+  <li ng-repeat="item in twitterFeed">{{item}}</li>
+</ol>
+
+<div class="twitterDisplay"></div>
 
 <footer class="footer">
   <div class="container">

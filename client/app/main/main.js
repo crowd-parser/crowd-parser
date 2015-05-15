@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('trendsnomnomApp')
+angular.module('statisticsApp')
   .config(function ($stateProvider) {
     $stateProvider
       .state('main', {

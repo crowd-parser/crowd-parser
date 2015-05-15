@@ -11,27 +11,51 @@
 
 var _ = require('lodash');
 
+var Twit = require('twit');
+
+var express = require('express');
+// Setup server
+var app = express();
+var server = require('http').createServer(app);
+var io = require('socket.io')(server);
+
+var T = new Twit({
+  consumer_key: 'LzrzGCydhWiwdBBleA5TfxLOO', 
+  consumer_secret: 'Qb3Io9LVPAyW0FOzdQUwqQ2ymNv7cSGrEa3fw5OcH9qKdCOrOB', 
+  access_token: '19341319-ZafhlXVvwKtwddQh8vmU6b6XylgxTKsd0cwOBwJuD', 
+  access_token_secret: 'FG1DWyme86ZfGRJTlF3x6oBsu7FBQCmKLCqMuSDs7ZUQB'
+});
+
+io.on('connection', function(socket) {
+  var count = 0;
+  socket.on('twitter stream', function(num) {
+
+    var stream = T.stream('statuses/filter', {track: '#apple', language: 'en'});
+    console.log('hello');
+    stream.on('tweet', function(tweet) {
+      io.emit('twitter stream', tweet);
+      count++;
+      if (count === 20) {
+        stream.stop();
+      }
+    });
+  });
+});
+
+
 // Get list of things
 exports.index = function(req, res) {
-  res.json([
-  {
-  name : 'Development Tools',
-  info : 'Integration with popular tools such as Bower, Grunt, Karma, Mocha, JSHint, Node Inspector, Livereload, Protractor, Jade, Stylus, Sass, CoffeeScript, and Less.'
-  }, {
-  name : 'Server and Client integration',
-  info : 'Built with a powerful and fun stack: MongoDB, Express, AngularJS, and Node.'
-  }, {
-  name : 'Smart Build System',
-  info : 'Build system ignores `spec` files, allowing you to keep tests alongside code. Automatic injection of scripts and styles into your index.html'
-  },  {
-  name : 'Modular Structure',
-  info : 'Best practice client and server structures allow for more code reusability and maximum scalability'
-  },  {
-  name : 'Optimized Build',
-  info : 'Build process packs up your templates as a single JavaScript payload, minifies your scripts/css/images, and rewrites asset names for caching.'
-  },{
-  name : 'Deployment Ready',
-  info : 'Easily deploy your app to Heroku or Openshift with the heroku and openshift subgenerators'
-  }
-  ]);
+  
+  var stream = T.stream('statuses/sample');
+  var tweets = [];
+  console.log(req.params.id);
+
+  stream.on('tweet', function(tweet) {
+    tweets.push(tweet);
+
+    if (tweets.length === 20) {
+      stream.stop();
+      res.json(tweets);
+    }
+  });
 };

@@ -32,8 +32,39 @@
   </div>
   Random tweets: {{numberLeftOver}}
 
+  <div class="d3"></div>
+
   <ol>
-    <li ng-repeat="item in twitterFeed">{{item.lang}}, {{item.text}}</li>
+    <li ng-repeat="tweet in twitterFeed">
+      created_at: {{tweet.created_at}}<br>
+      id: {{tweet.id}}<br>
+      id_str: {{tweet.id_str}}<br>
+      text: {{tweet.text}}<br>
+      source: {{tweet.source}}<br>
+      truncated: {{tweet.truncated}}<br>
+      in_reply_to_status_id: {{tweet.in_reply_to_status_id}}<br>
+      in_reply_to_status_id_str: {{tweet.in_reply_to_status_id_str}}<br>
+      in_reply_to_user_id: {{tweet.in_reply_to_user_id}}<br>
+      in_reply_to_user_id_str: {{tweet.in_reply_to_user_id_str}}<br>
+      in_reply_to_screen_name: {{tweet.in_reply_to_screen_name}}<br>
+      user: {{tweet.user}}<br>
+      geo: {{tweet.geo}}<br>
+      coordinates: {{tweet.coordinates}}<br>
+      place: {{tweet.place}}<br>
+      contributors: {{tweet.contributors}}<br>
+      retweeted_status: {{tweet.retweeted_status}}<br>
+      retweet_count: {{tweet.retweet_count}}<br>
+      favorite_count: {{tweet.favorite_count}}<br>
+      entities: {{tweet.entities}}<br>
+      extended_entities: {{tweet.extended_entities}}<br>
+      favorited: {{tweet.favorited}}<br>
+      retweeted: {{tweet.retweeted}}<br>
+      possibly_sensitive: {{tweet.possibly_sensitive}}<br>
+      filter_level: {{tweet.filter_level}}<br>
+      lang: {{tweet.lang}}<br>
+      timestamp_ms: {{tweet.timestamp_ms}}<br>
+
+    </li>
   </ol>
 
 </div>

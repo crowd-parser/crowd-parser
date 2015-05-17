@@ -112,10 +112,9 @@ angular.module('parserApp')
       twitterHelpers.createWordCloudForStream();
     });
   });
-  
 
+  // =============
   
-
   $scope.getTwitterRestUserTimeline = function() {
 
     $scope.tweetsArray = [];
@@ -133,6 +132,29 @@ angular.module('parserApp')
   socket.on('twitter rest user timeline', function(data) {
     $scope.$apply(function() {
       $scope.tweetsArray = data;
+    });
+  });
+
+  $scope.getTwitterRestSearch = function() {
+
+    $scope.tweetsArray = [];
+
+    var query = $scope.twitterRestSearchQuery;
+    $scope.twitterRestSearchQuery = '';
+
+    var result_type = $scope.twitterRestSearchResultType;
+    $scope.twitterRestSearchResultType = '';
+
+    countToGet = $scope.twitterRestSearchCount;
+    $scope.twitterRestSearchCount = '';
+
+    socket.emit('twitter rest search',query, result_type, countToGet);
+    return false;
+  };
+
+  socket.on('twitter rest search', function(data) {
+    $scope.$apply(function() {
+      $scope.tweetsArray = data.statuses;
     });
   });
 

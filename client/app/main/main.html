@@ -40,6 +40,24 @@
     <button class="btn btn-primary">Submit</button>
   </form>
 
+  <h2>Twitter REST Search</h2>
+
+  <form ng-submit="getTwitterRestSearch()">
+    <div class="form-group">
+      <label for="twitter-rest-search-query">Query</label>
+      <input type="text" class="form-control" ng-model="twitterRestSearchQuery">
+    </div>
+    <div class="form-group">
+      <label for="twitter-rest-search-result-type">Mixed, Recent, or Popular?</label>
+      <input type="text" class="form-control" ng-model="twitterRestSearchResultType">
+    </div>
+    <div class="form-group">
+      <label for="twitter-rest-search-count">How many tweets would you like to retrieve (up to 100)?</label>
+      <input type="number" class="form-control" ng-model="twitterRestSearchCount">
+    </div>
+    <button class="btn btn-primary">Submit</button>
+  </form>
+
   Number of tweets received: {{numberReceived}}<br>
   <div ng-repeat="topicNumberReceived in topicsEachReceived">
     {{topicNumberReceived.topic}}: {{topicNumberReceived.count}}

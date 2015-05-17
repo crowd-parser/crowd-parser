@@ -41,9 +41,14 @@ module.exports = function(io, T) {
     });
 
     socket.on('twitter rest user timeline', function(screen_name, count) {
-      console.log(screen_name)
       T.get('statuses/user_timeline', {screen_name: screen_name, count: count}, function(err, data) {
         socket.emit('twitter rest user timeline', data);
+      });
+    });
+
+    socket.on('twitter rest search', function(query, result_type, count) {
+      T.get('search/tweets', {q: query, result_type: result_type, count: count}, function(err, data) {
+        socket.emit('twitter rest search', data);
       });
     });
 

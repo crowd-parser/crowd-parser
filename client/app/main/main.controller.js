@@ -3,91 +3,115 @@
 angular.module('parserApp')
   .controller('MainCtrl', function ($scope, Twitter, Wordcloud) {
 
+  // =========== Setup ============= //
+
   var socket = Twitter.socket;
-   $scope.tweetsArray = Twitter.tweetsArray;
+   $scope.tweetsArray = [];
   var countToGet = countToGet;
+  var wordsArray;
+  var twitterStreamFilterTopics;
+
+  var twitterHelpers = {
+    resetStreamSample: function() {
+      $scope.tweetsArray = [];
+      $scope.numberReceived = 0;
+    },
+    resetStreamFilter: function() {
+      $scope.tweetsArray = [];
+      $scope.numberReceived = 0;
+      $scope.topicsTotalReceived = 0;
+      $scope.topicsEachReceived = [];
+      wordsArray = [];
+    },
+    getCountToGet: function(type) {
+      var count = $scope['twitterStream' + type + 'Count'];
+      console.log(count);
+      $scope['twitterStream' + type + 'Count'] = '';
+      return count;
+    },
+    getAndCreateTwitterStreamFilterTopicsArray: function() {
+      twitterStreamFilterTopics = $scope.twitterStreamFilterTopics.split(',');
+
+      twitterStreamFilterTopics.forEach(function(topic, i) {
+        $scope.topicsEachReceived[i] = {};
+        $scope.topicsEachReceived[i].count = 0;
+        $scope.topicsEachReceived[i].topic = topic.trim();
+      });
+
+      $scope.twitterStreamFilterTopics = '';
+    },
+    createWordCloudForStream: function() {
+      if ($scope.numberReceived === countToGet) {
+        wordsArray = Wordcloud.createWordsArray($scope.tweetsArray);
+        Wordcloud.createWordCloud(wordsArray);
+      }
+    },
+    calculateFilterRelevantTweetsCount: function(tweet, topic, i) {
+      if (tweet.text.toLowerCase().indexOf(topic.toLowerCase()) !== -1) {
+        $scope.topicsEachReceived[i].count++;
+        $scope.topicsTotalReceived++;
+      }
+    },
+    calculateFilterIrrelevantTweetsCount: function(totalCount, totalRelatedTweetsCount) {
+      $scope.numberLeftOver = $scope.numberReceived - $scope.topicsTotalReceived;
+    }
+  };
+
+  // =========== twitter-stream-sample section ============ //
   
   $scope.getTwitterStreamSample = function() {
 
-    $scope.tweetsArray = [];
-    $scope.numberReceived = 0;
+    twitterHelpers.resetStreamSample();
 
-    countToGet = $scope.twitterStreamSampleCount;
-    $scope.twitterStreamSampleCount = '';
+    countToGet = twitterHelpers.getCountToGet('Sample');
 
-    socket.emit('twitter stream sample', countToGet);
+    Twitter.getTwitterStreamSample(countToGet);
+
     return false;
   };
-  
-  socket.on('twitter stream sample', function(tweet) {
+
+  Twitter.receiveTwitterStream('sample', function(tweet) {
 
     $scope.$apply(function() {
       $scope.tweetsArray.push(tweet);
       $scope.numberReceived++;
     });
 
-    if ($scope.numberReceived === countToGet) {
-      var wordsArray = Wordcloud.createWordsArray($scope.tweetsArray);
-      Wordcloud.createWordCloud(wordsArray);
-    }
+    twitterHelpers.createWordCloudForStream();
   });
 
-  var topics;
-  $scope.numberReceived = 0;
-  $scope.topicsReceived = 0;
-  $scope.numberLeftOver = 0;
-  $scope.topicsNumberReceived = [];
+  // =============== twitter-stream-filter section =========== //
 
-  var wordsArray = [];
 
   $scope.getTwitterStreamFilter = function() {
 
-    $scope.tweetsArray = [];
-    $scope.numberReceived = 0;
-    $scope.topicsReceived = 0;
-    $scope.topicsNumberReceived = [];
-    wordsArray = [];
+    twitterHelpers.resetStreamFilter();
 
-    countToGet = $scope.twitterStreamFilterCount;
-    $scope.twitterStreamFilterCount = '';
+    countToGet = twitterHelpers.getCountToGet('Filter');
 
-    
+    twitterHelpers.getAndCreateTwitterStreamFilterTopicsArray();
 
-    topics = $scope.twitterStreamFilterTopics.split(',');
+    Twitter.getTwitterStreamFilter(countToGet, twitterStreamFilterTopics);
 
-    topics.forEach(function(topic, i) {
-      $scope.topicsNumberReceived[i] = {};
-      $scope.topicsNumberReceived[i].count = 0;
-      $scope.topicsNumberReceived[i].topic = topic.trim();
-    });
-
-    $scope.twitterStreamFilterTopics = '';
-
-    socket.emit('twitter stream filter', countToGet, topics);
     return false;
   };
 
-  socket.on('twitter stream filter', function(tweet) {
+  Twitter.receiveTwitterStream('filter', function(tweet) {
 
     $scope.$apply(function() {
       $scope.tweetsArray.push(tweet);
       $scope.numberReceived++;
-      topics.forEach(function(topic, i) {
+      
+      twitterStreamFilterTopics.forEach(function(topic, i) {
 
-        if (tweet.text.toLowerCase().indexOf(topic.toLowerCase()) !== -1) {
-          $scope.topicsNumberReceived[i].count++;
-          $scope.topicsReceived++;
-        }
+        twitterHelpers.calculateFilterRelevantTweetsCount(tweet, topic, i, i);
       });
-      $scope.numberLeftOver = $scope.numberReceived - $scope.topicsReceived;
 
-      if ($scope.numberReceived === countToGet) {
-        var wordsArray = Wordcloud.createWordsArray($scope.tweetsArray);
-        Wordcloud.createWordCloud(wordsArray);
-      }
+      twitterHelpers.calculateFilterIrrelevantTweetsCount($scope.numberReceived, $scope.topicsTotalReceived);
+
+      twitterHelpers.createWordCloudForStream();
     });
   });
-
   
 
   

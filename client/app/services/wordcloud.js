@@ -463,6 +463,7 @@ angular.module('parserApp.wordcloudService', [])
           .on("end", draw)
           .start();
       function draw(words) {
+        $('.d3').html('');
         d3.select(".d3").append("svg")
             .attr("width", 600)
             .attr("height", 600)

@@ -41,7 +41,7 @@
   </form>
 
   Number of tweets received: {{numberReceived}}<br>
-  <div ng-repeat="topicNumberReceived in topicsNumberReceived">
+  <div ng-repeat="topicNumberReceived in topicsEachReceived">
     {{topicNumberReceived.topic}}: {{topicNumberReceived.count}}
   </div>
   Random tweets: {{numberLeftOver}}

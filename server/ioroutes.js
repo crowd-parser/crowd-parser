@@ -40,6 +40,13 @@ module.exports = function(io, T) {
       });
     });
 
+    socket.on('twitter rest user timeline', function(screen_name, count) {
+      console.log(screen_name)
+      T.get('statuses/user_timeline', {screen_name: screen_name, count: count}, function(err, data) {
+        socket.emit('twitter rest user timeline', data);
+      });
+    });
+
   });
 
 };

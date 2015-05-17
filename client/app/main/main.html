@@ -26,6 +26,20 @@
     <button class="btn btn-primary">Submit</button>
   </form>
 
+  <h2>Twitter REST User Timeline</h2>
+
+  <form ng-submit="getTwitterRestUserTimeline()">
+    <div class="form-group">
+      <label for="twitter-rest-user-timeline-screenname">Screenname of Twitter user</label>
+      <input type="text" class="form-control" ng-model="twitterRestUserTimelineScreenname">
+    </div>
+    <div class="form-group">
+      <label for="twitter-rest-user-timeline-count">How many tweets would you like to retrieve (up to 200)?</label>
+      <input type="number" class="form-control" ng-model="twitterRestUserTimelineCount">
+    </div>
+    <button class="btn btn-primary">Submit</button>
+  </form>
+
   Number of tweets received: {{numberReceived}}<br>
   <div ng-repeat="topicNumberReceived in topicsNumberReceived">
     {{topicNumberReceived.topic}}: {{topicNumberReceived.count}}

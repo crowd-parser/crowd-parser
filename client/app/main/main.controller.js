@@ -82,7 +82,6 @@ angular.module('statisticsApp')
     does: true,
     done: true,
     down: true,
-    down: true,
     downed: true,
     downing: true,
     downs: true,
@@ -154,8 +153,6 @@ angular.module('statisticsApp')
     her: true,
     here: true,
     herself: true,
-    high: true,
-    high: true,
     high: true,
     higher: true,
     highest: true,
@@ -231,7 +228,6 @@ angular.module('statisticsApp')
     needs: true,
     never: true,
     new: true,
-    new: true,
     newer: true,
     newest: true,
     next: true,
@@ -299,7 +295,6 @@ angular.module('statisticsApp')
     rather: true,
     really: true,
     right: true,
-    right: true,
     room: true,
     rooms: true,
     s: true,
@@ -338,7 +333,6 @@ angular.module('statisticsApp')
     somewhere: true,
     state: true,
     states: true,
-    still: true,
     still: true,
     such: true,
     sure: true,
@@ -457,6 +451,10 @@ angular.module('statisticsApp')
       $scope.twitterFeed.push(tweet);
       $scope.numberReceived++;
     });
+
+    if ($scope.numberReceived === num) {
+      createWordsArray();
+    }
   });
 
   var topics;
@@ -533,7 +531,6 @@ angular.module('statisticsApp')
       wordsArray.push({text: key, size: storage[key]});
     }
     wordsArray.sort(function(a,b) {return b.size - a.size;}).slice(0,40);
-    console.log(JSON.stringify(wordsArray));
 
     createWordCloud(wordsArray);
   };
@@ -573,34 +570,24 @@ angular.module('statisticsApp')
       }
   };
 
+  $scope.getTwitterRestUserTimeline = function() {
+
+    $scope.twitterFeed = [];
+
+    var screenname = $scope.twitterRestUserTimelineScreenname;
+    $scope.twitterRestUserTimelineScreenname = '';
+
+    num = $scope.twitterRestUserTimelineCount;
+    $scope.twitterRestUserTimelineCount = '';
+
+    socket.emit('twitter rest user timeline',screenname, num);
+    return false;
+  };
+
+  socket.on('twitter rest user timeline', function(data) {
+    $scope.$apply(function() {
+      $scope.twitterFeed = data;
+    });
+  });
+
 });
-
-// created_at
-// id
-// id_str
-// text
-// source
-// truncated
-// in_reply_to_status_id
-// in_reply_to_status_id_str
-// in_reply_to_user_id
-// in_reply_to_user_id_str
-// in_reply_to_screen_name
-// user
-// geo
-// coordinates
-// place
-// contributors
-// retweeted_status
-// retweet_count
-// favorite_count
-// entities
-// extended_entities
-// favorited
-// retweeted
-// possibly_sensitive
-// filter_level
-// lang
-// timestamp_ms
-
-

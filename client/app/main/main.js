@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('statisticsApp')
+angular.module('parserApp')
   .config(function ($stateProvider) {
     $stateProvider
       .state('main', {

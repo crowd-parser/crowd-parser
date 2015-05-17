@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('statisticsApp')
+angular.module('parserApp')
   .factory('Modal', function ($rootScope, $modal) {
     /**
      * Opens a modal

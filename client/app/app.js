@@ -1,6 +1,7 @@
 'use strict';
 
-angular.module('statisticsApp', [
+angular.module('parserApp', [
+  'parserApp.wordcloudService',
   'ngCookies',
   'ngResource',
   'ngSanitize',

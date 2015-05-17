@@ -1,36 +1,33 @@
 'use strict';
 
 angular.module('parserApp')
-  .controller('MainCtrl', function ($scope, Wordcloud) {
+  .controller('MainCtrl', function ($scope, Twitter, Wordcloud) {
 
-    
-
-  var socket = io();
-
-  $scope.twitterFeed = [];
-  var num;
+  var socket = Twitter.socket;
+   $scope.tweetsArray = Twitter.tweetsArray;
+  var countToGet = countToGet;
   
-  $scope.getTwitterStreamSampleByNumber = function() {
+  $scope.getTwitterStreamSample = function() {
 
-    $scope.twitterFeed = [];
+    $scope.tweetsArray = [];
     $scope.numberReceived = 0;
 
-    num = $scope.twitterStreamSampleNumber;
-    $scope.twitterStreamSampleNumber = '';
+    countToGet = $scope.twitterStreamSampleCount;
+    $scope.twitterStreamSampleCount = '';
 
-    socket.emit('twitter stream sample', num);
+    socket.emit('twitter stream sample', countToGet);
     return false;
   };
   
   socket.on('twitter stream sample', function(tweet) {
 
     $scope.$apply(function() {
-      $scope.twitterFeed.push(tweet);
+      $scope.tweetsArray.push(tweet);
       $scope.numberReceived++;
     });
 
-    if ($scope.numberReceived === num) {
-      var wordsArray = Wordcloud.createWordsArray($scope.twitterFeed);
+    if ($scope.numberReceived === countToGet) {
+      var wordsArray = Wordcloud.createWordsArray($scope.tweetsArray);
       Wordcloud.createWordCloud(wordsArray);
     }
   });
@@ -45,14 +42,14 @@ angular.module('parserApp')
 
   $scope.getTwitterStreamFilter = function() {
 
-    $scope.twitterFeed = [];
+    $scope.tweetsArray = [];
     $scope.numberReceived = 0;
     $scope.topicsReceived = 0;
     $scope.topicsNumberReceived = [];
     wordsArray = [];
 
-    num = $scope.twitterStreamFilterNumber;
-    $scope.twitterStreamFilterNumber = '';
+    countToGet = $scope.twitterStreamFilterCount;
+    $scope.twitterStreamFilterCount = '';
 
     
 
@@ -66,14 +63,14 @@ angular.module('parserApp')
 
     $scope.twitterStreamFilterTopics = '';
 
-    socket.emit('twitter stream filter', num, topics);
+    socket.emit('twitter stream filter', countToGet, topics);
     return false;
   };
 
   socket.on('twitter stream filter', function(tweet) {
 
     $scope.$apply(function() {
-      $scope.twitterFeed.push(tweet);
+      $scope.tweetsArray.push(tweet);
       $scope.numberReceived++;
       topics.forEach(function(topic, i) {
 
@@ -84,8 +81,8 @@ angular.module('parserApp')
       });
       $scope.numberLeftOver = $scope.numberReceived - $scope.topicsReceived;
 
-      if ($scope.numberReceived === num) {
-        var wordsArray = Wordcloud.createWordsArray($scope.twitterFeed);
+      if ($scope.numberReceived === countToGet) {
+        var wordsArray = Wordcloud.createWordsArray($scope.tweetsArray);
         Wordcloud.createWordCloud(wordsArray);
       }
     });
@@ -97,21 +94,21 @@ angular.module('parserApp')
 
   $scope.getTwitterRestUserTimeline = function() {
 
-    $scope.twitterFeed = [];
+    $scope.tweetsArray = [];
 
     var screenname = $scope.twitterRestUserTimelineScreenname;
     $scope.twitterRestUserTimelineScreenname = '';
 
-    num = $scope.twitterRestUserTimelineCount;
+    countToGet = $scope.twitterRestUserTimelineCount;
     $scope.twitterRestUserTimelineCount = '';
 
-    socket.emit('twitter rest user timeline',screenname, num);
+    socket.emit('twitter rest user timeline',screenname, countToGet);
     return false;
   };
 
   socket.on('twitter rest user timeline', function(data) {
     $scope.$apply(function() {
-      $scope.twitterFeed = data;
+      $scope.tweetsArray = data;
     });
   });
 

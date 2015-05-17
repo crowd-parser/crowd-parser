@@ -4,10 +4,10 @@
 
 <h2>Twitter Stream Sample</h2>
 
-  <form ng-submit="getTwitterStreamSampleByNumber()">
+  <form ng-submit="getTwitterStreamSample()">
     <div class="form-group">
-      <label for="twitter-stream-sample-number">How many Tweets do you want to analyze?</label>
-      <input type="number" class="form-control" ng-model="twitterStreamSampleNumber">
+      <label for="twitter-stream-sample-count">How many Tweets do you want to analyze?</label>
+      <input type="number" class="form-control" ng-model="twitterStreamSampleCount">
     </div>
     <button class="btn btn-primary">Submit</button>
   </form>
@@ -16,8 +16,8 @@
 
   <form ng-submit="getTwitterStreamFilter()">
     <div class="form-group">
-      <label for="twitter-stream-filter-number">How many Tweets do you want to analyze?</label>
-      <input type="number" class="form-control" ng-model="twitterStreamFilterNumber">
+      <label for="twitter-stream-filter-count">How many Tweets do you want to analyze?</label>
+      <input type="number" class="form-control" ng-model="twitterStreamFilterCount">
     </div>
     <div class="form-group">
       <label for="twitter-stream-filter-topics">What topics do you want to analyze? (separate by commas</label>
@@ -49,7 +49,7 @@
   <div class="d3"></div>
 
   <ol>
-    <li ng-repeat="tweet in twitterFeed">
+    <li ng-repeat="tweet in tweetsArray">
       created_at: {{tweet.created_at}}<br>
       id: {{tweet.id}}<br>
       id_str: {{tweet.id_str}}<br>

@@ -1,6 +1,7 @@
 'use strict';
 
 angular.module('parserApp', [
+  'parserApp.twitterService',
   'parserApp.wordcloudService',
   'ngCookies',
   'ngResource',

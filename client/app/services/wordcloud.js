@@ -1,6 +1,6 @@
 angular.module('parserApp.wordcloudService', [])
 
-.factory('Wordcloud', function ($http, $location, $window) {
+.factory('Wordcloud', function () {
   
   var stopWords = {a: true,
   about: true,

@@ -158,4 +158,19 @@ angular.module('parserApp')
     });
   });
 
+
+
+
+  socket.emit('twitter rest trending');
+
+  socket.on('twitter rest trending', function(data) {
+    $scope.$apply(function() {
+      $scope.trendingTopics = data[0].trends;
+    });
+  });
+
+  $scope.searchTrendingTopic = function(query) {
+    socket.emit('twitter rest search', query, 'mixed', 100);
+  };
+
 });

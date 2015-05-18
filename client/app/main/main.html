@@ -2,7 +2,12 @@
 
 <div class="container">
 
-<h2>Twitter Stream Sample</h2>
+  <h2>Top 10 trending topics globally, cached for five minutes (click to search: "mixed", 100 count)</h2>
+  <div ng-repeat="topic in trendingTopics">
+    <a ng-click="searchTrendingTopic(topic.query)">{{topic.name}}</a>
+  </div>
+
+  <h2>Twitter Stream Sample</h2>
 
   <form ng-submit="getTwitterStreamSample()">
     <div class="form-group">

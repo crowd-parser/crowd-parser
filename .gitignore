@@ -5,4 +5,4 @@ public
 client/bower_components
 dist
 /server/config/local.env.js
-server/config/socketioconfig.js
+server/config/twitter-config.js

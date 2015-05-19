@@ -14,7 +14,7 @@ var app = express();
 var server = require('http').createServer(app);
 
 var io = require('socket.io')(server);
-var T = require('./config/socketioconfig');
+var T = require('./config/twitter-config');
 require('./ioroutes')(io, T);
 
 require('./config/express')(app);

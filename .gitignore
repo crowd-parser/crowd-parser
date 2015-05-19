@@ -6,4 +6,3 @@ client/bower_components
 dist
 /server/config/local.env.js
 server/config/socketioconfig.js
-formsubmission

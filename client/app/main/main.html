@@ -2,8 +2,9 @@
 
 <div class="container">
 
-  <div ng-repeat="sent in sentiment">
+  <div ng-repeat="sent in sentiment" class="tweet-sentiment">
     text: {{sent.text}}<br>
+    <span ng-repeat="pword in sent.positivewords">pword: {{pword[0]}}</span>
     positive words: {{sent.positiveWords}}<br>
     negative words: {{sent.negativeWords}}<br>
     sentiment score: {{sent.sentiment.score}}<br>

@@ -26,7 +26,6 @@ module.exports = function(io, T) {
           var sentimentResult = sentiment(tweetsSentimentArray);
 
           io.emit('sentiment', sentimentResult);
-          console.log(JSON.stringify(sentiment(tweetsSentimentArray)));
         }
       });
     });

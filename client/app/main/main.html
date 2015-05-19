@@ -5,10 +5,13 @@
   <div ng-repeat="sent in sentiment">
     text: {{sent.text}}<br>
     positive words: {{sent.positiveWords}}<br>
-    negative words: {{sent.negativeWords}}
+    negative words: {{sent.negativeWords}}<br>
+    sentiment score: {{sent.sentiment.score}}<br>
+    sentiment: {{sent.sentiment.sentiment}}
   </div>
   <div>
-    Final score: {{sentiment.finalScore}}
+    Final score: {{sentiment.totalSentiment.score}}<br>
+    Final sentiment: {{sentiment.totalSentiment.sentiment}}
   </div>
 
   <h2>Top 10 trending topics globally, cached for five minutes (click to search: "mixed", 100 count)</h2>

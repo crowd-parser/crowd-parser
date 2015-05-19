@@ -3,30 +3,26 @@ var sentimentPositive = sentimentWords.sentimentPositive;
 var sentimentNegative = sentimentWords.sentimentNegative;
 
 var sentimentAnalysis = function(data) {
-  var result = 0;
+  var results = {};
+  results.finalScore = 0;
 
-  data.forEach(function(item) {
-    item.split(' ').forEach(function(word) {
+  data.forEach(function(text, i) {
+    results[i + 1] = {};
+    results[i + 1].text = text;
+    results[i + 1].positiveWords = [];
+    results[i + 1].negativeWords = [];
+    text.split(' ').forEach(function(word) {
       if (sentimentPositive[word]) {
-        console.log('positive', word);
-        result += sentimentPositive[word];
+        results[i + 1].positiveWords.push([word, sentimentPositive[word]]);
+        results.finalScore += sentimentPositive[word];
       } else if (sentimentNegative[word]) {
-        console.log('negative', word);
-        result += sentimentNegative[word];
+        results[i + 1].negativeWords.push([word, sentimentNegative[word]]);
+        results.finalScore += sentimentNegative[word];
       }
     });
   });
 
-  if (result > 0) {
-    console.log('Positive');
-    return 'Positive';
-  } else if (result < 0) {
-    console.log('Negative');
-    return 'Negative';
-  } else {
-    console.log('Neutral');
-    return "Neutral";
-  }
+  return results;
 };
 
 module.exports = sentimentAnalysis;

@@ -1,3 +1,5 @@
+var sentiment = require('./sentiment/sentimentAnalysis');
+
 module.exports = function(io, T) {
 
   io.on('connection', function(socket) {
@@ -6,6 +8,7 @@ module.exports = function(io, T) {
 
       var count = 0;
       var target = num || 20;
+      var tweetsSentimentArray = [];
       
       var stream = T.stream('statuses/sample');
 
@@ -14,10 +17,16 @@ module.exports = function(io, T) {
         if (tweet.lang === 'en') {
           io.emit('twitter stream sample', tweet);
           count++;
+          tweetsSentimentArray.push(tweet.text);
         }
 
         if (count === target) {
           stream.stop();
+          
+          var sentimentResult = sentiment(tweetsSentimentArray);
+
+          io.emit('sentiment', sentimentResult);
+          console.log(JSON.stringify(sentiment(tweetsSentimentArray)));
         }
       });
     });

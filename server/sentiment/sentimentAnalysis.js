@@ -5,17 +5,24 @@ var sentimentNegative = sentimentWords.sentimentNegative;
 var sentimentAnalysis = function(data) {
   var result = 0;
 
-  if (sentimentPositive[data]) {
-    result += sentimentPositive[data];
-  } else if (sentimentNegative[data]) {
-    result += sentimentNegative[data];
-  }
+  data.forEach(function(item) {
+    item.split(' ').forEach(function(word) {
+      if (sentimentPositive[word]) {
+        result += sentimentPositive[word];
+      } else if (sentimentNegative[word]) {
+        result += sentimentNegative[word];
+      }
+    });
+  });
 
   if (result > 0) {
+    console.log('Positive');
     return 'Positive';
   } else if (result < 0) {
+    console.log('Negative');
     return 'Negative';
   } else {
+    console.log('Neutral');
     return "Neutral";
   }
 };

@@ -8,8 +8,10 @@ var sentimentAnalysis = function(data) {
   data.forEach(function(item) {
     item.split(' ').forEach(function(word) {
       if (sentimentPositive[word]) {
+        console.log('positive', word);
         result += sentimentPositive[word];
       } else if (sentimentNegative[word]) {
+        console.log('negative', word);
         result += sentimentNegative[word];
       }
     });

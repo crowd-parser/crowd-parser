@@ -173,4 +173,12 @@ angular.module('parserApp')
     socket.emit('twitter rest search', query, 'mixed', 100);
   };
 
+
+  socket.on('sentiment', function(data) {
+    console.log(data);
+    $scope.$apply(function() {
+      $scope.sentiment = data;
+    });
+  });
+
 });

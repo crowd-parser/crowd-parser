@@ -5,6 +5,7 @@ angular.module('parserApp')
 
   // =========== Setup ============= //
 
+  $scope.startingView = true;
   var socket = Twitter.socket;
    $scope.tweetsArray = [];
   var countToGet = countToGet;
@@ -61,6 +62,8 @@ angular.module('parserApp')
   
   $scope.getTwitterStreamSample = function() {
 
+    $scope.startingView = false;
+
     twitterHelpers.resetStreamSample();
 
     countToGet = twitterHelpers.getCountToGet('Sample');
@@ -84,6 +87,8 @@ angular.module('parserApp')
 
 
   $scope.getTwitterStreamFilter = function() {
+
+    $scope.startingView = false;
 
     twitterHelpers.resetStreamFilter();
 
@@ -117,6 +122,8 @@ angular.module('parserApp')
   
   $scope.getTwitterRestUserTimeline = function() {
 
+    $scope.startingView = false;
+
     $scope.tweetsArray = [];
 
     var screenname = $scope.twitterRestUserTimelineScreenname;
@@ -136,6 +143,8 @@ angular.module('parserApp')
   });
 
   $scope.getTwitterRestSearch = function() {
+
+    $scope.startingView = false;
 
     $scope.tweetsArray = [];
 

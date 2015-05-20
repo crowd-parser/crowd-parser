@@ -12,9 +12,11 @@ Crowd parser is both an open-source app and a crowd-sourced sentiment library.
 
 ### Step 2: Install dependencies
 
-`npm install -g bower`
-`npm install`
-`bower install`
+```
+npm install -g bower
+npm install
+bower install
+```
 
 ### Step 3: Configure Twitter credentials
 
@@ -71,7 +73,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 ## Team
 
-Christina Holland
-Cooper Buckingham
-Michael Cheng
-Kenny Tran
+1. Christina Holland
+1. Cooper Buckingham
+1. Michael Cheng
+1. Kenny Tran

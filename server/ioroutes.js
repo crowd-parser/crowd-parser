@@ -90,7 +90,7 @@ module.exports = function(io, T) {
     });
 
     socket.on('twitter rest trending', function() {
-      T.get('trends/place', {id: 1}, function(err, data) {
+      T.get('trends/place', {id: 23424977}, function(err, data) {
         socket.emit('twitter rest trending', data);
       });
     });

@@ -29,6 +29,14 @@
     border-top: 1px solid #E5E5E5;
 }
 
+.app-section {
+    background: #F2F2F2;
+    display: inline-block;
+    width: 48%;
+    padding: 10px;
+    border: 1px solid #000;
+}
+
 .tweet-sentiment {
     border: 1px solid #000;
 }

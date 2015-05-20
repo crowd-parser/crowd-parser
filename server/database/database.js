@@ -1,5 +1,4 @@
-var sqlite3 = require('sqlite3');
-var db = new sqlite3.Database('');
+var db = require('./database-config.js');
 
 //External facing functions, agnostic of actual database
 var tweets = exports.tweets = {};
@@ -82,6 +81,30 @@ var genericAddToTable = function(tableName, listOfObjects){
     }
   stmt.finalize();
 };
+
+
+
+/*var createTest = function(cb) {
+    dw.connect(function(conn, cb) {
+        cps.seq([
+            function(_, cb) {
+                User.Table.create(conn, {
+                    first_name: 'Hannah',
+                    last_name: 'Mckay',
+                    gender: 'female'
+                    // ....
+                }, cb);
+            },
+            function(user, cb) {  // user is an object of the class User.Row
+                console.log(user.get('first_name')); // print out 'Hannah'
+                cb();
+            }
+        ], cb);
+    }, cb);
+};
+*/
+
+
 
 var genericDropTable = function(tableName, callback){
   db.serialize(function(){

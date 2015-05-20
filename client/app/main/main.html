@@ -15,6 +15,18 @@
     Final sentiment: {{sentiment.totalSentiment.sentiment}}
   </div>
 
+  <div ng-repeat="em in emoji" class="tweet-sentiment">
+    text: {{em.text}}<br>
+    positive emojis: {{em.positiveEmojis}}<br>
+    negative emojis: {{em.negativeEmojis}}<br>
+    unknown emojis: {{em.unknown}}<br>
+    sentiment score: {{em.score}}
+  </div>
+  <div>
+    Final score: {{emoji.totalScore}}<br>
+    Final sentiment: {{emoji.emojiSentiment}}
+  </div>
+
   <h2>Top 10 trending topics globally, cached for five minutes (click to search: "mixed", 100 count)</h2>
   <div ng-repeat="topic in trendingTopics">
     <a ng-click="searchTrendingTopic(topic.query)">{{topic.name}}</a>

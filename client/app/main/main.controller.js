@@ -181,4 +181,10 @@ angular.module('parserApp')
     });
   });
 
+  socket.on('emoji', function(data) {
+    console.log(data);
+    $scope.$apply(function() {
+      $scope.emoji = data;
+    });
+  });
 });

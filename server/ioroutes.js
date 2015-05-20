@@ -1,4 +1,5 @@
 var sentiment = require('./sentiment/sentimentAnalysis');
+var emojiAnalysis = require('./layers/emoticonLayer/emoticonAnalysis');
 
 module.exports = function(io, T) {
 
@@ -11,6 +12,7 @@ module.exports = function(io, T) {
       var count = 0;
       var target = num || 20;
       var tweetsSentimentArray = [];
+      var twemojiTextArray = [];
       
       var stream = T.stream('statuses/sample');
 
@@ -26,8 +28,10 @@ module.exports = function(io, T) {
           stream.stop();
           
           var sentimentResult = sentiment(tweetsSentimentArray);
+          var emojiResult = emojiAnalysis(tweetsSentimentArray);
 
           io.emit('sentiment', sentimentResult);
+          io.emit('emoji', emojiResult);
         }
       });
     });

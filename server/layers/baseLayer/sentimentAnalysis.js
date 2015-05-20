@@ -4,35 +4,40 @@ var sentimentNegative = sentimentWords.sentimentNegative;
 
 var sentimentAnalysis = function(data) {
   var results = {};
+  results.tweets = [];
   var totalSentimentScore = 0;
   var totalSentiment;
 
   data.forEach(function(text, i) {
-    results[i + 1] = {};
-    results[i + 1].text = text;
-    results[i + 1].positiveWords = [];
-    results[i + 1].negativeWords = [];
-    results[i + 1].score = 0;
+    var tweetSentiment = {};
+
+    tweetSentiment.text = text;
+    tweetSentiment.positiveWords = [];
+    tweetSentiment.negativeWords = [];
+    tweetSentiment.score = 0;
     text.split(' ').forEach(function(word) {
       if (sentimentPositive[word]) {
-        results[i + 1].positiveWords.push([word, sentimentPositive[word]]);
-        results[i + 1].score++;
+        tweetSentiment.positiveWords.push([word, sentimentPositive[word]]);
+        tweetSentiment.score++;
       } else if (sentimentNegative[word]) {
-        results[i + 1].negativeWords.push([word, sentimentNegative[word]]);
-        results[i + 1].score--;
+        tweetSentiment.negativeWords.push([word, sentimentNegative[word]]);
+        tweetSentiment.score--;
       }
-      if (results[i + 1].score > 0) {
-        results[i + 1].sentiment = {score: 1, sentiment: 'positive'};
-      } else if (results[i + 1].score < 0) {
-        results[i + 1].sentiment = {score: -1, sentiment: 'negative'};
+      if (tweetSentiment.score > 0) {
+        tweetSentiment.sentiment = {score: 1, sentiment: 'positive'};
+      } else if (tweetSentiment.score < 0) {
+        tweetSentiment.sentiment = {score: -1, sentiment: 'negative'};
       } else {
-        results[i + 1].sentiment = {score: 0, sentiment: 'neutral'};
+        tweetSentiment.sentiment = {score: 0, sentiment: 'neutral'};
       }
+
     });
+
+    results.tweets.push(tweetSentiment);
   });
 
-  for (var key in results) {
-    totalSentimentScore += results[key].sentiment.score;
+  results.tweets.forEach(function(tweet) {
+    totalSentimentScore += tweet.sentiment.score;
     if (totalSentimentScore > 0) {
       totalSentiment = 'positive';
     } else if (totalSentimentScore < 0) {
@@ -42,7 +47,8 @@ var sentimentAnalysis = function(data) {
     }
 
     results.totalSentiment = {score: totalSentimentScore, sentiment: totalSentiment};
-  }
+  })
+  
 
   return results;
 };

@@ -20,9 +20,8 @@ require('./ioroutes')(io, T);
 require('./config/express')(app);
 require('./routes')(app);
 
-// Setup dabase
-var sqlite3 = require('sqlite3').verbose();
-var db = new sqlite3.Database(':memory:');
+// Setup database
+var db = require('./database/database.js');
 
 // Start server
 server.listen(config.port, config.ip, function () {

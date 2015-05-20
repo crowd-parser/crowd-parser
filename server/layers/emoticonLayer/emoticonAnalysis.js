@@ -4,11 +4,12 @@ var emojiRegex = require('./emojiRegex');
 var emoticonAnalysis = function(data) {
 
   var results = {};
+  results.tweets = [];
   var itemCode;
   results.totalScore = 0;
 
   data.forEach(function (text, i) {
-    results[i+1] = {
+    var tweetSentiment = {
       score: 0,
       text: text,
       positiveEmojis: [],
@@ -26,20 +27,22 @@ var emoticonAnalysis = function(data) {
       emojis.forEach(function(item) {
         itemCode = toCodePoint(item);
         if (itemCode in em.positive) {
-          results[i+1].score += em.positive[itemCode];
-          results[i+1].positiveEmojis.push(item);
+          tweetSentiment.score += em.positive[itemCode];
+          tweetSentiment.positiveEmojis.push(item);
         } else if (toCodePoint(item) in em.negative) {
-          results[i+1].score += em.negative[itemCode];
-          results[i+1].negativeEmojis.push(item);
+          tweetSentiment.score += em.negative[itemCode];
+          tweetSentiment.negativeEmojis.push(item);
         } else {
           // if not in either table, store it in 'unknown'
           // array so we know what we missed
-          results[i+1].unknown.push(item);
+          tweetSentiment.unknown.push(item);
         }
       });
     }
-    results.totalScore += results[i+1].score;
+    results.totalScore += tweetSentiment.score;
+    results.tweets.push(tweetSentiment);
   });
+
 
   if (results.totalScore > 0) {
     results.emojiSentiment = 'positive';

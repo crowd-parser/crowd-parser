@@ -1,4 +1,4 @@
-var sentiment = require('./sentiment/sentimentAnalysis');
+var sentiment = require('./layers/baseLayer/sentimentAnalysis');
 var emojiAnalysis = require('./layers/emoticonLayer/emoticonAnalysis');
 
 module.exports = function(io, T) {

@@ -27,19 +27,18 @@ keywords.add = function(keyword){
 
 tweets.getAllTweets = function(callback){
   //USAGE for callback: function(err, row) {console.log(row.id + ": " + row.text);
-   db.each("SELECT rowid AS id, text FROM tweets", callback);
+   //db.each("SELECT rowid AS id, text FROM tweets", callback);
+   callback([{username: "Joe", message: "Hi 2 You", inReplyTo:null, retweets:3, followers:8, favorited: 3, date: +new Date()},
+             {username: "Joe2", message: "Hi 3 You", inReplyTo:null, retweets:3, followers:8, favorited: 3, date: +new Date()},
+             {username: "Joe3", message: "Hi 4 You", inReplyTo:null, retweets:3, followers:8, favorited: 3, date: +new Date()}]);
 };
 
-tweets.createTable = function(exampleObject){
-  //drop table
-  //for every property on example object
-    //input object will have to include text or int, etc
-  //make table including those fields
-
+tweets.createTable = function(exampleObject, callback){
+ genericCreateTable("tweets", exampleObject, callback);
 
 };
 
-var genericCreateTable = function(name, exampleObject){
+var genericCreateTable = function(name, exampleObject, callback){
   db.serialize(function(){
 
     var str = ("CREATE TABLE " + name + ' (id INTEGER PRIMARY KEY AUTOINCREMENT');
@@ -58,6 +57,7 @@ var genericCreateTable = function(name, exampleObject){
     str = str + ')';
 
     db.run(str);
+    if(callback) callback();
   });
 };
 
@@ -92,8 +92,9 @@ var genericDropTable = function(tableName, callback){
 }
 
 exports.createFromScratch = function(){
+  console.log("CREATING NEW TABLES");
   db.serialize(function() {
-    genericCreateTable("tweets", {username:"", text:"" });
+    tweets.createTable({username:"", text:"" });
     genericAddToTable("tweets", [
                       {username: "Joe", text: "Hi 2 You"},
                       {username: "Dave", text: "it's dave!"},

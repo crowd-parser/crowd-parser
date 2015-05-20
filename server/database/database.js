@@ -1,5 +1,7 @@
 var db = require('./database-config.js');
 
+// var mysql = require('./database-config.js');
+
 //External facing functions, agnostic of actual database
 var tweets = exports.tweets = {};
 var layers = exports.layers = {};

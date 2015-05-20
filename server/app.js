@@ -48,7 +48,7 @@ require('./ioroutes')(io, T);
 // var _mysql = require('mysql');
 
 // var mysql = _mysql.createConnection({
-//   host: 'yt403ys3fx.database.windows.net',
+//   host: 'crowdparser.cloudapp.net:3307',
 //   user: 'crowdparser',
 //   password: 'Michael123'
 // });

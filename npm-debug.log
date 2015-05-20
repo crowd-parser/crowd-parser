@@ -1,0 +1,136 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/local/bin/node',
+1 verbose cli   '/usr/local/bin/npm',
+1 verbose cli   'install',
+1 verbose cli   'node-sqlserver-unofficial' ]
+2 info using npm@2.5.1
+3 info using node@v0.12.0
+4 silly cache add args [ 'node-sqlserver-unofficial', null ]
+5 verbose cache add spec node-sqlserver-unofficial
+6 silly cache add parsed spec { raw: 'node-sqlserver-unofficial',
+6 silly cache add   scope: null,
+6 silly cache add   name: 'node-sqlserver-unofficial',
+6 silly cache add   rawSpec: '',
+6 silly cache add   spec: '*',
+6 silly cache add   type: 'range' }
+7 verbose addNamed node-sqlserver-unofficial@*
+8 silly addNamed semver.valid null
+9 silly addNamed semver.validRange *
+10 silly addNameRange { name: 'node-sqlserver-unofficial', range: '*', hasData: false }
+11 silly mapToRegistry name node-sqlserver-unofficial
+12 silly mapToRegistry using default registry
+13 silly mapToRegistry registry https://registry.npmjs.org/
+14 silly mapToRegistry uri https://registry.npmjs.org/node-sqlserver-unofficial
+15 verbose addNameRange registry:https://registry.npmjs.org/node-sqlserver-unofficial not in flight; fetching
+16 verbose request uri https://registry.npmjs.org/node-sqlserver-unofficial
+17 verbose request no auth needed
+18 info attempt registry request try #1 at 6:27:57 PM
+19 verbose request using bearer token for auth
+20 verbose request id 3cf27f59ab62d535
+21 http request GET https://registry.npmjs.org/node-sqlserver-unofficial
+22 http 200 https://registry.npmjs.org/node-sqlserver-unofficial
+23 silly get cb [ 200,
+23 silly get   { server: 'CouchDB/1.5.0 (Erlang OTP/R16B03)',
+23 silly get     etag: '"6TMKDE1HFJ81QS9OLJKANZORN"',
+23 silly get     'content-type': 'application/json',
+23 silly get     'cache-control': 'max-age=60',
+23 silly get     'content-length': '7407',
+23 silly get     'accept-ranges': 'bytes',
+23 silly get     date: 'Tue, 19 May 2015 23:27:57 GMT',
+23 silly get     via: '1.1 varnish',
+23 silly get     connection: 'keep-alive',
+23 silly get     'x-served-by': 'cache-ord1735-ORD',
+23 silly get     'x-cache': 'MISS',
+23 silly get     'x-cache-hits': '0',
+23 silly get     'x-timer': 'S1432078077.231886,VS0,VE44',
+23 silly get     vary: 'Accept' } ]
+24 verbose get saving node-sqlserver-unofficial to /Users/michael/.npm/registry.npmjs.org/node-sqlserver-unofficial/.cache.json
+25 silly addNameRange number 2 { name: 'node-sqlserver-unofficial', range: '*', hasData: true }
+26 silly addNameRange versions [ 'node-sqlserver-unofficial', [ '1.2.0', '1.3.0', '1.4.0' ] ]
+27 verbose addNamed node-sqlserver-unofficial@1.4.0
+28 silly addNamed semver.valid 1.4.0
+29 silly addNamed semver.validRange 1.4.0
+30 silly mapToRegistry name node-sqlserver-unofficial
+31 silly mapToRegistry using default registry
+32 silly mapToRegistry registry https://registry.npmjs.org/
+33 silly mapToRegistry uri https://registry.npmjs.org/node-sqlserver-unofficial
+34 verbose addRemoteTarball https://registry.npmjs.org/node-sqlserver-unofficial/-/node-sqlserver-unofficial-1.4.0.tgz not in flight; adding
+35 verbose addRemoteTarball [ 'https://registry.npmjs.org/node-sqlserver-unofficial/-/node-sqlserver-unofficial-1.4.0.tgz',
+35 verbose addRemoteTarball   '020621446aceecbf9c479ac1217e1344b812b271' ]
+36 info retry fetch attempt 1 at 6:27:57 PM
+37 info attempt registry request try #1 at 6:27:57 PM
+38 http fetch GET https://registry.npmjs.org/node-sqlserver-unofficial/-/node-sqlserver-unofficial-1.4.0.tgz
+39 verbose request using bearer token for auth
+40 http fetch 200 https://registry.npmjs.org/node-sqlserver-unofficial/-/node-sqlserver-unofficial-1.4.0.tgz
+41 silly fetchAndShaCheck shasum 020621446aceecbf9c479ac1217e1344b812b271
+42 verbose addTmpTarball /var/folders/8p/89tcz_d94zxgyyqsg1jbjpx80000gn/T/npm-88533-720daa7a/registry.npmjs.org/node-sqlserver-unofficial/-/node-sqlserver-unofficial-1.4.0.tgz not in flight; adding
+43 verbose addTmpTarball already have metadata; skipping unpack for node-sqlserver-unofficial@1.4.0
+44 silly cache afterAdd node-sqlserver-unofficial@1.4.0
+45 verbose afterAdd /Users/michael/.npm/node-sqlserver-unofficial/1.4.0/package/package.json not in flight; writing
+46 verbose afterAdd /Users/michael/.npm/node-sqlserver-unofficial/1.4.0/package/package.json written
+47 silly install resolved [ { name: 'node-sqlserver-unofficial',
+47 silly install resolved     description: 'Unofficial binary distribution of the msnodesql package.',
+47 silly install resolved     author: { name: 'Jorge Azevedo' },
+47 silly install resolved     version: '1.4.0',
+47 silly install resolved     keywords:
+47 silly install resolved      [ 'sql',
+47 silly install resolved        'database',
+47 silly install resolved        'mssql',
+47 silly install resolved        'azure',
+47 silly install resolved        'sqlserver',
+47 silly install resolved        'tds',
+47 silly install resolved        'microsoft',
+47 silly install resolved        'msnodesql',
+47 silly install resolved        'node-sqlserver' ],
+47 silly install resolved     repository:
+47 silly install resolved      { type: 'git',
+47 silly install resolved        url: 'https://github.com/jorgeazevedo/node-sqlserver-unofficial.git' },
+47 silly install resolved     bugs: { url: 'https://github.com/jorgeazevedo/node-sqlserver-unofficial/issues' },
+47 silly install resolved     licenses: [ [Object] ],
+47 silly install resolved     main: './lib/sql.js',
+47 silly install resolved     engines: { node: '>=0.8' },
+47 silly install resolved     dependencies: {},
+47 silly install resolved     devDependencies: {},
+47 silly install resolved     os: [ 'win32' ],
+47 silly install resolved     homepage: 'https://github.com/jorgeazevedo/node-sqlserver-unofficial',
+47 silly install resolved     _id: 'node-sqlserver-unofficial@1.4.0',
+47 silly install resolved     dist:
+47 silly install resolved      { shasum: '020621446aceecbf9c479ac1217e1344b812b271',
+47 silly install resolved        tarball: 'http://registry.npmjs.org/node-sqlserver-unofficial/-/node-sqlserver-unofficial-1.4.0.tgz' },
+47 silly install resolved     _from: 'node-sqlserver-unofficial@*',
+47 silly install resolved     _npmVersion: '1.3.24',
+47 silly install resolved     _npmUser: { name: 'jorgeazevedo', email: 'jorge.amado.azevedo@gmail.com' },
+47 silly install resolved     maintainers: [ [Object] ],
+47 silly install resolved     directories: {},
+47 silly install resolved     _shasum: '020621446aceecbf9c479ac1217e1344b812b271',
+47 silly install resolved     _resolved: 'https://registry.npmjs.org/node-sqlserver-unofficial/-/node-sqlserver-unofficial-1.4.0.tgz' } ]
+48 info install node-sqlserver-unofficial@1.4.0 into /Users/michael/code/misc/voyage-and-bay
+49 info installOne node-sqlserver-unofficial@1.4.0
+50 verbose installOne of node-sqlserver-unofficial to /Users/michael/code/misc/voyage-and-bay not in flight; installing
+51 verbose lock using /Users/michael/.npm/_locks/node-sqlserver-unofficia-50621bafceceac23.lock for /Users/michael/code/misc/voyage-and-bay/node_modules/node-sqlserver-unofficial
+52 verbose unlock done using /Users/michael/.npm/_locks/node-sqlserver-unofficia-50621bafceceac23.lock for /Users/michael/code/misc/voyage-and-bay/node_modules/node-sqlserver-unofficial
+53 verbose stack Error: Unsupported
+53 verbose stack     at checkPlatform (/usr/local/lib/node_modules/npm/node_modules/npm-install-checks/index.js:47:14)
+53 verbose stack     at Array.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/slide/lib/bind-actor.js:15:8)
+53 verbose stack     at LOOP (/usr/local/lib/node_modules/npm/node_modules/slide/lib/chain.js:15:14)
+53 verbose stack     at /usr/local/lib/node_modules/npm/node_modules/slide/lib/chain.js:18:7
+53 verbose stack     at checkEngine (/usr/local/lib/node_modules/npm/node_modules/npm-install-checks/index.js:26:10)
+53 verbose stack     at Array.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/slide/lib/bind-actor.js:15:8)
+53 verbose stack     at LOOP (/usr/local/lib/node_modules/npm/node_modules/slide/lib/chain.js:15:14)
+53 verbose stack     at chain (/usr/local/lib/node_modules/npm/node_modules/slide/lib/chain.js:20:5)
+53 verbose stack     at /usr/local/lib/node_modules/npm/lib/install.js:949:5
+53 verbose stack     at /usr/local/lib/node_modules/npm/lib/utils/locker.js:40:9
+54 verbose pkgid node-sqlserver-unofficial@1.4.0
+55 verbose cwd /Users/michael/code/misc/voyage-and-bay
+56 error Darwin 14.1.0
+57 error argv "/usr/local/bin/node" "/usr/local/bin/npm" "install" "node-sqlserver-unofficial"
+58 error node v0.12.0
+59 error npm  v2.5.1
+60 error code EBADPLATFORM
+61 error notsup Unsupported
+61 error notsup Not compatible with your operating system or architecture: node-sqlserver-unofficial@1.4.0
+61 error notsup Valid OS:    win32
+61 error notsup Valid Arch:  any
+61 error notsup Actual OS:   darwin
+61 error notsup Actual Arch: x64
+62 verbose exit [ 1, true ]

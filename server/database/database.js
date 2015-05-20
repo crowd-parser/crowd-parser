@@ -1,6 +1,8 @@
 var sqlite3 = require('sqlite3');
 var db = new sqlite3.Database('');
 
+// var mysql = require('./database-config.js');
+
 //External facing functions, agnostic of actual database
 var tweets = exports.tweets = {};
 var layers = exports.layers = {};

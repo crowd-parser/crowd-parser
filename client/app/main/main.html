@@ -1,123 +1,173 @@
 <div ng-include="'components/navbar/navbar.html'"></div>
 
 <div class="container">
-  <h1>Crowd Parser: Explore Twitter's Mood Swings</h1>
+  <div class="starting-view" ng-show="startingView">
+    <h1>Crowd Parser: Explore Twitter's Mood Swings</h1>
 
-  <div class="app-section">
+    <div class="app-section">
 
-    <h3>The Latest Million Tweets</h3>
-    How's Twitter feeling overall?<br>
-    <strong>Chart here</strong><br>
-    How's Twitter feeling about _______?<br>
-    <form>
-      <input type="text" placeholder="TODO: Query database of million tweets">
-      <button>Submit</button>
-    </form>
-    Is Twitter confused? You can help.<br>
-    <strong>Paginated list of tweets and their analysis. Users interact and mark how accurate, what was off, words that should be added/changed.</strong>
-  </div>
-
-  <div class="app-section">
-    <h3>Twitter's journey through time</h3>
-
-    <strong>Charts</strong><br>
-    About "Hillary Clinton"<br>
-    About the "SuperBowl"<br>
-    About "Obamacare"<br>
-    About "ice cream"<br>
-    About "death"<br><br>
-
-    Is twitter confused? You can help.<br><br>
-
-    Begin another Twitter journey (general, topic)<br><br>
-
-    <strong>Twitter Stream Filter</strong>
-
-    <form ng-submit="getTwitterStreamFilter()">
-      <div class="form-group">
-        <label for="twitter-stream-filter-count">How many Tweets do you want to analyze?</label>
-        <input type="number" class="form-control" ng-model="twitterStreamFilterCount">
-      </div>
-      <div class="form-group">
-        <label for="twitter-stream-filter-topics">What topics do you want to analyze? (separate by commas</label>
-        <input type="text" class="form-control" ng-model="twitterStreamFilterTopics">
-      </div>
-      <button class="btn btn-primary">Submit</button>
-    </form>
-  </div>
-
-  <div class="app-section">
-    <h3>Snapshot of Twitter's current mood</h3>
-
-    Topics currently on Twitter's mind:<br><br>
-
-      <strong>Top 10 trending topics in USA</strong>
-      <div ng-repeat="topic in trendingTopics">
-      <a ng-click="searchTrendingTopic(topic.query)">{{topic.name}}</a>
+      <h3>The Latest Million Tweets</h3>
+      How's Twitter feeling overall?<br>
+      <strong>Chart here</strong><br>
+      How's Twitter feeling about _______?<br>
+      <form>
+        <input type="text" placeholder="TODO: Query database of million tweets">
+        <button>Submit</button>
+      </form>
+      Is Twitter confused? You can help.<br>
+      <strong>Paginated list of tweets and their analysis. Users interact and mark how accurate, what was off, words that should be added/changed.</strong>
     </div>
 
-    Choose a topic: ________<br><br>
+    <div class="app-section">
+      <h3>Twitter's journey through time</h3>
 
-    <strong>Twitter REST Search</strong>
+      <strong>Charts</strong><br>
+      About "Hillary Clinton"<br>
+      About the "SuperBowl"<br>
+      About "Obamacare"<br>
+      About "ice cream"<br>
+      About "death"<br><br>
 
-    <form ng-submit="getTwitterRestSearch()">
-      <div class="form-group">
-        <label for="twitter-rest-search-query">Query</label>
-        <input type="text" class="form-control" ng-model="twitterRestSearchQuery">
+      Is twitter confused? You can help.<br><br>
+
+      Begin another Twitter journey (general, topic)<br><br>
+
+      <strong>Twitter Stream Filter</strong>
+
+      <form ng-submit="getTwitterStreamFilter()">
+        <div class="form-group">
+          <label for="twitter-stream-filter-count">How many Tweets do you want to analyze?</label>
+          <input type="number" class="form-control" ng-model="twitterStreamFilterCount">
+        </div>
+        <div class="form-group">
+          <label for="twitter-stream-filter-topics">What topics do you want to analyze? (separate by commas</label>
+          <input type="text" class="form-control" ng-model="twitterStreamFilterTopics">
+        </div>
+        <button class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+
+    <div class="app-section">
+      <h3>Snapshot of Twitter's current mood</h3>
+
+      Topics currently on Twitter's mind:<br><br>
+
+        <strong>Top 10 trending topics in USA</strong>
+        <div ng-repeat="topic in trendingTopics">
+        <a ng-click="searchTrendingTopic(topic.query)">{{topic.name}}</a>
       </div>
-      <div class="form-group">
-        <label for="twitter-rest-search-result-type">recent or mixed (with popular)? (popular only returns 15 at most</label>
-        <input type="text" class="form-control" ng-model="twitterRestSearchResultType">
-      </div>
-      <div class="form-group">
-        <label for="twitter-rest-search-count">How many tweets would you like to retrieve (up to 100)?</label>
-        <input type="number" class="form-control" ng-model="twitterRestSearchCount">
-      </div>
-      <button class="btn btn-primary">Submit</button>
-    </form>
+
+      Choose a topic: ________<br><br>
+
+      <strong>Twitter REST Search</strong>
+
+      <form ng-submit="getTwitterRestSearch()">
+        <div class="form-group">
+          <label for="twitter-rest-search-query">Query</label>
+          <input type="text" class="form-control" ng-model="twitterRestSearchQuery">
+        </div>
+        <div class="form-group">
+          <label for="twitter-rest-search-result-type">recent or mixed (with popular)? (popular only returns 15 at most</label>
+          <input type="text" class="form-control" ng-model="twitterRestSearchResultType">
+        </div>
+        <div class="form-group">
+          <label for="twitter-rest-search-count">How many tweets would you like to retrieve (up to 100)?</label>
+          <input type="number" class="form-control" ng-model="twitterRestSearchCount">
+        </div>
+        <button class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+
+    <div class="app-section">
+      <h3>How are Twitter's friends feeling?</h3>
+
+      <strong>Twitter REST User Timeline</strong>
+
+      <form ng-submit="getTwitterRestUserTimeline()">
+        <div class="form-group">
+          <label for="twitter-rest-user-timeline-screenname">Screenname of Twitter user</label>
+          <input type="text" class="form-control" ng-model="twitterRestUserTimelineScreenname">
+        </div>
+        <div class="form-group">
+          <label for="twitter-rest-user-timeline-count">How many tweets would you like to retrieve (up to 200)?</label>
+          <input type="number" class="form-control" ng-model="twitterRestUserTimelineCount">
+        </div>
+        <button class="btn btn-primary">Submit</button>
+      </form>
+    </div>
   </div>
 
-  <div class="app-section">
-    <h3>How are Twitter's friends feeling?</h3>
+  <div class="results-view" ng-hide="startingView">
+    <button class="btn btn-info" ng-click="startingView = true">Back</button>
+    <div ng-repeat="sent in sentiment" class="tweet-sentiment">
+      text: {{sent.text}}<br>
+      <span ng-repeat="pword in sent.positivewords">pword: {{pword[0]}}</span>
+      positive words: {{sent.positiveWords}}<br>
+      negative words: {{sent.negativeWords}}<br>
+      sentiment score: {{sent.sentiment.score}}<br>
+      sentiment: {{sent.sentiment.sentiment}}
+    </div>
+    <div>
+      Final score: {{sentiment.totalSentiment.score}}<br>
+      Final sentiment: {{sentiment.totalSentiment.sentiment}}
+    </div>
 
-    <strong>Twitter REST User Timeline</strong>
+    <div ng-repeat="em in emoji" class="tweet-sentiment">
+      text: {{em.text}}<br>
+      positive emojis: {{em.positiveEmojis}}<br>
+      negative emojis: {{em.negativeEmojis}}<br>
+      unknown emojis: {{em.unknown}}<br>
+      sentiment score: {{em.score}}
+    </div>
+    <div>
+      Final score: {{emoji.totalScore}}<br>
+      Final sentiment: {{emoji.emojiSentiment}}
+    </div>
 
-    <form ng-submit="getTwitterRestUserTimeline()">
-      <div class="form-group">
-        <label for="twitter-rest-user-timeline-screenname">Screenname of Twitter user</label>
-        <input type="text" class="form-control" ng-model="twitterRestUserTimelineScreenname">
+    <hr>
+
+      Number of tweets received: {{numberReceived}}<br>
+      <div ng-repeat="topicNumberReceived in topicsEachReceived">
+        {{topicNumberReceived.topic}}: {{topicNumberReceived.count}}
       </div>
-      <div class="form-group">
-        <label for="twitter-rest-user-timeline-count">How many tweets would you like to retrieve (up to 200)?</label>
-        <input type="number" class="form-control" ng-model="twitterRestUserTimelineCount">
-      </div>
-      <button class="btn btn-primary">Submit</button>
-    </form>
-  </div>
+      Random tweets: {{numberLeftOver}}
 
-  <div ng-repeat="sent in sentiment" class="tweet-sentiment">
-    text: {{sent.text}}<br>
-    <span ng-repeat="pword in sent.positivewords">pword: {{pword[0]}}</span>
-    positive words: {{sent.positiveWords}}<br>
-    negative words: {{sent.negativeWords}}<br>
-    sentiment score: {{sent.sentiment.score}}<br>
-    sentiment: {{sent.sentiment.sentiment}}
-  </div>
-  <div>
-    Final score: {{sentiment.totalSentiment.score}}<br>
-    Final sentiment: {{sentiment.totalSentiment.sentiment}}
-  </div>
+      <div class="d3"></div>
 
-  <div ng-repeat="em in emoji" class="tweet-sentiment">
-    text: {{em.text}}<br>
-    positive emojis: {{em.positiveEmojis}}<br>
-    negative emojis: {{em.negativeEmojis}}<br>
-    unknown emojis: {{em.unknown}}<br>
-    sentiment score: {{em.score}}
-  </div>
-  <div>
-    Final score: {{emoji.totalScore}}<br>
-    Final sentiment: {{emoji.emojiSentiment}}
+      <ol>
+        <li ng-repeat="tweet in tweetsArray">
+          created_at: {{tweet.created_at}}<br>
+          id: {{tweet.id}}<br>
+          id_str: {{tweet.id_str}}<br>
+          text: {{tweet.text}}<br>
+          source: {{tweet.source}}<br>
+          truncated: {{tweet.truncated}}<br>
+          in_reply_to_status_id: {{tweet.in_reply_to_status_id}}<br>
+          in_reply_to_status_id_str: {{tweet.in_reply_to_status_id_str}}<br>
+          in_reply_to_user_id: {{tweet.in_reply_to_user_id}}<br>
+          in_reply_to_user_id_str: {{tweet.in_reply_to_user_id_str}}<br>
+          in_reply_to_screen_name: {{tweet.in_reply_to_screen_name}}<br>
+          user: {{tweet.user}}<br>
+          geo: {{tweet.geo}}<br>
+          coordinates: {{tweet.coordinates}}<br>
+          place: {{tweet.place}}<br>
+          contributors: {{tweet.contributors}}<br>
+          retweeted_status: {{tweet.retweeted_status}}<br>
+          retweet_count: {{tweet.retweet_count}}<br>
+          favorite_count: {{tweet.favorite_count}}<br>
+          entities: {{tweet.entities}}<br>
+          extended_entities: {{tweet.extended_entities}}<br>
+          favorited: {{tweet.favorited}}<br>
+          retweeted: {{tweet.retweeted}}<br>
+          possibly_sensitive: {{tweet.possibly_sensitive}}<br>
+          filter_level: {{tweet.filter_level}}<br>
+          lang: {{tweet.lang}}<br>
+          timestamp_ms: {{tweet.timestamp_ms}}<br>
+
+        </li>
+      </ol>
+
+    </div>
   </div>
 
   
@@ -138,48 +188,7 @@
 
   
 
-  Number of tweets received: {{numberReceived}}<br>
-  <div ng-repeat="topicNumberReceived in topicsEachReceived">
-    {{topicNumberReceived.topic}}: {{topicNumberReceived.count}}
-  </div>
-  Random tweets: {{numberLeftOver}}
-
-  <div class="d3"></div>
-
-  <ol>
-    <li ng-repeat="tweet in tweetsArray">
-      created_at: {{tweet.created_at}}<br>
-      id: {{tweet.id}}<br>
-      id_str: {{tweet.id_str}}<br>
-      text: {{tweet.text}}<br>
-      source: {{tweet.source}}<br>
-      truncated: {{tweet.truncated}}<br>
-      in_reply_to_status_id: {{tweet.in_reply_to_status_id}}<br>
-      in_reply_to_status_id_str: {{tweet.in_reply_to_status_id_str}}<br>
-      in_reply_to_user_id: {{tweet.in_reply_to_user_id}}<br>
-      in_reply_to_user_id_str: {{tweet.in_reply_to_user_id_str}}<br>
-      in_reply_to_screen_name: {{tweet.in_reply_to_screen_name}}<br>
-      user: {{tweet.user}}<br>
-      geo: {{tweet.geo}}<br>
-      coordinates: {{tweet.coordinates}}<br>
-      place: {{tweet.place}}<br>
-      contributors: {{tweet.contributors}}<br>
-      retweeted_status: {{tweet.retweeted_status}}<br>
-      retweet_count: {{tweet.retweet_count}}<br>
-      favorite_count: {{tweet.favorite_count}}<br>
-      entities: {{tweet.entities}}<br>
-      extended_entities: {{tweet.extended_entities}}<br>
-      favorited: {{tweet.favorited}}<br>
-      retweeted: {{tweet.retweeted}}<br>
-      possibly_sensitive: {{tweet.possibly_sensitive}}<br>
-      filter_level: {{tweet.filter_level}}<br>
-      lang: {{tweet.lang}}<br>
-      timestamp_ms: {{tweet.timestamp_ms}}<br>
-
-    </li>
-  </ol>
-
-</div>
+  
 
 <footer class="footer">
   <div class="container">

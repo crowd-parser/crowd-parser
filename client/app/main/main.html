@@ -97,16 +97,19 @@
     </div>
   </div>
 
+
   <div class="results-view" ng-hide="startingView">
     <button class="btn btn-info" ng-click="startingView = true">Back</button>
-    <div ng-repeat="sent in sentiment" class="tweet-sentiment">
-      text: {{sent.text}}<br>
-      <span ng-repeat="pword in sent.positivewords">pword: {{pword[0]}}</span>
-      positive words: {{sent.positiveWords}}<br>
-      negative words: {{sent.negativeWords}}<br>
-      sentiment score: {{sent.sentiment.score}}<br>
-      sentiment: {{sent.sentiment.sentiment}}
+    
+    <dir-pagination-controls></dir-pagination-controls>
+    <div dir-paginate="tweet in sentiment.tweets | itemsPerPage: 10" class="tweet-sentiment">
+      text: {{tweet.text}}<br>
+      positive words: {{tweet.positiveWords}}<br>
+      negative words: {{tweet.negativeWords}}<br>
+      sentiment score: {{tweet.sentiment.score}}<br>
+      sentiment: {{tweet.sentiment.sentiment}}
     </div>
+
     <div>
       Final score: {{sentiment.totalSentiment.score}}<br>
       Final sentiment: {{sentiment.totalSentiment.sentiment}}
@@ -181,14 +184,6 @@
     </div>
     <button class="btn btn-primary">Submit</button>
   </form>
-
-  
-
-  
-
-  
-
-  
 
 <footer class="footer">
   <div class="container">

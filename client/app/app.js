@@ -3,6 +3,7 @@
 angular.module('parserApp', [
   'parserApp.twitterService',
   'parserApp.wordcloudService',
+  'parserApp.directives.dirPagination',
   'ngCookies',
   'ngResource',
   'ngSanitize',

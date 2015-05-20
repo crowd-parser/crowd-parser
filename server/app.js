@@ -20,6 +20,10 @@ require('./ioroutes')(io, T);
 require('./config/express')(app);
 require('./routes')(app);
 
+// Setup dabase
+var sqlite3 = require('sqlite3').verbose();
+var db = new sqlite3.Database(':memory:');
+
 // Start server
 server.listen(config.port, config.ip, function () {
   console.log('Express server listening on %d, in %s mode', config.port, app.get('env'));

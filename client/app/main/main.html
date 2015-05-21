@@ -121,31 +121,6 @@
       <div>Emoticon layer score: {{tweet.emoticonLayerResults.score}}</div>
       <div>Sentiment: {{tweet.emoticonLayerResults.sentiment}}</div>
     </div>
-    
-    <div ng-repeat="tweet in sentiment.tweets" class="tweet-sentiment">
-      text: {{tweet.text}}<br>
-      positive words: {{tweet.positiveWords}}<br>
-      negative words: {{tweet.negativeWords}}<br>
-      sentiment score: {{tweet.sentiment.score}}<br>
-      sentiment: {{tweet.sentiment.sentiment}}
-    </div>
-
-    <div>
-      Final score: {{sentiment.totalSentiment.score}}<br>
-      Final sentiment: {{sentiment.totalSentiment.sentiment}}
-    </div>
-
-    <div ng-repeat="em in emoji.tweets" class="tweet-sentiment">
-      text: {{em.text}}<br>
-      positive emojis: {{em.positiveEmojis}}<br>
-      negative emojis: {{em.negativeEmojis}}<br>
-      unknown emojis: {{em.unknown}}<br>
-      sentiment score: {{em.score}}
-    </div>
-    <div>
-      Final score: {{emoji.totalScore}}<br>
-      Final sentiment: {{emoji.emojiSentiment}}
-    </div>
 
     <hr>
 

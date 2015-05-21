@@ -2,7 +2,7 @@ var baseLayer = require('./baseLayer/sentimentAnalysis');
 var emoticonLayer = require('./emoticonLayer/emoticonAnalysis');
 
 var allLayers = function(tweetsArray) {
-
+  console.log(tweetsArray);
   var results = {};
   results.tweetsWithSentimentAnalysis = [];
 

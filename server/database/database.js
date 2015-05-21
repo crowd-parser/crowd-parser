@@ -23,7 +23,7 @@ exports.db.connect(function(err){
 /*============= DEBUG and MACRO SETTINGS =================*/
 var NUKE_ENTIRE_TWEETS_TABLE_ON_SERVER_START = true; //false will prevent further debug stuff
 var FILL_TWEETS_DATABASE_WITH_THIS_ARRAY_OF_TWEETS = []; //manually add test tweets here
-var ADD_ALL_19_MEGS_OF_TEST_TWEETS = true;
+var ADD_ALL_19_MEGS_OF_TEST_TWEETS = false;
 
 var ALL_THE_TEST_TWEETS = {};
 if(ADD_ALL_19_MEGS_OF_TEST_TWEETS){

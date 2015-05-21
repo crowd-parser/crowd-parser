@@ -37,3 +37,7 @@
     color: #000;
     padding: 0.2em 0;
 }
+
+body {
+  font: 300 16px/22px "Lato", "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}

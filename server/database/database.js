@@ -7,8 +7,6 @@
 //stores connection information from non-shared database configuration file
 exports.db = require('./database-config.js');
 
-console.log(new Date(1432237354665));
-
 //establishes connection to persistent database previously configured
 exports.db.connect(function(err){
     if(err){

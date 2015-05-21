@@ -2,7 +2,7 @@
 
 <header>
   <h1>Crowd Parser</h1>
-  <h3>Insights from One Million Tweets</h3>
+  <h3>Explore Twitter Sentiment</h3>
 </header>
 <div class="container">
   <div class="starting-view" ng-show="startingView">
@@ -103,31 +103,23 @@
 
   <div class="results-view" ng-hide="startingView">
     <button class="btn btn-info" ng-click="startingView = true">Back</button>
-    
+
     <dir-pagination-controls></dir-pagination-controls>
-    <div dir-paginate="tweet in sentiment.tweets | itemsPerPage: 10" class="tweet-sentiment">
-      text: {{tweet.text}}<br>
-      positive words: {{tweet.positiveWords}}<br>
-      negative words: {{tweet.negativeWords}}<br>
-      sentiment score: {{tweet.sentiment.score}}<br>
-      sentiment: {{tweet.sentiment.sentiment}}
-    </div>
-
-    <div>
-      Final score: {{sentiment.totalSentiment.score}}<br>
-      Final sentiment: {{sentiment.totalSentiment.sentiment}}
-    </div>
-
-    <div ng-repeat="em in emoji.tweets" class="tweet-sentiment">
-      text: {{em.text}}<br>
-      positive emojis: {{em.positiveEmojis}}<br>
-      negative emojis: {{em.negativeEmojis}}<br>
-      unknown emojis: {{em.unknown}}<br>
-      sentiment score: {{em.score}}
-    </div>
-    <div>
-      Final score: {{emoji.totalScore}}<br>
-      Final sentiment: {{emoji.emojiSentiment}}
+    <div dir-paginate="tweet in allLayers.tweetsWithSentimentAnalysis | itemsPerPage: 10">
+      <div>{{tweet.text}}</div>
+      <div>{{tweet.username}}</div>
+      
+      <h2>Base Layer Results</h2>
+      <div>Positive words: {{tweet.baseLayerResults.positiveWords.join()}}</div>
+      <div>Negative words: {{tweet.baseLayerResults.negativeWords.join()}}</div>
+      <div>Base layer score: {{tweet.baseLayerResults.score}}</div>
+      <div>Sentiment: {{tweet.baseLayerResults.sentiment}}</div>
+      
+      <h2>Emoticon Layer Results</h2>
+      <div>Positive words: {{tweet.emoticonLayerResults.positiveWords.join()}}</div>
+      <div>Negative words: {{tweet.emoticonLayerResults.negativeWords.join()}}</div>
+      <div>Emoticon layer score: {{tweet.emoticonLayerResults.score}}</div>
+      <div>Sentiment: {{tweet.emoticonLayerResults.sentiment}}</div>
     </div>
 
     <hr>

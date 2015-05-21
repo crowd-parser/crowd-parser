@@ -53,7 +53,38 @@ var sentimentAnalysis = function(data) {
   return results;
 };
 
-module.exports = sentimentAnalysis;
+var tweetSentimentAnalysis = function(tweet) {
+
+  var results = {
+    positiveWords: [],
+    negativeWords: [],
+    score: 0
+  };
+
+  tweet.split(' ').forEach(function(word) {
+    if (sentimentPositive[word]) {
+      results.positiveWords.push(word);
+
+      results.score++;
+    } else if (sentimentNegative[word]) {
+      results.negativeWords.push(word);
+
+      results.score--;
+    }
+    if (results.score > 0) {
+      results.sentiment = 'positive';
+    } else if (results.score < 0) {
+      results.sentiment = 'negative'
+    } else {
+      results.sentiment = 'neutral';
+    }
+  });
+
+  return results;
+};
+
+exports.sentimentAnalysis = sentimentAnalysis;
+exports.tweetSentimentAnalysis = tweetSentimentAnalysis;
 
 // var results = {
 //   tweetsWithSentimentResults: [

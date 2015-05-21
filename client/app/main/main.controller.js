@@ -26,7 +26,7 @@ angular.module('parserApp')
     },
     getCountToGet: function(type) {
       var count = $scope['twitterStream' + type + 'Count'];
-      console.log(count);
+      
       $scope['twitterStream' + type + 'Count'] = '';
       return count;
     },
@@ -183,7 +183,22 @@ angular.module('parserApp')
   };
 
   socket.on('all layers', function(data) {
-    console.log(data);
+
+    data.tweetsWithSentimentAnalysis.forEach(function(tweet) {
+      var textArray = tweet.text.split(' ');
+      if (tweet.baseLayerResults.positiveWords) {
+        tweet.baseLayerResults.positiveWords.forEach(function(word) {
+          textArray[word[1]] = '<span class="positive-word">' + word[0] + '</span>';
+        });
+      }
+      if (tweet.baseLayerResults.negativeWords) {
+        tweet.baseLayerResults.negativeWords.forEach(function(word) {
+          textArray[word[1]] = '<span class="negative-word">' + word[0] + '</span>';
+        });
+      }
+      tweet.text = textArray.join(' ');
+    });
+
     $scope.$apply(function() {
       $scope.allLayers = data;
     });

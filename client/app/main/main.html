@@ -107,7 +107,7 @@
     <div class="tweets-sentiment">
       <dir-pagination-controls></dir-pagination-controls>
       <div dir-paginate="tweet in allLayers.tweetsWithSentimentAnalysis | itemsPerPage: 10" class="tweet-sentiment">
-        <div>{{tweet.text}}</div>
+        <div ng-bind-html="tweet.text"></div>
         <div>{{tweet.username}}</div>
         
         <h2>Base Layer Results</h2>

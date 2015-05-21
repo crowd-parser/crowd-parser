@@ -1,6 +1,10 @@
 //TODO
-//escape field values properly
+//
 //support child objects and concat field names
+//only auto add fields of data if they exist in the table chosen
+//process emojis
+//build table for chosen keyword function
+  //search all tweets for keyword base function
 
 /*============= DATABASE MODULE WRAPPER for SQL commands =========*/
 
@@ -48,6 +52,10 @@ exports.genericGetMatching = function(tableName, callback){
   //TODO
 }
 
+exports.genericGetTableColumnNames = function(tableName, callback){
+  this.db.query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? ORDER BY ORDINAL_POSITION",[tableName] , callback);
+}
+
 //===========================================
 
 
@@ -57,8 +65,8 @@ exports.genericGetMatching = function(tableName, callback){
 
 
 
-exports.genericCreateTable = function(name, exampleObject, callback){
-    var str = ("CREATE TABLE " + this.db.escapeId(name) + ' (id INTEGER PRIMARY KEY AUTO_INCREMENT,');
+exports.genericCreateTable = function(tableName, exampleObject, callback){
+    var str = ("CREATE TABLE " + this.db.escapeId(tableName) + ' (id INTEGER PRIMARY KEY AUTO_INCREMENT,');
     var key;
     var type;
 
@@ -72,8 +80,12 @@ exports.genericCreateTable = function(name, exampleObject, callback){
     }
     str = str.slice(0, -1);
     str = str + ")";
-    console.log(str);
-    this.db.query(str, callback);
+    this.db.query(str, function(err, rows, fields){
+      if(!err){
+        console.log("CREATED NEW TABLE: " + tableName);
+      }
+      callback(err, rows, fields);
+    });
 };
 
 // ============================================
@@ -82,49 +94,70 @@ exports.genericCreateTable = function(name, exampleObject, callback){
 
 
 //=============== ADD STUFF ====================
-
 exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, callbackAtEnd){
   delete listOfObjects[0]['id'];
-  var holder = Object.keys(listOfObjects[0]);
+  var that = this;
 
-  var insertStr = "INSERT INTO " + tableName + ' (';
-  for(var i = 0; i < holder.length; i++){
-
-    insertStr = insertStr + this.db.escapeId(holder[i]) + ", ";
-
-  }
-  insertStr = insertStr.slice(0, -2);
-  insertStr = insertStr + ' ) VALUES (';
-
-
-  var queryStr;
-  var temp;
-  var count = listOfObjects.length;
-    for (var i = 0; i < listOfObjects.length; i++) {
-      queryStr = "";
-        for(var j = 0; j < holder.length; j++){
-          temp = listOfObjects[i][holder[j]];
-          if(isNaN(temp) && typeof temp !== "string"){
-            queryStr = queryStr + '""' + ", ";
-          }else{
-            temp = this.db.escape(temp);
-            queryStr = queryStr + temp + ", ";
-          }
-        }
-      queryStr = queryStr.slice(0, -2);
-      queryStr = queryStr + ' )';
-
-      queryStr = insertStr + queryStr;
-      this.db.query(queryStr, function(str, bailOut, err){
-        count--;
-
-          callbackPerAdd(err);
-
-        if(count <= 0){
-          callbackAtEnd("SUCCESS");
-        }
-      });
+  //this is all so we can push any objects at the db, regardless of table setup
+  this.genericGetTableColumnNames(tableName, function(err, rows, fields){
+    //console.log(arguments);
+    var tableColumns = [];
+    for(var i = 0; i < rows.length; i++){
+      tableColumns.push(rows[i]['COLUMN_NAME']);
     }
+    startAdding(that, tableColumns);
+  });
+
+  var startAdding = function(that, holder){
+    //var holder = Object.keys(listOfObjects[0]);
+
+    var insertStr = "INSERT INTO " + tableName + ' (';
+    for(var i = 0; i < holder.length; i++){
+
+      insertStr = insertStr + that.db.escapeId(holder[i]) + ", ";
+    }
+    insertStr = insertStr.slice(0, -2);
+    insertStr = insertStr + ' ) VALUES (';
+
+    var queryStr;
+    var temp;
+    var count = listOfObjects.length;
+    that.doAddingMessage(count);
+      for (var i = 0; i < listOfObjects.length; i++) {
+        queryStr = "";
+          for(var j = 0; j < holder.length; j++){
+            temp = listOfObjects[i][holder[j]];
+            if(temp === undefined || (isNaN(temp) && typeof temp !== "string")){
+              queryStr = queryStr + '""' + ", ";
+            }else{
+              temp = that.db.escape(temp);
+              queryStr = queryStr + temp + ", ";
+            }
+          }
+        queryStr = queryStr.slice(0, -2);
+        queryStr = queryStr + ' )';
+
+        queryStr = insertStr + queryStr;
+        that.db.query(queryStr, function(str, bailOut, err){
+          count--;
+          that.doAddingMessage(count, 25);
+          callbackPerAdd(err);
+          if(count <= 0){
+            console.log("COMPLETED ADDING ALL ENTRIES");
+            callbackAtEnd();
+          }
+        });
+      }
+  };
+
+
+};
+
+exports.doAddingMessage = function(count, moduloVal){
+  moduloVal = moduloVal || 1;
+  if(count & moduloVal === 0){
+    console.log("" + count + " ENTRIES REMAIN TO BE ADDED. ETA: " + Math.round(.08 * count / 60 * 100)/100 + " minutes");
+  }
 };
 
 //==============================================
@@ -159,18 +192,10 @@ exports.changeToDatabase = function(name, callback){
 
 exports.ADDALLTHETWEETS = function(){
   if(ADD_ALL_19_MEGS_OF_TEST_TWEETS !== true) return;
-
-  var count = ALL_THE_TEST_TWEETS.length;
-  console.log("" + count + " tweets to go, eta: " + Math.round(.08 * count / 60 * 100)/100 + " minutes");
-
   var indieCall = function(err){
     if(err){
       console.log(err);
     }
-    if(count % 25 === 0){
-      console.log("" + count + " tweets to go, eta: " + Math.round(.08 * count / 60 * 100)/100 + " minutes");
-    }
-    count--;
   };
 
   var finalCall = function(){
@@ -214,7 +239,7 @@ exports.trigger = function(db,callback){
           that.genericAddToTable('tweets', addTheseTweets, function(err){if(err){console.log(err); return;}}, function(msg){
             that.getAllTweets(function(err, rows, fields){
               if(err){console.log(err); return;}
-              console.log("A TWEET", rows[0]);
+              console.log("THERE IS AT LEAST ONE TWEET IN THE TABLE NOW");
               that.ADDALLTHETWEETS();
           });
           });

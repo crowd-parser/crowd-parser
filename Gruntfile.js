@@ -511,6 +511,10 @@ module.exports = function (grunt) {
     this.async();
   });
 
+  grunt.registerTask('createDatabase', function(){
+    //execute function on database.js module
+  });
+
   grunt.registerTask('serve', function (target) {
     if (target === 'dist') {
       return grunt.task.run(['build', 'env:all', 'env:prod', 'express:prod', 'wait', 'open', 'express-keepalive']);

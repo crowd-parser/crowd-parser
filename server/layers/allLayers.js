@@ -5,12 +5,12 @@ var allLayers = function(tweetsArray) {
 
   var results = {};
   results.tweetsWithSentimentAnalysis = [];
-  results.finalResults = {};
 
 
   tweetsArray.forEach(function(tweet) {
 
     var tweetWithSentimentAnalysis = {};
+    tweetWithSentimentAnalysis.combinedLayersResults = {};
 
     tweetWithSentimentAnalysis.created_at = tweet.created_at;
     tweetWithSentimentAnalysis.id = tweet.id;

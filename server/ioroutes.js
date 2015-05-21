@@ -27,7 +27,7 @@ module.exports = function(io, T) {
         if (count === target) {
           stream.stop();
           
-          var sentimentResult = sentiment(tweetsSentimentArray);
+          var sentimentResult = sentiment.sentimentAnalysis(tweetsSentimentArray);
           var emojiResult = emojiAnalysis(tweetsSentimentArray);
 
           io.emit('sentiment', sentimentResult);
@@ -53,7 +53,7 @@ module.exports = function(io, T) {
         if (count === target) {
           stream.stop();
 
-          var sentimentResult = sentiment(tweetsSentimentArray);
+          var sentimentResult = sentiment.sentimentAnalysis(tweetsSentimentArray);
 
           io.emit('sentiment', sentimentResult);
         }

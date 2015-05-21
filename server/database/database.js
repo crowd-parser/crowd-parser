@@ -1,3 +1,6 @@
+//TODO
+//escape field values properly
+//support child objects and concat field names
 
 /*============= DATABASE MODULE WRAPPER for SQL commands =========*/
 
@@ -18,7 +21,7 @@ exports.db.connect(function(err){
 
 
 /*============= DEBUG and MACRO SETTINGS =================*/
-var NUKE_ENTIRE_TWEETS_TABLE_ON_SERVER_START = false;
+var NUKE_ENTIRE_TWEETS_TABLE_ON_SERVER_START = true; //false will prevent further debug stuff
 var FILL_TWEETS_DATABASE_WITH_THIS_ARRAY_OF_TWEETS = []; //manually add test tweets here
 var ADD_ALL_19_MEGS_OF_TEST_TWEETS = false;
 
@@ -51,6 +54,8 @@ exports.genericGetMatching = function(tableName, callback){
 
 
 //============== CREATE STUFF ==================
+
+
 
 exports.genericCreateTable = function(name, exampleObject, callback){
     var str = ("CREATE TABLE " + this.db.escapeId(name) + ' (id INTEGER PRIMARY KEY AUTO_INCREMENT,');
@@ -94,26 +99,27 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
 
   var queryStr;
   var temp;
-  //var count = 0;
+  var count = listOfObjects.length;
     for (var i = 0; i < listOfObjects.length; i++) {
       queryStr = "";
         for(var j = 0; j < holder.length; j++){
           temp = listOfObjects[i][holder[j]];
           if(isNaN(temp) && typeof temp !== "string"){
-            queryStr = queryStr + "''" + ", ";
+            queryStr = queryStr + '""' + ", ";
           }else{
-
-            queryStr = queryStr + "'" + temp + "'" + ", ";
+            temp = this.db.escape(temp);
+            queryStr = queryStr + temp + ", ";
           }
         }
       queryStr = queryStr.slice(0, -2);
       queryStr = queryStr + ' )';
 
       queryStr = insertStr + queryStr;
-      var count = listOfObjects.length;
-      this.db.query(queryStr, function(err){
+      this.db.query(queryStr, function(str, bailOut, err){
         count--;
-        callbackPerAdd(err);
+
+          callbackPerAdd(err);
+
         if(count <= 0){
           callbackAtEnd("SUCCESS");
         }
@@ -151,19 +157,27 @@ exports.changeToDatabase = function(name, callback){
 
 //================ TESTING ======================
 
-exports.ADDALLTHETEETS = function(){
+exports.ADDALLTHETWEETS = function(){
   if(ADD_ALL_19_MEGS_OF_TEST_TWEETS !== true) return;
 
-  var count = 1;
+  var count = ALL_THE_TEST_TWEETS.length;
+  console.log("" + count + " tweets to go, eta: " + Math.round(.08 * count / 60 * 100)/100 + " minutes");
 
-  this.genericAddToTable('tweets', ALL_THE_TEST_TWEETS , function(err){
+  var indieCall = function(err){
     if(err){
       console.log(err);
-      return;
     }
-    console.log(count);
-    count++;
-  });
+    if(count % 25 === 0){
+      console.log("" + count + " tweets to go, eta: " + Math.round(.08 * count / 60 * 100)/100 + " minutes");
+    }
+    count--;
+  };
+
+  var finalCall = function(){
+    console.log("A BILLION TWEETS ADDED");
+  };
+
+  this.genericAddToTable('tweets', ALL_THE_TEST_TWEETS , indieCall, finalCall);
 };
 
 exports.testTweet1 = {"created_at":"Wed May 20 23:13:04 +0000 2015","id":601163762242981900,"id_str":"601163762242981888","text":"@LanaeBeau_TY 😥😥😥 you suck","source":"<a href=\"http://twitter.com/download/android\" rel=\"nofollow\">Twitter for Android</a>","truncated":false,"in_reply_to_status_id":601160439414857700,"in_reply_to_status_id_str":"601160439414857728","in_reply_to_user_id":277764780,"in_reply_to_user_id_str":"277764780","in_reply_to_screen_name":"LanaeBeau_TY","user":{"id":3252488177,"id_str":"3252488177","name":"●○●○♡","screen_name":"2411Clark","location":"","url":null,"description":"I'm dope just follow .","protected":false,"verified":false,"followers_count":7,"friends_count":29,"listed_count":0,"favourites_count":11,"statuses_count":40,"created_at":"Wed May 13 19:04:37 +0000 2015","utc_offset":null,"time_zone":null,"geo_enabled":false,"lang":"en","contributors_enabled":false,"is_translator":false,"profile_background_color":"C0DEED","profile_background_image_url":"http://abs.twimg.com/images/themes/theme1/bg.png","profile_background_image_url_https":"https://abs.twimg.com/images/themes/theme1/bg.png","profile_background_tile":false,"profile_link_color":"0084B4","profile_sidebar_border_color":"C0DEED","profile_sidebar_fill_color":"DDEEF6","profile_text_color":"333333","profile_use_background_image":true,"profile_image_url":"http://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_image_url_https":"https://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_banner_url":"https://pbs.twimg.com/profile_banners/3252488177/1431961882","default_profile":true,"default_profile_image":false,"following":null,"follow_request_sent":null,"notifications":null},"geo":null,"coordinates":null,"place":null,"contributors":null,"retweet_count":0,"favorite_count":0,"entities":{"hashtags":[],"trends":[],"urls":[],"user_mentions":[{"screen_name":"LanaeBeau_TY","name":"tyisha.","id":277764780,"id_str":"277764780","indices":[0,13]}],"symbols":[]},"favorited":false,"retweeted":false,"possibly_sensitive":false,"filter_level":"low","lang":"en","timestamp_ms":"1432163584658"};
@@ -201,7 +215,7 @@ exports.trigger = function(db,callback){
             that.getAllTweets(function(err, rows, fields){
               if(err){console.log(err); return;}
               console.log("A TWEET", rows[0]);
-              that.ADDALLTHETEETS();
+              that.ADDALLTHETWEETS();
           });
           });
         });

@@ -21,7 +21,8 @@ require('./config/express')(app);
 require('./routes')(app);
 
 // Setup database
-var testdatabase = require('./database/testdatabase.js');
+app.database = require('./database/database.js');
+app.database.trigger(function(){console.log("TRIGGERED")});
 
 // Start server
 server.listen(config.port, config.ip, function () {

@@ -25,22 +25,16 @@ module.exports = function(io, T) {
         if (tweet.lang === 'en') {
           io.emit('twitter stream sample', tweet);
           count++;
-          tweetsSentimentArray.push(tweet.text);
 
           tweetsArray.push(tweet);
         }
 
         if (count === target) {
           stream.stop();
-          
-          var sentimentResult = sentiment.sentimentAnalysis(tweetsSentimentArray);
-          var emojiResult = emojiAnalysis.emoticonAnalysis(tweetsSentimentArray);
 
           var allLayersResults = allLayers(tweetsArray);
           
           io.emit('all layers', allLayersResults);
-          io.emit('sentiment', sentimentResult);
-          io.emit('emoji', emojiResult);
         }
       });
     });
@@ -49,7 +43,7 @@ module.exports = function(io, T) {
 
       var count = 0;
       var target = num || 20;
-      var tweetsSentimentArray = [];
+      var tweetsArray = [];
 
       var stream = T.stream('statuses/filter', {track: topics, language: 'en'});
 
@@ -57,14 +51,15 @@ module.exports = function(io, T) {
         io.emit('twitter stream filter', tweet);
         
         count++;
-        tweetsSentimentArray.push(tweet.text);
-
+        
+        tweetsArray.push(tweet);
+          
         if (count === target) {
           stream.stop();
 
-          var sentimentResult = sentiment.sentimentAnalysis(tweetsSentimentArray);
-
-          io.emit('sentiment', sentimentResult);
+          var allLayersResults = allLayers(tweetsArray);
+          
+          io.emit('all layers', allLayersResults);
         }
       });
     });
@@ -73,13 +68,9 @@ module.exports = function(io, T) {
       T.get('statuses/user_timeline', {screen_name: screen_name, count: count}, function(err, data) {
         socket.emit('twitter rest user timeline', data);
 
-        var tweetsSentimentArray = data.map(function(tweet) {
-          return tweet.text;
-        });
-
-        var sentimentResult = sentiment(tweetsSentimentArray);
-
-        io.emit('sentiment', sentimentResult);
+        var allLayersResults = allLayers(data);
+        
+        io.emit('all layers', allLayersResults);
 
       });
     });
@@ -88,13 +79,9 @@ module.exports = function(io, T) {
       T.get('search/tweets', {q: query, count: count, result_type: result_type}, function(err, data) {
         socket.emit('twitter rest search', data);
 
-        var tweetsSentimentArray = data.statuses.map(function(tweet) {
-          return tweet.text;
-        });
-
-        var sentimentResult = sentiment(tweetsSentimentArray);
-
-        io.emit('sentiment', sentimentResult);
+        var allLayersResults = allLayers(data.statuses);
+                  
+        io.emit('all layers', allLayersResults);
       });
     });
 

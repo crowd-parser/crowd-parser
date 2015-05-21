@@ -104,22 +104,24 @@
   <div class="results-view" ng-hide="startingView">
     <button class="btn btn-info" ng-click="startingView = true">Back</button>
 
-    <dir-pagination-controls></dir-pagination-controls>
-    <div dir-paginate="tweet in allLayers.tweetsWithSentimentAnalysis | itemsPerPage: 10">
-      <div>{{tweet.text}}</div>
-      <div>{{tweet.username}}</div>
-      
-      <h2>Base Layer Results</h2>
-      <div>Positive words: {{tweet.baseLayerResults.positiveWords.join()}}</div>
-      <div>Negative words: {{tweet.baseLayerResults.negativeWords.join()}}</div>
-      <div>Base layer score: {{tweet.baseLayerResults.score}}</div>
-      <div>Sentiment: {{tweet.baseLayerResults.sentiment}}</div>
-      
-      <h2>Emoticon Layer Results</h2>
-      <div>Positive words: {{tweet.emoticonLayerResults.positiveWords.join()}}</div>
-      <div>Negative words: {{tweet.emoticonLayerResults.negativeWords.join()}}</div>
-      <div>Emoticon layer score: {{tweet.emoticonLayerResults.score}}</div>
-      <div>Sentiment: {{tweet.emoticonLayerResults.sentiment}}</div>
+    <div class="tweets-sentiment">
+      <dir-pagination-controls></dir-pagination-controls>
+      <div dir-paginate="tweet in allLayers.tweetsWithSentimentAnalysis | itemsPerPage: 10" class="tweet-sentiment">
+        <div>{{tweet.text}}</div>
+        <div>{{tweet.username}}</div>
+        
+        <h2>Base Layer Results</h2>
+        <div>Positive words: {{tweet.baseLayerResults.positiveWords.join()}}</div>
+        <div>Negative words: {{tweet.baseLayerResults.negativeWords.join()}}</div>
+        <div>Base layer score: {{tweet.baseLayerResults.score}}</div>
+        <div>Sentiment: {{tweet.baseLayerResults.sentiment}}</div>
+        
+        <h2>Emoticon Layer Results</h2>
+        <div>Positive words: {{tweet.emoticonLayerResults.positiveWords.join()}}</div>
+        <div>Negative words: {{tweet.emoticonLayerResults.negativeWords.join()}}</div>
+        <div>Emoticon layer score: {{tweet.emoticonLayerResults.score}}</div>
+        <div>Sentiment: {{tweet.emoticonLayerResults.sentiment}}</div>
+      </div>
     </div>
 
     <hr>
@@ -131,39 +133,6 @@
       Random tweets: {{numberLeftOver}}
 
       <div class="d3"></div>
-
-      <ol>
-        <li ng-repeat="tweet in tweetsArray">
-          created_at: {{tweet.created_at}}<br>
-          id: {{tweet.id}}<br>
-          id_str: {{tweet.id_str}}<br>
-          text: {{tweet.text}}<br>
-          source: {{tweet.source}}<br>
-          truncated: {{tweet.truncated}}<br>
-          in_reply_to_status_id: {{tweet.in_reply_to_status_id}}<br>
-          in_reply_to_status_id_str: {{tweet.in_reply_to_status_id_str}}<br>
-          in_reply_to_user_id: {{tweet.in_reply_to_user_id}}<br>
-          in_reply_to_user_id_str: {{tweet.in_reply_to_user_id_str}}<br>
-          in_reply_to_screen_name: {{tweet.in_reply_to_screen_name}}<br>
-          user: {{tweet.user}}<br>
-          geo: {{tweet.geo}}<br>
-          coordinates: {{tweet.coordinates}}<br>
-          place: {{tweet.place}}<br>
-          contributors: {{tweet.contributors}}<br>
-          retweeted_status: {{tweet.retweeted_status}}<br>
-          retweet_count: {{tweet.retweet_count}}<br>
-          favorite_count: {{tweet.favorite_count}}<br>
-          entities: {{tweet.entities}}<br>
-          extended_entities: {{tweet.extended_entities}}<br>
-          favorited: {{tweet.favorited}}<br>
-          retweeted: {{tweet.retweeted}}<br>
-          possibly_sensitive: {{tweet.possibly_sensitive}}<br>
-          filter_level: {{tweet.filter_level}}<br>
-          lang: {{tweet.lang}}<br>
-          timestamp_ms: {{tweet.timestamp_ms}}<br>
-
-        </li>
-      </ol>
 
     </div>
   </div>

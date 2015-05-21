@@ -1,45 +1,44 @@
-var db = require('./database-config.js');
+var _db = require('./database-config.js');
 
 //External facing functions, agnostic of actual database
-var tweets = exports.tweets = {};
-var layers = exports.layers = {};
-var keywords = exports.keywords = {};
-exports.db = db;
+// var tweets = exports.tweets = {};
+// var layers = exports.layers = {};
+// var keywords = exports.keywords = {};
+exports.db = _db;
 
 
-layers.createLayerData = function(layerName, data){
+// layers.createLayerData = function(layerName, data){
 
-};
+// };
 
-layers.addLayerData = function(layerName, data){
+// layers.addLayerData = function(layerName, data){
 
-};
+// };
 
-tweets.add = function(tweets){
- genericAddToTable("tweets", tweets);
+// tweets.add = function(tweets){
+//  genericAddToTable("tweets", tweets);
 
-};
+// };
 
-keywords.add = function(keyword){
- //user generic
-};
+// keywords.add = function(keyword){
+//  //user generic
+// };
 
-tweets.getAllTweets = function(callback){
-  //USAGE for callback: function(err, row) {console.log(row.id + ": " + row.text);
-   //db.each("SELECT rowid AS id, text FROM tweets", callback);
+exports.getAllTweets = function(callback){
    callback([{username: "Joe", message: "Hi 2 You", inReplyTo:null, retweets:3, followers:8, favorited: 3, date: +new Date()},
              {username: "Joe2", message: "Hi 3 You", inReplyTo:null, retweets:3, followers:8, favorited: 3, date: +new Date()},
              {username: "Joe3", message: "Hi 4 You", inReplyTo:null, retweets:3, followers:8, favorited: 3, date: +new Date()}]);
 };
 
-tweets.createTable = function(exampleObject, callback){
- genericCreateTable("tweets", exampleObject, callback);
+exports.createTable = function(exampleObject, callback){
+ this.genericCreateTable("tweets", exampleObject, callback);
 
 };
 
-var genericCreateTable = function(name, exampleObject, callback){
-  db.serialize(function(){
+exports.testTweet = {"created_at":"Wed May 20 23:13:04 +0000 2015","id":601163762242981900,"id_str":"601163762242981888","text":"@LanaeBeau_TY 😥😥😥 you suck","source":"<a href=\"http://twitter.com/download/android\" rel=\"nofollow\">Twitter for Android</a>","truncated":false,"in_reply_to_status_id":601160439414857700,"in_reply_to_status_id_str":"601160439414857728","in_reply_to_user_id":277764780,"in_reply_to_user_id_str":"277764780","in_reply_to_screen_name":"LanaeBeau_TY","user":{"id":3252488177,"id_str":"3252488177","name":"●○●○♡","screen_name":"2411Clark","location":"","url":null,"description":"I'm dope just follow .","protected":false,"verified":false,"followers_count":7,"friends_count":29,"listed_count":0,"favourites_count":11,"statuses_count":40,"created_at":"Wed May 13 19:04:37 +0000 2015","utc_offset":null,"time_zone":null,"geo_enabled":false,"lang":"en","contributors_enabled":false,"is_translator":false,"profile_background_color":"C0DEED","profile_background_image_url":"http://abs.twimg.com/images/themes/theme1/bg.png","profile_background_image_url_https":"https://abs.twimg.com/images/themes/theme1/bg.png","profile_background_tile":false,"profile_link_color":"0084B4","profile_sidebar_border_color":"C0DEED","profile_sidebar_fill_color":"DDEEF6","profile_text_color":"333333","profile_use_background_image":true,"profile_image_url":"http://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_image_url_https":"https://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_banner_url":"https://pbs.twimg.com/profile_banners/3252488177/1431961882","default_profile":true,"default_profile_image":false,"following":null,"follow_request_sent":null,"notifications":null},"geo":null,"coordinates":null,"place":null,"contributors":null,"retweet_count":0,"favorite_count":0,"entities":{"hashtags":[],"trends":[],"urls":[],"user_mentions":[{"screen_name":"LanaeBeau_TY","name":"tyisha.","id":277764780,"id_str":"277764780","indices":[0,13]}],"symbols":[]},"favorited":false,"retweeted":false,"possibly_sensitive":false,"filter_level":"low","lang":"en","timestamp_ms":"1432163584658"};
 
+
+exports.genericCreateTable = function(name, exampleObject, callback){
     var str = ("CREATE TABLE " + name + ' (id INTEGER PRIMARY KEY AUTOINCREMENT');
     var key;
 
@@ -55,12 +54,10 @@ var genericCreateTable = function(name, exampleObject, callback){
     }
     str = str + ')';
 
-    db.run(str);
-    if(callback) callback();
-  });
+    this.db.query(str, callback);
 };
 
-var genericAddToTable = function(tableName, listOfObjects){
+exports.genericAddToTable = function(tableName, listOfObjects, callback){
   var holder = Object.keys(listOfObjects[0]);
   var marks = "";
   var insertStr = "INSERT INTO " + tableName + ' (';
@@ -71,15 +68,22 @@ var genericAddToTable = function(tableName, listOfObjects){
 
   insertStr = insertStr + ' VALUES (';
   insertStr = insertStr + marks + ")";
-  var runStr = "";
-  var stmt = db.prepare(insertStr);
+  var vals;
+  var queryStr;
+  //var count = 0;
     for (var i = 0; i < listOfObjects.length; i++) {
+      vals = [];
         for(var j = 0; j < holder.length; j++){
-          runStr = runStr + " " + listOfObjects[i][holder[j]];
+          vals.push(listOfObjects[i][holder[j]]);
         }
-        stmt.run(runStr);
+      queryStr = db.format(insertStr, valsStr);
+      this.db.query(queryStr, callback); //TODO add callback here for errors
+      //count++;
+      // if(count >= listOfObjects.length){
+      //   callback();
+      // }
     }
-  stmt.finalize();
+
 };
 
 
@@ -106,22 +110,22 @@ var genericAddToTable = function(tableName, listOfObjects){
 
 
 
-var genericDropTable = function(tableName, callback){
-  db.serialize(function(){
-    db.run("DROP TABLE IF EXISTS " + tableName);
-    if(callback) callback();
-  });
+exports.genericDropTable = function(tableName, callback){
+  this.db.query("DROP TABLE IF EXISTS " + tableName);
+};
 
-}
+exports.nukeAll = function(){
+
+};
 
 exports.createFromScratch = function(){
-  console.log("CREATING NEW TABLES");
-  db.serialize(function() {
-    tweets.createTable({username:"", text:"" });
-    genericAddToTable("tweets", [
-                      {username: "Joe", text: "Hi 2 You"},
-                      {username: "Dave", text: "it's dave!"},
-                      {username: "Deb", text: "Yo Yo Yo"}]);
+  console.log("CREATING NEW TABLES PH");
+  // db.serialize(function() {
+  //   tweets.createTable({username:"", text:"" });
+  //   genericAddToTable("tweets", [
+  //                     {username: "Joe", text: "Hi 2 You"},
+  //                     {username: "Dave", text: "it's dave!"},
+  //                     {username: "Deb", text: "Yo Yo Yo"}]);
     // var stmt = db.prepare("INSERT INTO tweets VALUES (?)");
     // for (var i = 0; i < 10000; i++) {
     //     stmt.run("this is tweet number " + i);
@@ -147,10 +151,7 @@ exports.createFromScratch = function(){
     // stmt.run("Avengers");
 
     // stmt.finalize();
-  });
-
-  exports.createFromScratch();
-}
+};
 
 
 

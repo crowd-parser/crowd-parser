@@ -1,3 +1,6 @@
+var NUKEDBONSERVERSTART = false;
+var USEALL19GIGS = false;
+
 exports.db = require('./database-config.js');
 
 //External facing functions, agnostic of actual database
@@ -188,6 +191,18 @@ exports.changeToDatabase = function(name, callback){
   this.db.query("USE " + name, callback);
 };
 
+exports.ALLTHETWEETS = function(){
+  if(USEALL19GIGS === false) return;
+
+  var count = 1;
+  this.genericAddToTable('tweets', require('./tweets_test.js'), function(err){
+    if(err) console.log(err);
+    console.log(count);
+    count++;
+
+  } );
+}
+
 exports.trigger = function(db,callback){
 
   var that = this;
@@ -202,6 +217,7 @@ exports.trigger = function(db,callback){
 
   that.createDatabase('dev',function(){
     that.changeToDatabase('dev', function(){
+      if(!NUKEDBONSERVERSTART) return;
       that.genericDropTable('tweets', function(){
         that.genericCreateTable('tweets', that.testTweet1, function(err){
           console.log("HERE5");
@@ -215,6 +231,7 @@ exports.trigger = function(db,callback){
               console.log("A TWEET", rows[0]);
               console.log("A TWEET", rows[1]);
               console.log("A TWEET", rows[2]);
+              that.ALLTHETWEETS();
             });
           });
         });
@@ -223,6 +240,8 @@ exports.trigger = function(db,callback){
   });
 
 };
+
+
 
 
       // this.genericDropTable('tweets', function(err){

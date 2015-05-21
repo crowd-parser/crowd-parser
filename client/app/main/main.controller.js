@@ -182,25 +182,10 @@ angular.module('parserApp')
     socket.emit('twitter rest search', query, 'mixed', 100);
   };
 
-
-  socket.on('sentiment', function(data) {
-    console.log(data);
-    $scope.$apply(function() {
-      $scope.sentiment = data;
-    });
-  });
-
-  socket.on('emoji', function(data) {
-    console.log(data);
-    $scope.$apply(function() {
-      $scope.emoji = data;
-    });
-  });
-
   socket.on('all layers', function(data) {
     console.log(data);
     $scope.$apply(function() {
       $scope.allLayers = data;
     });
-  })
+  });
 });

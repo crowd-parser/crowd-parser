@@ -21,7 +21,6 @@ var emoticonAnalysis = function(data) {
     // use emojiRegex to grab array of all emojis in string
     var emojis = text.match(emojiRegex());
 
-   
     if (emojis) {
       // check each emoji against emoticonData table
       emojis.forEach(function(item) {
@@ -50,6 +49,52 @@ var emoticonAnalysis = function(data) {
     results.emojiSentiment = 'negative';
   } else {
     results.emojiSentiment = 'neutral';
+  }
+
+  return results;
+
+};
+
+var tweetEmoticonAnalysis = function(tweet) {
+
+  var results = {
+    positiveWords: [],
+    negativeWords: [],
+    unknown: [],
+    hadEmojis: false,
+    score: 0
+  };
+
+  var emojis = tweet.match(emojiRegex());
+
+  var itemCode;
+
+  if (emojis) {
+    // check each emoji against emoticonData table
+    emojis.forEach(function(item) {
+      itemCode = toCodePoint(item);
+      if (itemCode in em.positive) {
+        results.score += em.positive[itemCode];
+
+        results.positiveWords.push(item);
+      } else if (toCodePoint(item) in em.negative) {
+        results.score += em.negative[itemCode];
+
+        results.negativeWords.push(item);
+      } else {
+        // if not in either table, store it in 'unknown'
+        // array so we know what we missed
+        results.unknown.push(item);
+      }
+    });
+  }
+
+  if (results.score > 0) {
+    results.sentiment = 'positive';
+  } else if (results.score < 0) {
+    results.sentiment = 'negative';
+  } else {
+    results.sentiment = 'neutral';
   }
 
   return results;
@@ -89,4 +134,5 @@ function toCodePoint(unicodeSurrogates, sep) {
   return r.join(sep || '-');
 }
 
-module.exports = emoticonAnalysis;
+exports.emoticonAnalysis = emoticonAnalysis;
+exports.tweetEmoticonAnalysis = tweetEmoticonAnalysis;

@@ -55,32 +55,32 @@ var sentimentAnalysis = function(data) {
 
 var tweetSentimentAnalysis = function(tweet) {
 
-  var tweetSentimentAnalysisResults = {};
-
-  tweetSentimentAnalysisResults.positiveWords = [];
-  tweetSentimentAnalysisResults.negativeWords = [];
-  tweetSentimentAnalysisResults.score = 0;
+  var results = {
+    positiveWords: [],
+    negativeWords: [],
+    score: 0
+  };
 
   tweet.split(' ').forEach(function(word) {
     if (sentimentPositive[word]) {
-      tweetSentimentAnalysisResults.positiveWords.push(word);
+      results.positiveWords.push(word);
 
-      tweetSentimentAnalysisResults.score++;
+      results.score++;
     } else if (sentimentNegative[word]) {
-      tweetSentimentAnalysisResults.negativeWords.push(word);
+      results.negativeWords.push(word);
 
-      tweetSentimentAnalysisResults.score--;
+      results.score--;
     }
-    if (tweetSentimentAnalysisResults.score > 0) {
-      tweetSentimentAnalysisResults.sentiment = 'positive';
-    } else if (tweetSentimentAnalysisResults.score < 0) {
-      tweetSentimentAnalysisResults.sentiment = 'negative'
+    if (results.score > 0) {
+      results.sentiment = 'positive';
+    } else if (results.score < 0) {
+      results.sentiment = 'negative'
     } else {
-      tweetSentimentAnalysisResults.sentiment = 'neutral';
+      results.sentiment = 'neutral';
     }
   });
 
-  return tweetSentimentAnalysisResults;
+  return results;
 };
 
 exports.sentimentAnalysis = sentimentAnalysis;

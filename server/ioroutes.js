@@ -28,7 +28,7 @@ module.exports = function(io, T) {
           stream.stop();
           
           var sentimentResult = sentiment.sentimentAnalysis(tweetsSentimentArray);
-          var emojiResult = emojiAnalysis(tweetsSentimentArray);
+          var emojiResult = emojiAnalysis.emoticonAnalysis(tweetsSentimentArray);
 
           io.emit('sentiment', sentimentResult);
           io.emit('emoji', emojiResult);

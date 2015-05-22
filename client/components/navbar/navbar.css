@@ -1,0 +1,11 @@
+.custom-navbar {
+  background: #193441;
+  height: 50px;
+  width: 100%;
+}
+
+.custom-navbar a {
+  color: #FFF;
+  font-size: 30px;
+  height: 50px;
+}

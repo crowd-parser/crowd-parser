@@ -1,9 +1,14 @@
-<div ng-include="'components/navbar/navbar.html'"></div>
+<!-- <div ng-include="'components/navbar/navbar.html'"></div> -->
 
 <header>
-  <h1>Crowd Parser</h1>
-  <h3>Explore Twitter Sentiment</h3>
+  <img src="../assets/images/logo.png">
 </header>
+
+<nav class="custom-navbar">
+  <ul>
+    <li><a href="#">Home</a></li>
+  </ul>
+</nav>
 <div class="container">
   <div class="starting-view" ng-show="startingView">
 
@@ -122,7 +127,7 @@
           <div class="sentiment-score {{tweet.emoticonLayerResults.score > 0 ? 'positive-score' : tweet.emoticonLayerResults.score < 0 ? 'negative-score' : 'neutral-score'}}">{{tweet.emoticonLayerResults.score}}</div>
           <img src="{{tweet.emoticonLayerResults.score > 0 ? '../assets/images/positivesmiley.png' : tweet.emoticonLayerResults.score < 0 ? '../assets/images/negativesmiley.png' : '../assets/images/neutralsmiley.png'}}" class="sentiment-image">
         </div>
-        
+
         <div class="layer-heading">Overall Sentiment</div> 
         <div class="sentiment-score {{tweet.overallResults.score > 0 ? 'positive-score' : tweet.overallResults.score < 0 ? 'negative-score' : 'neutral-score'}}">{{tweet.overallResults.score}}</div>
         <img src="{{tweet.overallResults.score > 0 ? '../assets/images/positivesmiley.png' : tweet.overallResults.score < 0 ? '../assets/images/negativesmiley.png' : '../assets/images/neutralsmiley.png'}}" class="sentiment-image">

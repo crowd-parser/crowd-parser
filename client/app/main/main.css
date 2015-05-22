@@ -1,6 +1,7 @@
 header {
+    background: #FFF;
     text-align: center;
-    margin-top: -20px;
+    padding: 40px 0;
 }
 
 .footer {
@@ -19,6 +20,7 @@ header {
 }
 
 .tweet-sentiment {
+    background: #FFF;
     text-align: center;
     width: 85%;
     margin: 0 auto;

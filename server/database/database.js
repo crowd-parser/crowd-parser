@@ -5,6 +5,8 @@
 //process emojis
 //build table for chosen keyword function
   //search all tweets for keyword base function
+//all template objects get thier "id" value ignored if included with one
+ //need a cleaner solution for that
 
 /*============= DATABASE MODULE WRAPPER for SQL commands =========*/
 
@@ -16,7 +18,7 @@ exports.db.connect(function(err){
     if(err){
       console.log(">>>>>>>>>>>>>ERROR connecting mysql ", err.stack);
     }else{
-      console.log(">>>>>>>>>>>>>CONNECTED as ID ", this.threadId);
+      console.log(">>>>>>>>>>>>>CONNECTED as ID ", exports.db.threadId);
     }
 });
 
@@ -50,11 +52,11 @@ exports.genericGetAll = function(tableName, callback){
 
 exports.genericGetMatching = function(tableName, callback){
   //TODO
-}
+};
 
 exports.genericGetTableColumnNames = function(tableName, callback){
   this.db.query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? ORDER BY ORDINAL_POSITION",[tableName] , callback);
-}
+};
 
 //===========================================
 
@@ -70,12 +72,11 @@ exports.genericCreateTable = function(tableName, exampleObject, callback){
     var key;
     var type;
 
+    exampleObject = this.rearchitectArrWithDeepObjects([exampleObject])[0];
+
     for(key in exampleObject){
-      if(key === "id"){
-        continue;
-      }else{
-        type = "TEXT";
-      }
+        //TODO just doing all text for now, will specify based on content later
+      type = "TEXT";
       str = str + " " + this.db.escapeId(key) + " " + type + ',';
     }
     str = str.slice(0, -1);
@@ -90,6 +91,56 @@ exports.genericCreateTable = function(tableName, exampleObject, callback){
 
 // ============================================
 
+exports.rearchitectArrWithDeepObjects = function(arr){
+
+  var newArr = [];
+  var temp;
+
+  var tryToPushObject = function(thing, nameSoFar){
+       if(nameSoFar !== ""){
+          temp = {};
+          temp[nameSoFar] = thing;
+          newArr.push(temp);
+        }
+  };
+
+  var recurse = function(thing, nameSoFar){
+      console.log(nameSoFar);
+      if(thing === undefined){
+        tryToPushObject(thing, nameSoFar);
+        return;
+      }
+      if(thing === null){
+        tryToPushObject(thing, nameSoFar);
+        return;
+      }
+      if(Array.isArray(thing)){
+        tryToPushObject(thing.join(","), nameSoFar);
+      }else if(typeof thing === 'object'){
+        for(var key in thing){
+          if(nameSoFar === ""){
+            temp = key;
+            if(temp === "id"){
+              temp = "id_original"
+            }
+          }else{
+            temp = nameSoFar.concat("_" + key);
+          }
+          recurse(thing[key], temp);
+        }
+      }else{
+         tryToPushObject(thing, nameSoFar);
+      }
+    };
+
+    for(var i = 0; i < arr.length; i++){
+      recurse(arr[i], "");
+    }
+
+    console.log(newArr);
+    return newArr;
+
+};
 
 
 
@@ -123,6 +174,9 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
     var temp;
     var count = listOfObjects.length;
     that.doAddingMessage(count);
+    //recurse this for child objects I guess
+
+
       for (var i = 0; i < listOfObjects.length; i++) {
         queryStr = "";
           for(var j = 0; j < holder.length; j++){

@@ -19,7 +19,59 @@ header {
 }
 
 .tweet-sentiment {
+    text-align: center;
+    width: 85%;
+    margin: 0 auto;
+    padding: 15px;
     border: 1px solid #000;
+}
+
+.tweet-username {
+    color: #B1B1B1;
+}
+
+.tweet-text {
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+
+.tweet-layer-results {
+    display: inline-block;
+    width: 49%;
+}
+
+.layer-heading {
+    font-size: 19px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.tweet-layer-results img {
+    margin-top: 5px;
+}
+
+.sentiment-score {
+    display: inline-block;
+    font-size: 30px;
+    font-weight: bold;
+    width: 50px;
+    height: 50px;
+    padding-top: 12px;
+    border: 2px solid #000;
+    border-radius: 50%;
+}
+
+.sentiment-image {
+    height: 53px;
+    margin-bottom: 15px;
+}
+
+.positive-score {
+    color: #43912D;
+}
+
+.negative-score {
+    color: #91412D;
 }
 
 .positive-word {

@@ -105,23 +105,29 @@
     <button class="btn btn-info" ng-click="startingView = true">Back</button>
 
     <div class="tweets-sentiment">
-      <dir-pagination-controls></dir-pagination-controls>
+      <center><dir-pagination-controls></dir-pagination-controls></center>
       <div dir-paginate="tweet in allLayers.tweetsWithSentimentAnalysis | itemsPerPage: 10" class="tweet-sentiment">
-        <div ng-bind-html="tweet.text"></div>
-        <div>{{tweet.username}}</div>
+        <div class="tweet-username">{{tweet.username}}</div>
+        <div ng-bind-html="tweet.text" class="tweet-text"></div>
         
-        <h2>Base Layer Results</h2>
-        <div>Positive words: {{tweet.baseLayerResults.positiveWords.join()}}</div>
-        <div>Negative words: {{tweet.baseLayerResults.negativeWords.join()}}</div>
-        <div>Base layer score: {{tweet.baseLayerResults.score}}</div>
-        <div>Sentiment: {{tweet.baseLayerResults.sentiment}}</div>
+        <div class="tweet-layer-results">
+          <div class="layer-heading">Common Words Layer</div> 
+          <div class="sentiment-score {{tweet.baseLayerResults.score > 0 ? 'positive-score' : tweet.baseLayerResults.score < 0 ? 'negative-score' : 'neutral-score'}}">{{tweet.baseLayerResults.score}}</div>
+          <img src="{{tweet.baseLayerResults.score > 0 ? '../assets/images/positivesmiley.png' : tweet.baseLayerResults.score < 0 ? '../assets/images/negativesmiley.png' : '../assets/images/neutralsmiley.png'}}" class="sentiment-image">
+        </div>
+
+        <div class="tweet-layer-results">
+          <div class="layer-heading">Emoticon Layer</div> 
+          <div><strong>Positive:</strong> {{tweet.emoticonLayerResults.positiveWords.join(', ') || 'n/a'}} | <strong>Negative:</strong> {{tweet.emoticonLayerResults.negativeWords.join(', ') || 'n/a'}}</div>
+          <div class="sentiment-score {{tweet.emoticonLayerResults.score > 0 ? 'positive-score' : tweet.emoticonLayerResults.score < 0 ? 'negative-score' : 'neutral-score'}}">{{tweet.emoticonLayerResults.score}}</div>
+          <img src="{{tweet.emoticonLayerResults.score > 0 ? '../assets/images/positivesmiley.png' : tweet.emoticonLayerResults.score < 0 ? '../assets/images/negativesmiley.png' : '../assets/images/neutralsmiley.png'}}" class="sentiment-image">
+        </div>
         
-        <h2>Emoticon Layer Results</h2>
-        <div>Positive words: {{tweet.emoticonLayerResults.positiveWords.join()}}</div>
-        <div>Negative words: {{tweet.emoticonLayerResults.negativeWords.join()}}</div>
-        <div>Emoticon layer score: {{tweet.emoticonLayerResults.score}}</div>
-        <div>Sentiment: {{tweet.emoticonLayerResults.sentiment}}</div>
+        <div class="layer-heading">Overall Sentiment</div> 
+        <div class="sentiment-score {{tweet.overallResults.score > 0 ? 'positive-score' : tweet.overallResults.score < 0 ? 'negative-score' : 'neutral-score'}}">{{tweet.overallResults.score}}</div>
+        <img src="{{tweet.overallResults.score > 0 ? '../assets/images/positivesmiley.png' : tweet.overallResults.score < 0 ? '../assets/images/negativesmiley.png' : '../assets/images/neutralsmiley.png'}}" class="sentiment-image">
       </div>
+
     </div>
 
     <hr>

@@ -22,6 +22,16 @@ var allLayers = function(tweetsArray) {
 
     tweetWithSentimentAnalysis.emoticonLayerResults = emoticonLayer.tweetEmoticonAnalysis(tweet.text);
 
+    tweetWithSentimentAnalysis.overallResults = {};
+    tweetWithSentimentAnalysis.overallResults.score = tweetWithSentimentAnalysis.baseLayerResults.score + tweetWithSentimentAnalysis.emoticonLayerResults.score;
+    if (tweetWithSentimentAnalysis.overallResults.score > 0) {
+      tweetWithSentimentAnalysis.overallResults.sentiment = 'positive';
+    } else if (tweetWithSentimentAnalysis.overallResults.score < 0) {
+      tweetWithSentimentAnalysis.overallResults.sentiment = 'negative';
+    } else {
+      tweetWithSentimentAnalysis.overallResults.sentiment = 'neutral';
+    }
+
     results.tweetsWithSentimentAnalysis.push(tweetWithSentimentAnalysis);
 
   });

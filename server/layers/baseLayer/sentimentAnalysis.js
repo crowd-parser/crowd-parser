@@ -62,11 +62,14 @@ var tweetSentimentAnalysis = function(tweet) {
   };
 
   tweet.split(' ').forEach(function(word, i) {
-    if (sentimentPositive[word]) {
+
+    var lowerCaseWord = word.toLowerCase();
+
+    if (sentimentPositive[lowerCaseWord]) {
       results.positiveWords.push([word, i]);
 
       results.score++;
-    } else if (sentimentNegative[word]) {
+    } else if (sentimentNegative[lowerCaseWord]) {
       results.negativeWords.push([word, i]);
 
       results.score--;

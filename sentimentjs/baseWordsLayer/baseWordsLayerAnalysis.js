@@ -2,55 +2,82 @@ var sentimentWords = require('./baseWordsList');
 var sentimentPositive = sentimentWords.sentimentPositive;
 var sentimentNegative = sentimentWords.sentimentNegative;
 
-var sentimentAnalysis = function(data) {
-  var results = {};
-  results.tweets = [];
-  var totalSentimentScore = 0;
-  var totalSentiment;
+var baseWordsLayerAnalysis = {
 
-  data.forEach(function(text, i) {
-    var tweetSentiment = {};
+  string: function(string) {
 
-    tweetSentiment.text = text;
-    tweetSentiment.positiveWords = [];
-    tweetSentiment.negativeWords = [];
-    tweetSentiment.score = 0;
-    text.split(' ').forEach(function(word, i) {
-      if (sentimentPositive[word]) {
-        tweetSentiment.positiveWords.push([word, sentimentPositive[word]]);
-        tweetSentiment.score++;
-      } else if (sentimentNegative[word]) {
-        tweetSentiment.negativeWords.push([word, sentimentNegative[word]]);
-        tweetSentiment.score--;
+    var results = {
+      positiveWords: [],
+      negativeWords: [],
+      score: 0
+    };
+
+    string.split(' ').forEach(function(word, i) {
+
+      var lowerCaseWord = word.toLowerCase();
+
+      if (sentimentPositive[lowerCaseWord]) {
+        results.positiveWords.push([word, i]);
+
+        results.score++;
+      } else if (sentimentNegative[lowerCaseWord]) {
+        results.negativeWords.push([word, i]);
+
+        results.score--;
       }
-      if (tweetSentiment.score > 0) {
-        tweetSentiment.sentiment = {score: 1, sentiment: 'positive'};
-      } else if (tweetSentiment.score < 0) {
-        tweetSentiment.sentiment = {score: -1, sentiment: 'negative'};
+      if (results.score > 0) {
+        results.sentiment = 'positive';
+      } else if (results.score < 0) {
+        results.sentiment = 'negative'
       } else {
-        tweetSentiment.sentiment = {score: 0, sentiment: 'neutral'};
+        results.sentiment = 'neutral';
       }
-
     });
 
-    results.tweets.push(tweetSentiment);
-  });
+    return results;
+  },
 
-  results.tweets.forEach(function(tweet) {
-    totalSentimentScore += tweet.sentiment.score;
-    if (totalSentimentScore > 0) {
-      totalSentiment = 'positive';
-    } else if (totalSentimentScore < 0) {
-      totalSentiment = 'negative';
-    } else {
-      totalSentiment = 'neutral';
-    }
+  stringsArray: function(stringsArray) {
+    var results = {
+      stringsWithAnalyses: [],
+      overallScore: 0
+    };
+    var totalSentimentScore = 0;
+    var totalSentiment;
 
-    results.totalSentiment = {score: totalSentimentScore, sentiment: totalSentiment};
-  })
-  
+    stringsArray.forEach(function(text, i) {
+      
+      var stringWithAnalysis = {
+        text: text,
+        positiveWords: [],
+        negativeWords: [],
+        score: 0
+      };
 
-  return results;
+      text.split(' ').forEach(function(word, i) {
+        
+        if (sentimentPositive[word]) {
+          stringWithAnalysis.positiveWords.push([word, sentimentPositive[word]]);
+          stringWithAnalysis.score++;
+        
+        } else if (sentimentNegative[word]) {
+          stringWithAnalysis.negativeWords.push([word, sentimentNegative[word]]);
+          stringWithAnalysis.score--;
+        }
+
+        if (stringWithAnalysis.score > 0) {
+          results.overallScore++;
+        } else if (stringWithAnalysis.score < 0) {
+          results.overallScore--;
+        }
+
+      });
+
+      results.stringsWithAnalyses.push(stringWithAnalysis);
+    });
+    
+    return results;
+  }
 };
 
 var tweetSentimentAnalysis = function(tweet) {
@@ -86,5 +113,7 @@ var tweetSentimentAnalysis = function(tweet) {
   return results;
 };
 
-exports.sentimentAnalysis = sentimentAnalysis;
-exports.tweetSentimentAnalysis = tweetSentimentAnalysis;
+module.exports = baseWordsLayerAnalysis;
+
+// exports.sentimentAnalysis = sentimentAnalysis;
+// exports.tweetSentimentAnalysis = tweetSentimentAnalysis;

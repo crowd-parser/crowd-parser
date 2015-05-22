@@ -1,5 +1,5 @@
 var baseLayerAnalysis = require('./baseWordsLayer/baseWordsLayerAnalysis');
-var emoticonLayer = require('./emoticonLayer/emoticonLayerAnalysis');
+var emoticonLayerAnalysis = require('./emoticonLayer/emoticonLayerAnalysis');
 
   var allLayersAnalysis = {
 
@@ -24,10 +24,10 @@ var emoticonLayer = require('./emoticonLayer/emoticonLayerAnalysis');
           followers_count: tweet.user.followers_count,
 
           // Get base layer analysis result object; includes list of matching words and score
-          baseLayerResults: baseLayerAnalysis.tweetSentimentAnalysis(tweet.text),
+          baseLayerResults: baseLayerAnalysis.string(tweet.text),
 
           // Get emoticon layer analysis result object; includes list of matching emojis and score
-          emoticonLayerResults: emoticonLayer.tweetEmoticonAnalysis(tweet.text),
+          emoticonLayerResults: emoticonLayerAnalysis.tweetEmoticonAnalysis(tweet.text),
 
           // Combined score of all layers
           overallResults: {}

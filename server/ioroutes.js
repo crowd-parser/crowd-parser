@@ -1,4 +1,4 @@
-var allLayersAnalysis = require('./sentimentjs/allLayersAnalysis');
+var allLayersAnalysis = require('./sentiment/allLayersAnalysis');
 
 module.exports = function(io, T) {
 

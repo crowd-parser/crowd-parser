@@ -4,7 +4,7 @@ var sentimentNegative = sentimentWords.sentimentNegative;
 
 module.exports = function(string) {
 
-  // Initialize the results object with what we want in the end
+  // Initialize results object with what we want in the end
   var results = {
     positiveWords: [],
     negativeWords: [],

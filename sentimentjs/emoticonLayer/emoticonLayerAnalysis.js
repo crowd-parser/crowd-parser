@@ -1,106 +1,56 @@
 var em = require('./emoticonsList');
 var emojiRegex = require('./emojiRegex');
 
-var emoticonAnalysis = function(data) {
+module.exports = function(string) {
 
-  var results = {};
-  results.tweets = [];
-  var itemCode;
-  results.totalScore = 0;
-
-  data.forEach(function (text, i) {
-    var tweetSentiment = {
-      score: 0,
-      text: text,
-      positiveEmojis: [],
-      negativeEmojis: [],
-      hadEmojis: false,
-      unknown: []
-    };
-
-    // use emojiRegex to grab array of all emojis in string
-    var emojis = text.match(emojiRegex());
-
-    if (emojis) {
-      // check each emoji against emoticonData table
-      emojis.forEach(function(item) {
-        itemCode = toCodePoint(item);
-        if (itemCode in em.positive) {
-          tweetSentiment.score += em.positive[itemCode];
-          tweetSentiment.positiveEmojis.push(item);
-        } else if (toCodePoint(item) in em.negative) {
-          tweetSentiment.score += em.negative[itemCode];
-          tweetSentiment.negativeEmojis.push(item);
-        } else {
-          // if not in either table, store it in 'unknown'
-          // array so we know what we missed
-          tweetSentiment.unknown.push(item);
-        }
-      });
-    }
-    results.totalScore += tweetSentiment.score;
-    results.tweets.push(tweetSentiment);
-  });
-
-
-  if (results.totalScore > 0) {
-    results.emojiSentiment = 'positive';
-  } else if (results.totalScore < 0) {
-    results.emojiSentiment = 'negative';
-  } else {
-    results.emojiSentiment = 'neutral';
-  }
-
-  return results;
-
-};
-
-var tweetEmoticonAnalysis = function(tweet) {
-
+  // Initialize results object with what we want in theh end
   var results = {
     positiveWords: [],
     negativeWords: [],
     unknown: [],
-    hadEmojis: false,
     score: 0
   };
 
-  var emojis = tweet.match(emojiRegex());
+  // Create an array of the emojis in the string
+  var emojis = string.match(emojiRegex());
 
+  // Character representation of emoji
   var itemCode;
 
   if (emojis) {
-    // check each emoji against emoticonData table
+
+    // check each emoji against emoticon list
     emojis.forEach(function(item) {
+
+      // Convert emoji to characters
       itemCode = toCodePoint(item);
+
+      // If emoji is in the positive emoticons list, add to positive words array
       if (itemCode in em.positive) {
-        results.score += em.positive[itemCode];
-
         results.positiveWords.push(item);
-      } else if (toCodePoint(item) in em.negative) {
-        results.score += em.negative[itemCode];
 
+        // Increment the final score of the string
+        results.score++;
+
+      // If emoji is in the negative emoticons list, add to negative words array
+      } else if (toCodePoint(item) in em.negative) {
         results.negativeWords.push(item);
+
+        // Decrement the final score of the string
+        results.score--;
+
       } else {
-        // if not in either table, store it in 'unknown'
-        // array so we know what we missed
+        // If not in either table, store it in 'unknown' array so we know what we missed
         results.unknown.push(item);
       }
     });
   }
 
-  if (results.score > 0) {
-    results.sentiment = 'positive';
-  } else if (results.score < 0) {
-    results.sentiment = 'negative';
-  } else {
-    results.sentiment = 'neutral';
-  }
-
   return results;
-
 };
 
+
+// Used to convert emojis to and from characters
 function fromCodePoint(codepoint) {
   var code = typeof codepoint === 'string' ?
         parseInt(codepoint, 16) : codepoint;
@@ -133,6 +83,3 @@ function toCodePoint(unicodeSurrogates, sep) {
   }
   return r.join(sep || '-');
 }
-
-exports.emoticonAnalysis = emoticonAnalysis;
-exports.tweetEmoticonAnalysis = tweetEmoticonAnalysis;

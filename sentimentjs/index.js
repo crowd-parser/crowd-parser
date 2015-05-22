@@ -1,3 +1,6 @@
+// This is a copy of allLayersAnalysis.js for the NPM package.
+// We didn't want to change the descriptive name for our app
+
 var baseLayerAnalysis = require('./baseWordsLayer/baseWordsLayerAnalysis');
 var emoticonLayerAnalysis = require('./emoticonLayer/emoticonLayerAnalysis');
 

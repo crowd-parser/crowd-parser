@@ -74,8 +74,21 @@ exports.searchForTweetForKeywordRuntime = function(keyword, callback){
 
 //============== CREATE STUFF ==================
 exports.addForeignKey = function(thisTable, thisTableColumn, thatTable, thatTableColumn, callback){
-  this.db.query("ALTER TABLE " + thisTable + " ADD FOREIGN KEY (" + thisTableColumn + ") REFERENCES " + thatTable+"("+thatTableColumn+")");
+  var that = this;
+  that.temp.fkObj = {thisTable: thisTable, thisTableColumn: thisTableColumn, thatTable: thatTable, thatTableColumn: thatTableColumn};
+  this.db.query("ALTER TABLE " + thisTable + " ADD COLUMN (" + thisTableColumn + " INTEGER)", function(){
+    console.log(arguments);
+  });
+
+  // function(){
+  //   that.db.query("ALTER TABLE " + that.temp.fkObj.thisTable + " ADD FOREIGN KEY (" + that.temp.fkObj.thisTableColumn + ") REFERENCES " + that.temp.fkObj.thatTable+"("+that.temp.fkObj.thatTableColumn+")");
+
+  // }
 };
+
+exports.changeColumnProperty = function(tableName ){
+  //ALTER TABLE table_name ALTER COLUMN column_name datatype
+}
 
 exports.genericCreateTable = function(tableName, exampleObject, callback){
     var AI = "AUTO_INCREMENT";
@@ -170,10 +183,10 @@ exports.addKeyword = function(keyword){
   this.genericCreateTable("keywords", that.temp.kObj , function(err){
 
     that.genericAddToTable("keywords", [that.temp.kObj], null, function(){
-      that.genericCreateTable(that.temp.kObj['tableName'], {tweet_id: 999}, function(err){
+      that.genericCreateTable(that.temp.kObj['tableName'], {test: 999 }, function(err){
         //TODO add back in FK assignment
-        //that.addForeignKey(that.temp.kObj['tableName'], "tweet_id", "tweets", "id", function(err){
-
+        that.addForeignKey(that.temp.kObj['tableName'], "tweet_id", "tweets", "id", function(err){
+          that.errCB(err);
             that.searchForTweetForKeyword(that.temp.kObj.keyword, function(err, rows, fields){
               //console.log(arguments);
               console.log("" + rows.length + " tweets found containing the keyword");
@@ -182,7 +195,7 @@ exports.addKeyword = function(keyword){
               });
 
             });
-        //});
+        });
       });
     });
   });
@@ -253,8 +266,6 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
         });
       }
   };
-
-
 };
 
 exports.doAddingMessage = function(count, moduloVal){
@@ -332,6 +343,12 @@ exports.trigger = function(db,callback){
   that.createDatabase('dev',function(){
     that.changeToDatabase('dev', function(){
       if(!NUKE_ENTIRE_TWEETS_TABLE_ON_SERVER_START) return;
+      // that.db.query("DESCRIBE");
+      that.db.query("SHOW TABLES", function(err, rows, fields){
+        console.log(rows);
+      });
+      that.genericDropTable('keywords');
+      that.genericDropTable('tweets_containing_you');
       that.genericDropTable('tweets', function(){
         that.genericCreateTable('tweets', that.testTweet1, function(err){
           if(err){console.log(err); return;}
@@ -348,7 +365,7 @@ exports.trigger = function(db,callback){
               //console.log("TWEET 0 in Table Tweets: ", rows[0]);
               that.addKeyword("you");
               that.ADDALLTHETWEETS();
-          });
+            });
           });
         });
       });

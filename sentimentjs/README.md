@@ -12,8 +12,6 @@ For example, our "emoticons layer" specifically looks for emoticons in a string 
 
 In the future, we hope to add more "layers," such as a "negation layer" and perhaps a "movie layer" that catches normal words that are actually movies.
 
-We welcome you to join us in creating a better sentiment library! Our library is still in an infant stage, so contributions would be greatly appreciated!
-
 ## Installation
 
 `npm install sentimentjs`
@@ -147,3 +145,7 @@ Running the above will return an object that has this format:
   ]
 }
 ```
+
+## Contributing
+
+We welcome you to join us in creating a better sentiment library! Our library is still in an infant stage, so contributions would be greatly appreciated!

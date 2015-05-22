@@ -21,3 +21,13 @@ header {
 .tweet-sentiment {
     border: 1px solid #000;
 }
+
+.positive-word {
+    color: green;
+    font-weight: bold;
+}
+
+.negative-word {
+    color: red;
+    font-weight: bold;
+}

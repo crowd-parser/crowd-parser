@@ -15,7 +15,7 @@ var sentimentAnalysis = function(data) {
     tweetSentiment.positiveWords = [];
     tweetSentiment.negativeWords = [];
     tweetSentiment.score = 0;
-    text.split(' ').forEach(function(word) {
+    text.split(' ').forEach(function(word, i) {
       if (sentimentPositive[word]) {
         tweetSentiment.positiveWords.push([word, sentimentPositive[word]]);
         tweetSentiment.score++;
@@ -61,13 +61,13 @@ var tweetSentimentAnalysis = function(tweet) {
     score: 0
   };
 
-  tweet.split(' ').forEach(function(word) {
+  tweet.split(' ').forEach(function(word, i) {
     if (sentimentPositive[word]) {
-      results.positiveWords.push(word);
+      results.positiveWords.push([word, i]);
 
       results.score++;
     } else if (sentimentNegative[word]) {
-      results.negativeWords.push(word);
+      results.negativeWords.push([word, i]);
 
       results.score--;
     }

@@ -1,4 +1,4 @@
-var sentimentWords = require('./sentimentWords');
+var sentimentWords = require('./baseWordsList');
 var sentimentPositive = sentimentWords.sentimentPositive;
 var sentimentNegative = sentimentWords.sentimentNegative;
 
@@ -88,53 +88,3 @@ var tweetSentimentAnalysis = function(tweet) {
 
 exports.sentimentAnalysis = sentimentAnalysis;
 exports.tweetSentimentAnalysis = tweetSentimentAnalysis;
-
-// var results = {
-//   tweetsWithSentimentResults: [
-//   {
-//     created_at:
-//     text: 
-//     followersCount:
-//     baseLayerResults: {
-//       positiveWords: ['word1', 'word2'],
-//       negativeWords: ['word1']
-//       baseLayerFinalScore: {
-//         score: 1,
-//         sentiment: positive
-//       }
-//     },
-//     emojiLayerResults: {
-//       positiveEmojis: ['emoji1'],
-//       negativeEmojis: ['emoji1', 'emoji2', 'emoji3'],
-//       emojiLayerFinalScore: {
-//         score: -2,
-//         sentiment: negative
-//       }
-//     },
-//     combinedLayerResults: {
-//       positives: ['word1', 'word2', 'emoji1'],
-//       negatives: ['word1', 'emoji1', 'emoji2', 'emoji3'],
-//       combinedTotalScore: {
-//         score: -1,
-//         sentiment: negative
-//       }
-//     }
-//   },
-//   {
-//     **** SAME AS ABOVE ******
-//   }
-//   ],
-//   cumulativeResults: {
-//     cumulativeBaseLayerResults: {
-//       positiveTweets: 325,
-//       negativeTweets: 230,
-//       cumulativeBaseLayerSentiment: 'positive'/'slightly positive'...
-//     },
-//     cumulativeEmojiLayerResults: {
-//       ****** SAME AS ABOVE *******
-//     }
-//     cumulativeResults: {
-//       ***** SAME AS ABOVE *******
-//     }
-//   }
-// }

@@ -1,4 +1,4 @@
-var em = require('./emoticonData');
+var em = require('./emoticonsList');
 var emojiRegex = require('./emojiRegex');
 
 var emoticonAnalysis = function(data) {

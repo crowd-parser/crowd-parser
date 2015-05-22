@@ -184,7 +184,7 @@ angular.module('parserApp')
 
   socket.on('all layers', function(data) {
 
-    data.tweetsWithSentimentAnalysis.forEach(function(tweet) {
+    data.tweetsWithAnalyses.forEach(function(tweet) {
       var textArray = tweet.text.split(' ');
       if (tweet.baseLayerResults.positiveWords) {
         tweet.baseLayerResults.positiveWords.forEach(function(word) {

@@ -1,7 +1,4 @@
-var sentiment = require('./layers/baseLayer/sentimentAnalysis');
-var emojiAnalysis = require('./layers/emoticonLayer/emoticonAnalysis');
-
-var allLayers = require('./layers/allLayers');
+var allLayersAnalysis = require('../sentimentjs/allLayersAnalysis');
 
 module.exports = function(io, T) {
 
@@ -32,7 +29,7 @@ module.exports = function(io, T) {
         if (count === target) {
           stream.stop();
 
-          var allLayersResults = allLayers(tweetsArray);
+          var allLayersResults = allLayersAnalysis.tweetsArray(tweetsArray);
           
           io.emit('all layers', allLayersResults);
         }
@@ -57,7 +54,7 @@ module.exports = function(io, T) {
         if (count === target) {
           stream.stop();
 
-          var allLayersResults = allLayers(tweetsArray);
+          var allLayersResults = allLayersAnalysis.tweetsArray(tweetsArray);
           
           io.emit('all layers', allLayersResults);
         }
@@ -68,7 +65,7 @@ module.exports = function(io, T) {
       T.get('statuses/user_timeline', {screen_name: screen_name, count: count}, function(err, data) {
         socket.emit('twitter rest user timeline', data);
 
-        var allLayersResults = allLayers(data);
+        var allLayersResults = allLayersAnalysis.tweetsArray(data);
         
         io.emit('all layers', allLayersResults);
 
@@ -79,7 +76,7 @@ module.exports = function(io, T) {
       T.get('search/tweets', {q: query, count: count, result_type: result_type}, function(err, data) {
         socket.emit('twitter rest search', data);
 
-        var allLayersResults = allLayers(data.statuses);
+        var allLayersResults = allLayersAnalysis.tweetsArray(data.statuses);
                   
         io.emit('all layers', allLayersResults);
       });

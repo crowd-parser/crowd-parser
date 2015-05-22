@@ -41,31 +41,11 @@ var T = new Twit({
 
 ## Usage: Sentiment Library
 
-> TODO
+We created our own sentiment library for Crowd Parser, and it is available as an open-source NPM package. Check it out here:
+
+[sentimentjs](https://github.com/crowd-parser/sentimentjs)
 
 Our sentiment library and algorithms are also available as an npm package. 
-
-### Installation
-
-`npm install crowd-parser-sentiment`
-
-### Usage
-
-```
-var sentiment = require('crowd-parser-sentiment');
-
-var arrayOfStrings = ['I love deep dish pizza', 'I hate everything'];
-
-var sentimentAnalysis = sentiment(arrayOfStrings);
-```
-
-Running the above will return an object that looks like this:
-
-```
-{
-  TODO
-}
-```
 
 ## Contributing
 

@@ -1,12 +1,7 @@
 //TODO
-//
-//support child objects and concat field names
-//only auto add fields of data if they exist in the table chosen
-//process emojis
 //build table for chosen keyword function
   //search all tweets for keyword base function
-//all template objects get thier "id" value ignored if included with one
- //need a cleaner solution for that
+  //handle emojis inputted into db
 
 /*============= DATABASE MODULE WRAPPER for SQL commands =========*/
 
@@ -68,54 +63,58 @@ exports.genericGetTableColumnNames = function(tableName, callback){
 
 
 exports.genericCreateTable = function(tableName, exampleObject, callback){
-    var str = ("CREATE TABLE " + this.db.escapeId(tableName) + ' (id INTEGER PRIMARY KEY AUTO_INCREMENT,');
+    var AI = "AUTO_INCREMENT";
+    // dontIgnoreId = true; //TODO UNDO
+    var str = ("CREATE TABLE IF NOT EXISTS " + this.db.escapeId(tableName) + ' (id INTEGER PRIMARY KEY ' + AI + ',');
     var key;
     var type;
 
     exampleObject = this.rearchitectArrWithDeepObjects([exampleObject])[0];
-
+    //console.log(exampleObject);
     for(key in exampleObject){
         //TODO just doing all text for now, will specify based on content later
       type = "TEXT";
-      str = str + " " + this.db.escapeId(key) + " " + type + ',';
+      str = str + " " + key + " " + type + ',';
     }
     str = str.slice(0, -1);
     str = str + ")";
+    //console.log(str);
     this.db.query(str, function(err, rows, fields){
       if(!err){
         console.log("CREATED NEW TABLE: " + tableName);
+      }else{
+        console.log(err);
       }
       callback(err, rows, fields);
     });
 };
 
+
 // ============================================
 
 exports.rearchitectArrWithDeepObjects = function(arr){
-
+  var that = this;
   var newArr = [];
   var temp;
 
-  var tryToPushObject = function(thing, nameSoFar){
+  var tryToPushObject = function(thing, nameSoFar, finalObject){
        if(nameSoFar !== ""){
-          temp = {};
-          temp[nameSoFar] = thing;
-          newArr.push(temp);
+          finalObject[that.db.escapeId(nameSoFar)] = that.db.escape(thing);
         }
   };
 
-  var recurse = function(thing, nameSoFar){
-      console.log(nameSoFar);
+  var recurse = function(thing, nameSoFar, finalObject){
+
       if(thing === undefined){
-        tryToPushObject(thing, nameSoFar);
+        tryToPushObject(thing, nameSoFar, finalObject);
         return;
       }
       if(thing === null){
-        tryToPushObject(thing, nameSoFar);
+        tryToPushObject(thing, nameSoFar, finalObject);
         return;
       }
       if(Array.isArray(thing)){
-        tryToPushObject(thing.join(","), nameSoFar);
+        tryToPushObject(thing.join(","), nameSoFar, finalObject);
       }else if(typeof thing === 'object'){
         for(var key in thing){
           if(nameSoFar === ""){
@@ -126,18 +125,19 @@ exports.rearchitectArrWithDeepObjects = function(arr){
           }else{
             temp = nameSoFar.concat("_" + key);
           }
-          recurse(thing[key], temp);
+          recurse(thing[key], temp, finalObject);
         }
       }else{
-         tryToPushObject(thing, nameSoFar);
+         tryToPushObject(thing, nameSoFar, finalObject);
       }
     };
 
     for(var i = 0; i < arr.length; i++){
-      recurse(arr[i], "");
+      var newObj = {};
+      recurse(arr[i], "", newObj);
+      newArr.push(newObj);
     }
 
-    console.log(newArr);
     return newArr;
 
 };
@@ -145,16 +145,23 @@ exports.rearchitectArrWithDeepObjects = function(arr){
 
 
 //=============== ADD STUFF ====================
-exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, callbackAtEnd){
-  delete listOfObjects[0]['id'];
+exports.addKeyword = function(keyword){
   var that = this;
+  this.genericCreateTable("keywords", {word: keyword}, function(err){
+    that.db.genericAddToTable("keywords", [{word: keyword}])
+  });
+}
 
+
+exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, callbackAtEnd){
+  var that = this;
+  listOfObjects = that.rearchitectArrWithDeepObjects(listOfObjects);
   //this is all so we can push any objects at the db, regardless of table setup
   this.genericGetTableColumnNames(tableName, function(err, rows, fields){
     //console.log(arguments);
     var tableColumns = [];
     for(var i = 0; i < rows.length; i++){
-      tableColumns.push(rows[i]['COLUMN_NAME']);
+      tableColumns.push( "`" + rows[i]['COLUMN_NAME'] + "`");
     }
     startAdding(that, tableColumns);
   });
@@ -165,7 +172,7 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
     var insertStr = "INSERT INTO " + tableName + ' (';
     for(var i = 0; i < holder.length; i++){
 
-      insertStr = insertStr + that.db.escapeId(holder[i]) + ", ";
+      insertStr = insertStr + holder[i] + ", ";
     }
     insertStr = insertStr.slice(0, -2);
     insertStr = insertStr + ' ) VALUES (';
@@ -176,6 +183,8 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
     that.doAddingMessage(count);
     //recurse this for child objects I guess
 
+    console.log(Object.keys(listOfObjects[0]));
+    console.log(holder);
 
       for (var i = 0; i < listOfObjects.length; i++) {
         queryStr = "";
@@ -184,7 +193,6 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
             if(temp === undefined || (isNaN(temp) && typeof temp !== "string")){
               queryStr = queryStr + '""' + ", ";
             }else{
-              temp = that.db.escape(temp);
               queryStr = queryStr + temp + ", ";
             }
           }
@@ -293,7 +301,8 @@ exports.trigger = function(db,callback){
           that.genericAddToTable('tweets', addTheseTweets, function(err){if(err){console.log(err); return;}}, function(msg){
             that.getAllTweets(function(err, rows, fields){
               if(err){console.log(err); return;}
-              console.log("THERE IS AT LEAST ONE TWEET IN THE TABLE NOW");
+              console.log("TWEET 0 in Table Tweets: ", rows[0]);
+
               that.ADDALLTHETWEETS();
           });
           });

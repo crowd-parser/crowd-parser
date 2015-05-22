@@ -12,6 +12,12 @@ For example, our "emoticons layer" specifically looks for emoticons in a string 
 
 In the future, we hope to add more "layers," such as a "negation layer" and perhaps a "movie layer" that catches normal words that are actually movies.
 
+Our base word lists come from renowned researchers Minqing Hu and Bing Liu, who authored this paper
+
+_Minqing Hu and Bing Liu. "Mining and Summarizing Customer Reviews."_
+_Proceedings of the ACM SIGKDD International Conference on Knowledge_ 
+_Discovery and Data Mining (KDD-2004), Aug 22-25, 2004, Seattle, Washington, USA_
+
 ## Installation
 
 `npm install sentimentjs`

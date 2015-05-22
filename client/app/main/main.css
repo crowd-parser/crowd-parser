@@ -20,6 +20,9 @@ header {
 
 .tweet-sentiment {
     text-align: center;
+    width: 85%;
+    margin: 0 auto;
+    padding: 15px;
     border: 1px solid #000;
 }
 
@@ -29,6 +32,7 @@ header {
 
 .tweet-text {
     font-size: 24px;
+    margin-bottom: 15px;
 }
 
 .tweet-layer-results {
@@ -38,6 +42,12 @@ header {
 
 .layer-heading {
     font-size: 19px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.tweet-layer-results img {
+    margin-top: 5px;
 }
 
 .sentiment-score {
@@ -53,7 +63,7 @@ header {
 
 .sentiment-image {
     height: 53px;
-    margin-bottom: 11px;
+    margin-bottom: 15px;
 }
 
 .positive-score {

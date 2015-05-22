@@ -24,7 +24,7 @@ var emoticonLayerAnalysis = require('./emoticonLayer/emoticonLayerAnalysis');
           followers_count: tweet.user.followers_count,
 
           // Get base layer analysis result object; includes list of matching words and score
-          baseLayerResults: baseLayerAnalysis.string(tweet.text),
+          baseLayerResults: baseLayerAnalysis(tweet.text),
 
           // Get emoticon layer analysis result object; includes list of matching emojis and score
           emoticonLayerResults: emoticonLayerAnalysis.tweetEmoticonAnalysis(tweet.text),

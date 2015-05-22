@@ -24,6 +24,7 @@
     <!-- build:css({.tmp,client}) app/app.css -->
     <link rel="stylesheet" href="app/app.css">
       <!-- injector:css -->
+      <link rel="stylesheet" href="app/3dstream/3dstream.css">
       <link rel="stylesheet" href="app/app.css">
       <link rel="stylesheet" href="app/main/main.css">
       <link rel="stylesheet" href="components/modal/modal.css">
@@ -66,16 +67,25 @@
       <script src="bower_components/angular-ui-router/release/angular-ui-router.js"></script>
       <script src="bower_components/d3/d3.js"></script>
       <script src="bower_components/d3.layout.cloud/d3.layout.cloud.js"></script>
+
       <!-- endbower -->
+        <script src="lib/three.min.js"></script>
+        <script src="lib/tween.min.js"></script>
+        <script src="lib/CSS3DRenderer.js"></script>
+        <script src="lib/ModifiedTrackballControls.js"></script>
+        <script src="app/3dstream/data/tweetRawData.js"></script>
       
     <!-- endbuild -->
 
         <!-- build:js({.tmp,client}) app/app.js -->
         <script src="app/app.js"></script>
           <!-- injector:js -->
+          <script src="app/3dstream/3dstream.js"></script>
+          <script src="app/3dstream/data/tweetRawData.js"></script>
           <script src="app/directives/dirPagination.js"></script>
           <script src="app/main/main.controller.js"></script>
           <script src="app/main/main.js"></script>
+          <script src="app/services/display3d.js"></script>
           <script src="app/services/twitter.js"></script>
           <script src="app/services/wordcloud.js"></script>
           <script src="components/modal/modal.service.js"></script>

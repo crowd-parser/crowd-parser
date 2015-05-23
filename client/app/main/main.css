@@ -85,3 +85,14 @@ header {
     color: red;
     font-weight: bold;
 }
+
+.viewport {
+    background: #FFF;
+}
+
+#world div {
+  -webkit-transform-style: preserve-3d;
+  -moz-transform-style: preserve-3d;  
+  -o-transform-style: preserve-3d;  
+  transform-style: preserve-3d;
+}

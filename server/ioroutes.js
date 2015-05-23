@@ -24,9 +24,8 @@ module.exports = function(io, T) {
       var tweetsArray = [];
       
       var stream = T.stream('statuses/sample');
-
       stream.on('tweet', function(tweet) {
-
+console.log(tweet)
         if (tweet.lang === 'en') {
           io.emit('twitter stream sample', tweet);
           count++;

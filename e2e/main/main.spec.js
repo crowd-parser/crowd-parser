@@ -8,9 +8,9 @@ describe('Main View', function() {
     page = require('./main.po');
   });
 
-  it('should include jumbotron with correct data', function() {
-    expect(page.h1El.getText()).toBe('\'Allo, \'Allo!');
-    expect(page.imgEl.getAttribute('src')).toMatch(/assets\/images\/yeoman.png$/);
-    expect(page.imgEl.getAttribute('alt')).toBe('I\'m Yeoman');
+  it('should include the header with logo image', function() {
+    // expect(page.h1El.getText()).toBe('\'Allo, \'Allo!');
+    expect(page.imgEl.getAttribute('src')).toMatch('http://localhost:9000/assets/images/logo.png');
+    expect(page.imgEl.getAttribute('alt')).toBe('crowd-parser-logo');
   });
 });

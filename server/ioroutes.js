@@ -2,6 +2,14 @@ var allLayersAnalysis = require('./sentiment/allLayersAnalysis');
 
 module.exports = function(io, T) {
 
+  try {
+    var TCH = require('./config/twitter_CH_private');
+  } catch (e) {
+    console.log(e);
+    var TCH = T;
+  }
+
+
   io.on('connection', function(socket) {
     
     // Receives a constant sample stream of twitter statuses
@@ -68,7 +76,7 @@ module.exports = function(io, T) {
       console.log(keywords);
 
       if (keywords) {
-        continuousStream = T.stream('statuses/filter', {track: keywords, language: 'en'});
+        continuousStream = TCH.stream('statuses/filter', {track: keywords, language: 'en'});
 
         continuousStream.on('tweet', function(tweet) {
           var tweetResults = allLayersAnalysis.tweetsArray([tweet]).tweetsWithAnalyses[0];

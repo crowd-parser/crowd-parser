@@ -75,9 +75,12 @@ exports.searchForTweetForKeywordRuntime = function(keyword, callback){
 //============== CREATE STUFF ==================
 exports.addForeignKey = function(thisTable, thisTableColumn, thatTable, thatTableColumn, callback){
   var that = this;
-  that.temp.fkObj = {thisTable: thisTable, thisTableColumn: thisTableColumn, thatTable: thatTable, thatTableColumn: thatTableColumn};
+  that.temp.fkObj = {thisTable: thisTable, thisTableColumn: thisTableColumn, thatTable: thatTable, thatTableColumn: thatTableColumn, callback: callback};
   this.db.query("ALTER TABLE " + thisTable + " ADD COLUMN (" + thisTableColumn + " INTEGER)", function(){
-    console.log(arguments);
+    that.db.query("ALTER TABLE " + that.temp.fkObj.thisTable + " ADD FOREIGN KEY (" + that.temp.fkObj.thisTableColumn + ") REFERENCES " + that.temp.fkObj.thatTable+"("+that.temp.fkObj.thatTableColumn+")", function(err, rows, fields){
+      if(!err) console.log("CREATED FOREIGN KEY IN TABLE");
+      that.temp.fkObj.callback(err, rows, fields);
+    });
   });
 
   // function(){
@@ -184,14 +187,28 @@ exports.addKeyword = function(keyword){
 
     that.genericAddToTable("keywords", [that.temp.kObj], null, function(){
       that.genericCreateTable(that.temp.kObj['tableName'], {test: 999 }, function(err){
-        //TODO add back in FK assignment
         that.addForeignKey(that.temp.kObj['tableName'], "tweet_id", "tweets", "id", function(err){
           that.errCB(err);
+            console.log("HERE");
             that.searchForTweetForKeyword(that.temp.kObj.keyword, function(err, rows, fields){
-              //console.log(arguments);
               console.log("" + rows.length + " tweets found containing the keyword");
-              that.genericAddToTable(that.temp.kObj['tableName'], rows, null, function(){
 
+              // that.db.query("DESCRIBE " + that.temp.kObj.tableName, function(err, rows, fields){
+              //   console.log(arguments);
+              // });
+              // return;
+              // console.log(rows[0]);
+              var finalSet = [];
+              var obj;
+              for(var i = 0; i < rows.length; i++){
+                obj = {};
+                obj['tweet_id'] = rows[i].id;
+                finalSet.push(obj);
+              }
+              that.genericAddToTable(that.temp.kObj['tableName'], finalSet, null, function(){
+                that.genericGetAll(that.temp.kObj['tableName'], function(err, rows){
+                  console.log(rows);
+                })
               });
 
             });

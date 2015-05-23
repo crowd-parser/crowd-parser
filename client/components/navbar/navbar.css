@@ -1,3 +1,16 @@
+.navbar {
+  background: #193441;
+}
+
+.navbar-default .navbar-brand {
+  color: #FFF;
+}
+
+.navbar-default .navbar-nav > .active > a {
+  background: #193441;
+  color: #D1DBBD;
+}
+
 .custom-navbar {
   background: #193441;
   height: 50px;

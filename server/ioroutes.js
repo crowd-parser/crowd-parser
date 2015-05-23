@@ -12,9 +12,7 @@ module.exports = function(io, T) {
 
   io.on('connection', function(socket) {
 
-    var streamDownload;
-
-    socket.on('start download', function(rate) {
+    
     
     // Receives a constant sample stream of twitter statuses
     socket.on('twitter stream sample', function(num) {
@@ -122,6 +120,10 @@ module.exports = function(io, T) {
         socket.emit('twitter rest trending', data);
       });
     });
+
+    var streamDownload;
+
+    socket.on('start download', function(rate) {
 
       streamDownload = T.stream('statuses/sample');
       var count = 0;

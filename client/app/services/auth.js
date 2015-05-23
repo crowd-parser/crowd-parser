@@ -11,7 +11,17 @@ angular.module('parserApp.authService', [])
 
   };
 
+  var adminlogin = function(username, password) {
+
+    $http.post('/auth/adminlogin', {username: username, password: password})
+      .success(function(data) {
+        console.log('Administrator logged in!');
+      });
+
+  };
+
   return {
-    login: login
+    login: login,
+    adminlogin: adminlogin
   };
 });

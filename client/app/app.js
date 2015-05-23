@@ -33,6 +33,11 @@ angular.module('parserApp', [
         url: '/login',
         templateUrl: 'app/login/login.html',
         controller: 'LoginCtrl'
+      })
+      .state('adminlogin', {
+        url: '/adminlogin',
+        templateUrl: 'app/adminlogin/adminlogin.html',
+        controller: 'AdminLoginCtrl'
       });
 
     $urlRouterProvider

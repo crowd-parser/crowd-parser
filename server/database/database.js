@@ -375,7 +375,7 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
         queryStr = queryStr + ' )';
 
         queryStr = insertStr + queryStr;
-
+console.log(queryStr);
         that.db.query(queryStr, function(err){
           count--;
 
@@ -529,6 +529,7 @@ exports.trigger = function(db,callback){
 
 //===========================================
 
-exports.addUser = function(user, callback){
-  this.genericAddToTable('users', [user], callback, null);
+exports.addAdmin = function(admin, callback){
+  console.log(admin);
+  this.genericAddToTable('admin', [admin], callback, null);
 }

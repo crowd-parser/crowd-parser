@@ -20,7 +20,7 @@ module.exports = function(io, T) {
       stream.on('tweet', function(tweet) {
         if (tweet.lang === 'en') {
           count++;
-          if (count === 1 || count % 30 === 0) {
+          if (count === 1 || count % 3 === 0) {
             db.addTweet(tweet, function(err, rows, fields) {
               if (err) {
                 console.log(err);

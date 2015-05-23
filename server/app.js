@@ -34,7 +34,7 @@ if(ENABLE_LIVE_STREAM_WRITE_TO_DATABASE){
   stream.on('tweet', function(tweet) {
     if (tweet.lang === 'en') {
       count++;
-      if (count === 1 || count % 30 === 0) {
+      if (count === 1 || count % 3 === 0) {
         if(!app.database || !app.database.isLive){
           console.log("WAITING FOR DB");
           return;

@@ -2,12 +2,12 @@ var allLayersAnalysis = require('./sentiment/allLayersAnalysis');
 
 module.exports = function(io, T) {
 
-
-
   io.on('connection', function(socket) {
     
+    // Receives a constant sample stream of twitter statuses
     socket.on('twitter stream sample', function(num) {
 
+      // Counter used to track how many tweets have been received
       var count = 0;
       var target = num || 20;
       var tweetsSentimentArray = [];

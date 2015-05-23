@@ -61,6 +61,18 @@ module.exports = function(io, T) {
       });
     });
 
+    // need var outside so I can find it and stop it later
+    var continuousStream;
+    socket.on('twitter stream filter continuous', function(keywords) {
+
+      var stream = T.stream('statuses/filter', {track: keywords, language: 'en'});
+
+      stream.on('tweet', function(tweet) {
+
+      });
+
+    });
+
     socket.on('twitter rest user timeline', function(screen_name, count) {
       T.get('statuses/user_timeline', {screen_name: screen_name, count: count}, function(err, data) {
         socket.emit('twitter rest user timeline', data);

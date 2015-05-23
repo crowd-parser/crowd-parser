@@ -6,9 +6,23 @@
   color: #FFF;
 }
 
+.navbar-default .navbar-brand:hover {
+  background: #E7E7E7;
+  color: #555;
+}
+
 .navbar-default .navbar-nav > .active > a {
   background: #193441;
   color: #D1DBBD;
+}
+
+.navbar-default .navbar-nav > li > a {
+  color: #FFF;
+}
+
+.navbar-default .navbar-nav > li > a:hover {
+  background: #E7E7E7;
+  color: #555;
 }
 
 .custom-navbar {

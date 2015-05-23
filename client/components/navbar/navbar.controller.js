@@ -5,6 +5,10 @@ angular.module('parserApp')
     $scope.menu = [{
       'title': 'Home',
       'link': '/'
+    },
+    {
+      'title': 'Login',
+      'link': '/login'
     }];
 
     $scope.isCollapsed = true;

@@ -7,6 +7,8 @@
 
 //USAGE
 /*
+        THE EXPORT IS CURRENTLY A SINGLETON, SO REFERENCE app.database everywhere
+
         addTweet(
                   tweetObject,
                   callbackForEachAdd<err, rows, fields>,
@@ -426,6 +428,7 @@ exports.trigger = function(db,callback){
 
   this.isLive = true;
 
+  that.changeToDatabase(that.databaseToTalkTo, that.errCB);
 
 
   if(!NUKE_ALL_TABLES_ON_START) return;

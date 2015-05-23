@@ -1,4 +1,6 @@
+
+
 exports.index = function(req, res) {
-  console.log('test');
+  // console.log(req.body.username, req.body.password);
   res.send('hello')
 };

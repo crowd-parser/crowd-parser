@@ -529,3 +529,6 @@ exports.trigger = function(db,callback){
 
 //===========================================
 
+exports.addUser = function(user, callback){
+  this.genericAddToTable('users', [user], callback, null);
+}

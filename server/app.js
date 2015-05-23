@@ -9,10 +9,11 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
 var express = require('express');
 var config = require('./config/environment');
-// Setup server
+// Set up server
 var app = express();
 var server = require('http').createServer(app);
 
+// Set up socket.io
 var io = require('socket.io')(server);
 var T = require('./config/twitter-config');
 require('./ioroutes')(io, T);
@@ -20,7 +21,7 @@ require('./ioroutes')(io, T);
 require('./config/express')(app);
 require('./routes')(app);
 
-// Setup database
+// Set up database
 app.database = require('./database/database.js');
 app.database.trigger(function(){console.log("TRIGGERED")});
 

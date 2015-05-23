@@ -8,12 +8,10 @@
 
 //USAGE
 /*
-        THE EXPORT IS CURRENTLY A SINGLETON, SO REFERENCE app.database everywhere
 
         addTweet(
                   tweetObject,
                   callbackForEachAdd<err, rows, fields>,
-
                   );
 
         addTweets(
@@ -25,7 +23,7 @@
         addKeyword(
                   keyword,
                   callbackAtEndWithTweets< arrayOfObjects >
-                  )
+                  );
 */
 
 //stores connection information from non-shared database configuration file
@@ -39,6 +37,9 @@ exports.db.connect(function(err){
       console.log(">>>>>>>>>>>>>CONNECTED as ID ", exports.db.threadId);
     }
 });
+
+exports.layerBaseWordsFunction = require('../sentiment/baseWordsLayer/baseWordsLayerAnalysis.js');
+exports.layerEmoticonsFunction = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js');
 
 /*==================================================================*/
 
@@ -63,7 +64,6 @@ var TALK_TO_DEV_DATABASE = false;
   }else{
     exports.databaseToTalkTo = 'production';
   }
-
 
 
 /*==================================================================*/
@@ -97,15 +97,23 @@ exports.searchInTweetsForKeyword = function(keyword, tweets, callback){
   //TODO;
 };
 
+exports.searchForValueInColumn = function(tableName, columnName, value){
+  //TODO;
+};
+
 exports.filterTweetsByLayer = function(tweets, layerName, callback){
   //return only the tweets that also exist in the layer table
   var filteredTweets = [];
 
+  //a layer will just have a list of tweet primary keys
+  //so the tweets that come in here must come from the database first
+
+  //that probably means we should use a database join on them
 
 
   calback(filteredTweets);
 
-}
+};
 
 
 //===========================================
@@ -114,6 +122,41 @@ exports.filterTweetsByLayer = function(tweets, layerName, callback){
 
 
 //============== CREATE STUFF ==================
+
+exports.createLayerTableBase = function(callback){
+  this.genericCreateLayerTable("base", this.layerBaseWordsFunction, callback);
+};
+
+exports.createLayerTableEmoticon = function(callback){
+  this.genericCreateLayerTable("emoticon", this.layerEmoticonsFunction, callback);
+};
+
+exports.genericCreateLayerTable = function(layerName, layerFunc, finalCB){
+  var that = this;
+  this.getAllTweets(function(err, rows, fields){
+    layerName = "layer_" + layerName;
+    that.temp.cLT = {layerName: layerName, layerFunc: layerFunc, rows: rows, finalCB: finalCB};
+    that.genericCreateTable(that.temp.cLT.layerName,{result: 1}, function(){
+      that.addForeignKey(that.temp.cLT.layerName, "tweet_id", "tweets", "id", function(){
+        that.setColumnToUnique("tweets","tweet_id", function(){
+
+          var addThese = [];
+
+          for(var i = 0; i < rows.length; i++){
+            if(i % 100 === 0) console.log("PROCESSED TWEETS: ", i);
+            addThese.push({result: that.temp.cLT.layerFunc(that.temp.cLT.rows[i].text), tweet_id: that.temp.cLT.rows[i].id});
+          }
+
+          that.genericAddToTable(that.temp.cLT.layerName,addThese,null,function(){
+            that.temp.cLT.finalCB(that.temp.cLT.rows);
+          });
+
+        });
+      });
+    });
+  });
+};
+
 exports.addForeignKey = function(thisTable, thisTableColumn, thatTable, thatTableColumn, callback){
   var that = this;
   that.temp.fkObj = {thisTable: thisTable, thisTableColumn: thisTableColumn, thatTable: thatTable, thatTableColumn: thatTableColumn, callback: callback};
@@ -129,7 +172,7 @@ exports.setColumnToUnique = function(tableName, columnName, callback){
   this.db.query("ALTER IGNORE TABLE " + tableName + " ADD UNIQUE (" + columnName + ")", callback);
 };
 
-exports.changeColumnProperty = function(tableName ){
+exports.changeColumnProperty = function(tableName){
   //ALTER TABLE table_name ALTER COLUMN column_name datatype
 };
 
@@ -443,9 +486,10 @@ exports.trigger = function(db,callback){
   that.getAllTweets(function(err, rows, fields){
     console.log("NUMBER OF CURRENT TWEETS: ", rows.length);
 
-    that.addKeyword("potus", function(tweets){
-     console.log(tweets.length);
-    });
+    // that.addKeyword("potus", function(tweets){
+    //  console.log(tweets.length);
+    //  //that.createLayerTableBase();
+    // });
 
   });
 

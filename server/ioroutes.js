@@ -1,4 +1,5 @@
 var allLayersAnalysis = require('./sentiment/allLayersAnalysis');
+var db = require('./database/database');
 
 module.exports = function(io, T) {
 
@@ -11,6 +12,27 @@ module.exports = function(io, T) {
 
 
   io.on('connection', function(socket) {
+
+    setTimeout(function() {
+      var stream = T.stream('statuses/sample');
+      var count = 0;
+      io.emit('tweet');
+      stream.on('tweet', function(tweet) {
+        if (tweet.lang === 'en') {
+          count++;
+          if (count === 1 || count % 30 === 0) {
+            db.addTweet(tweet, function(err, rows, fields) {
+              if (err) {
+                console.log(err);
+              } else {
+                console.log('tweet added!', tweet.id);
+              }
+            })
+          }
+        }
+      });
+      
+    }, 3000)
     
     // Receives a constant sample stream of twitter statuses
     socket.on('twitter stream sample', function(num) {
@@ -25,7 +47,7 @@ module.exports = function(io, T) {
       
       var stream = T.stream('statuses/sample');
       stream.on('tweet', function(tweet) {
-console.log(tweet)
+
         if (tweet.lang === 'en') {
           io.emit('twitter stream sample', tweet);
           count++;

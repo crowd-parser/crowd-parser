@@ -1,10 +1,11 @@
 'use strict';
 
 var express = require('express');
-var controller = require('./twitter-stream-sample.controller');
-
 var router = express.Router();
 
-router.get('/:id', controller.index);
+router.post('/', function(req, res, next) {
+  console.log('login');
+  res.send('login!');
+});
 
 module.exports = router;

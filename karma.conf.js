@@ -31,7 +31,7 @@ module.exports = function(config) {
       'client/components/**/*.jade',
       'client/app/**/*.html',
       'client/components/**/*.html',
-      'node_modules/socket.io/node_modules/socket.io-client/node_modules/engine.io-client/lib/socket.js'
+      'e2e/lib/socket.js'
     ],
 
     preprocessors: {

@@ -22,6 +22,11 @@ angular.module('parserApp', [
         url: '/3dstream',
         templateUrl: 'app/3dstream/3dstream.html',
         controller: '3dStreamCtrl'
+      })
+      .state('dbPanel', {
+        url: '/dbPanel',
+        templateUrl: 'app/dbPanel/dbPanel.html',
+        controller: 'DBPanelCtrl'
       });
 
     $urlRouterProvider

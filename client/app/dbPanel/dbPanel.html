@@ -1,8 +1,20 @@
 <div class="container">
-  <div class="dbMenu">
-    <input type="text" class="form-control" ng-model="textfieldA" />
-    <button class="btn btn-default" ng-model="buttonA" ng-click="taskA()">{{varA}}</button>
-    <button class="btn btn-default" ng-model="buttonB" ng-click="taskB()">{{varB}}</button>
-    <button class="btn btn-default" ng-model="buttonC" ng-click="taskC()">{{varC}}</button>
+    
+  <div class="admin-dashboard" style="background: #FFF; padding: 20px">
+
+    <form ng-submit="startDownload()">
+      <div class="form-group">
+        <label for="stream-download-rate">Stream download rate</label>
+        <input type="number" class="form-control" ng-model="streamDownloadRate">
+      </div>
+      <button class="btn btn-success">Start!</button>
+    </form>
+    
+    <br>
+    <button class="btn btn-danger" ng-click="stopDownload()">Stop!</button>
+  </div>
+
+  <div class="download-status" style="background: #FFF; padding: 10px; text-align: center; margin-top: 15px">
+    {{tweetAdded}}
   </div>
 </div>

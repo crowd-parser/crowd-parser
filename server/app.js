@@ -38,7 +38,7 @@ if(ENABLE_LIVE_STREAM_WRITE_TO_DATABASE){
         if(!app.database || !app.database.isLive){
           console.log("WAITING FOR DB");
           return;
-        }
+      }
         app.database.addTweet(tweet, function(err, rows, fields) {
           if (err) {
             console.log(err);

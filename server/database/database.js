@@ -5,6 +5,26 @@
 
 /*============= DATABASE MODULE WRAPPER for SQL commands =========*/
 
+//USAGE
+/*
+        addTweet(
+                  tweetObject,
+                  callbackForEachAdd<err, rows, fields>,
+
+                  );
+
+        addTweets(
+                  arrOfTweetObjects,
+                  callbackForEachAdd<err, rows, fields>,
+                  callbackAtEnd< >
+                  );
+
+        addKeyword(
+                  keyword,
+                  callbackAtEndWithTweets< arrayOfObjects >
+                  )
+*/
+
 //stores connection information from non-shared database configuration file
 exports.db = require('./database-config.js');
 
@@ -65,9 +85,22 @@ exports.genericGetItemsWithTextColumnContaining = function(tableName, columnName
   this.db.query("SELECT * FROM " + tableName +  " WHERE " + columnName + " LIKE '%" + string + "%'", callback);
 };
 
-exports.searchForTweetForKeyword = function(keyword, callback){
+exports.searchForTweetsWithKeyword = function(keyword, callback){
   this.genericGetItemsWithTextColumnContaining("tweets", "text", keyword, callback);
 };
+
+exports.searchInTweetsForKeyword = function(keyword, tweets, callback){
+  //TODO;
+};
+
+exports.filterTweetsByLayer = function(tweets, layerName, callback){
+  //return only the tweets that also exist in the layer table
+  var filteredTweets = [];
+
+
+  calback(filteredTweets);
+
+}
 
 
 //===========================================
@@ -117,7 +150,6 @@ exports.genericCreateTable = function(tableName, exampleObject, callback){
     str = str + ")";
     this.db.query(str, function(err){
       if(!err){
-        console.log("CREATED NEW TABLE: " + tableName);
       }else{
         console.log(err);
       }
@@ -182,9 +214,9 @@ exports.rearchitectArrWithDeepObjects = function(arr){
 
 
 //=============== ADD STUFF ====================
-exports.addKeyword = function(keyword){
+exports.addKeyword = function(keyword, callbackForTweets){
   var that = this;
-  this.temp.kObj = {keyword: keyword, tableName: "tweets_containing_" + keyword};
+  this.temp.kObj = {keyword: keyword, tableName: "tweets_containing_" + keyword, callbackForTweets: callbackForTweets, tweets:false};
 
   this.genericCreateTable("keywords", that.temp.kObj , function(err){
 
@@ -193,9 +225,9 @@ exports.addKeyword = function(keyword){
         that.addForeignKey(that.temp.kObj['tableName'], "tweet_id", "tweets", "id", function(err){
           that.errCB(err);
 
-            that.searchForTweetForKeyword(that.temp.kObj.keyword, function(err, rows, fields){
+            that.searchForTweetsWithKeyword(that.temp.kObj.keyword, function(err, rows, fields){
               console.log("" + rows.length + " tweets found containing the keyword");
-
+              that.temp.kObj.tweets = rows;
               var finalSet = [];
               var obj;
               for(var i = 0; i < rows.length; i++){
@@ -204,9 +236,9 @@ exports.addKeyword = function(keyword){
                 finalSet.push(obj);
               }
               that.genericAddToTable(that.temp.kObj['tableName'], finalSet, null, function(){
-                that.genericGetAll(that.temp.kObj['tableName'], function(err, rows){
-
-                })
+                // that.genericGetAll(that.temp.kObj['tableName'], function(err, rows){
+                  that.temp.kObj.callbackForTweets(that.temp.kObj.tweets);
+                // });
               });
 
             });
@@ -214,7 +246,30 @@ exports.addKeyword = function(keyword){
       });
     });
   });
+};
+
+exports.addTweet = function(tweet, callback){
+  this.genericAddToTable('tweets', [tweet], callback, null);
 }
+
+exports.addTweets = function(tweets, callbackPer, callbackEnd){
+
+  var newCallbackPer = function(err, rows, fields){
+    //could reindex on keywords here, or something
+    //maybe set them as not indexed yet, like in a columln
+    if(callbackPer) callbackPer(err, rows, fields);
+  }
+
+  var finalCallback = function(){
+    if(callbackEnd) callBackEnd();
+  };
+
+  this.genericAddToTable('tweets', tweets, newCallbackPer, finalCallback);
+};
+
+exports.updateKeywordListsForTweets = function(tweets, callbackEnd){
+  //TODO
+};
 
 
 exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, callbackAtEnd){
@@ -226,7 +281,7 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
 
   this.genericGetTableColumnNames(tableName, function(err, rows, fields){
 
-    var tableColumns = [];
+    var tableColumns = []; //TODO this should get cached / memoized basically
     for(var i = 0; i < rows.length; i++){
       tableColumns.push( "`" + rows[i]['COLUMN_NAME'] + "`");
     }
@@ -276,7 +331,7 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
             if(callbackAtEnd){
               callbackAtEnd();
             }else{
-              console.log("No final callback provided");
+
             }
 
           }

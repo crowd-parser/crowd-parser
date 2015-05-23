@@ -2,6 +2,7 @@
 //runtime keyword search
 //store layer results
 //handle emojis inputted into db
+//keywords with special symbols, like @, currently break as table names, regardless of escaping
 
 /*============= DATABASE MODULE WRAPPER for SQL commands =========*/
 
@@ -47,6 +48,7 @@ exports.db.connect(function(err){
 //ONLY SET THIS IF YOU PLAN TO CHANGE SCHEMA, OTHERWISE LEAVE AS IS
 var TALK_TO_DEV_DATABASE = false;
   var NUKE_ALL_TABLES_ON_START = false; //false will prevent further debug stuff
+  var THIS_IS_REALLY_SURE_YOU_WANT_TO_NUKE_EVERYTHING = false;
     var FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS = []; //manually add test tweets here
     var ADD_THESE_KEYWORDS = ["Obama", "Apple", "Avengers"]; //manually add test keywords here
 
@@ -121,16 +123,15 @@ exports.addForeignKey = function(thisTable, thisTableColumn, thatTable, thatTabl
       that.temp.fkObj.callback(err, rows, fields);
     });
   });
+};
 
-  // function(){
-  //   that.db.query("ALTER TABLE " + that.temp.fkObj.thisTable + " ADD FOREIGN KEY (" + that.temp.fkObj.thisTableColumn + ") REFERENCES " + that.temp.fkObj.thatTable+"("+that.temp.fkObj.thatTableColumn+")");
-
-  // }
+exports.setColumnToUnique = function(tableName, columnName, callback){
+  this.db.query("ALTER IGNORE TABLE " + tableName + " ADD UNIQUE (" + columnName + ")", callback);
 };
 
 exports.changeColumnProperty = function(tableName ){
   //ALTER TABLE table_name ALTER COLUMN column_name datatype
-}
+};
 
 exports.genericCreateTable = function(tableName, exampleObject, callback){
     var AI = "AUTO_INCREMENT";
@@ -219,18 +220,20 @@ exports.rearchitectArrWithDeepObjects = function(arr){
 //=============== ADD STUFF ====================
 exports.addKeyword = function(keyword, callbackForTweets){
   var that = this;
-  this.temp.kObj = {keyword: keyword, tableName: "tweets_containing_" + keyword, callbackForTweets: callbackForTweets, tweets:false};
+  // keyword = this.db.escapeId(keyword);
+  this.temp.kObj = {keyword: keyword, tableName: "tweets_containing_" + keyword};
+  this.temp.kCB = {callbackForTweets: callbackForTweets, tweets:false};
 
   this.genericCreateTable("keywords", that.temp.kObj , function(err){
 
     that.genericAddToTable("keywords", [that.temp.kObj], null, function(){
-      that.genericCreateTable(that.temp.kObj['tableName'], {test: 999 }, function(err){
+      that.genericCreateTable(that.temp.kObj['tableName'], { }, function(err){
         that.addForeignKey(that.temp.kObj['tableName'], "tweet_id", "tweets", "id", function(err){
-          that.errCB(err);
 
+          that.setColumnToUnique(that.temp.kObj['tableName'], "tweet_id", function(){
             that.searchForTweetsWithKeyword(that.temp.kObj.keyword, function(err, rows, fields){
               console.log("" + rows.length + " tweets found containing the keyword");
-              that.temp.kObj.tweets = rows;
+              that.temp.kCB.tweets = rows;
               var finalSet = [];
               var obj;
               for(var i = 0; i < rows.length; i++){
@@ -240,11 +243,16 @@ exports.addKeyword = function(keyword, callbackForTweets){
               }
               that.genericAddToTable(that.temp.kObj['tableName'], finalSet, null, function(){
                 // that.genericGetAll(that.temp.kObj['tableName'], function(err, rows){
-                  that.temp.kObj.callbackForTweets(that.temp.kObj.tweets);
+
+                  if(that.temp.kCB.callbackForTweets){
+                    that.temp.kCB.callbackForTweets(that.temp.kCB.tweets);
+                  }
+
                 // });
               });
 
             });
+          });
         });
       });
     });
@@ -272,6 +280,7 @@ exports.addTweets = function(tweets, callbackPer, callbackEnd){
 
 exports.updateKeywordListsForTweets = function(tweets, callbackEnd){
   //TODO
+  //take highest id for tweet in list then search all tweets higher than that on all keywords.
 };
 
 
@@ -384,7 +393,7 @@ exports.genericDropDatabase = function(name, callback){
 //================ TESTING ======================
 exports.genericDescribeTable = function(name){
   this.db.query("DESCRIBE " + name, function(err, rows, fields){
-    console.log("TABLE DESCRIBE: " + name);
+    console.log(rows);
   });
 };
 
@@ -430,8 +439,17 @@ exports.trigger = function(db,callback){
 
   that.changeToDatabase(that.databaseToTalkTo, that.errCB);
 
+  //TODO UNDO THIS
+  that.getAllTweets(function(err, rows, fields){
+    console.log("NUMBER OF CURRENT TWEETS: ", rows.length);
 
-  if(!NUKE_ALL_TABLES_ON_START) return;
+    that.addKeyword("potus", function(tweets){
+     console.log(tweets.length);
+    });
+
+  });
+
+  if(!NUKE_ALL_TABLES_ON_START || !THIS_IS_REALLY_SURE_YOU_WANT_TO_NUKE_EVERYTHING) return;
 
   that.genericDropDatabase(this.databaseToTalkTo, function(err){
 
@@ -440,21 +458,22 @@ exports.trigger = function(db,callback){
       that.changeToDatabase(that.databaseToTalkTo, function(err){
 
         that.genericCreateTable('tweets', that.testTweet1, function(err){
+          that.setColumnToUnique('tweets', 'id_str', function(){
+            var addTheseTweets;
+            if(FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS.length > 0){
+              addTheseTweets = FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS;
+            }else{
+              addTheseTweets = [that.testTweet1, that.testTweet2, that.testTweet3, that.testTweet4, that.testTweet5];
+            }
+            //there are two functions being passed in here, a callback per add, and a callback for the end of adds
 
-          var addTheseTweets;
-          if(FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS.length > 0){
-            addTheseTweets = FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS;
-          }else{
-            addTheseTweets = [that.testTweet1, that.testTweet2, that.testTweet3, that.testTweet4, that.testTweet5];
-          }
-          //there are two functions being passed in here, a callback per add, and a callback for the end of adds
-
-          that.genericAddToTable('tweets', addTheseTweets, that.errCB, function(msg){
-            that.getAllTweets(function(err, rows, fields){
-              that.ADDALLTHETWEETS(function(){
-                  for(var i = 0; i < ADD_THESE_KEYWORDS.length; i++){
-                    that.addKeyword(ADD_THESE_KEYWORDS[i]);
-                  }
+            that.genericAddToTable('tweets', addTheseTweets, that.errCB, function(msg){
+              that.getAllTweets(function(err, rows, fields){
+                that.ADDALLTHETWEETS(function(){
+                    for(var i = 0; i < ADD_THESE_KEYWORDS.length; i++){
+                      that.addKeyword(ADD_THESE_KEYWORDS[i]);
+                    }
+                });
               });
             });
           });

@@ -1,13 +1,23 @@
-
-<div class='3d-container' id="container"></div>
-<div class="arrow" id="leftarrow">
-  <button id="left"><span>&lt;</span></button>
-</div>
-<div class="arrow" id="rightarrow">
-  <button id="right"><span>&gt;</span></button>
-</div>
-<div id="menu">
-  <button id="flatten">Flatten Layers</button>
-  <button id="separate">Separate Layers</button>
-  <button id="stop">Stop Adding Tweets</button>
+<div class="3d-display">
+  <div id="container-3d"></div>
+  <div class="keyword-form-3d form-inline">
+    <form ng-submit="start3DKeywordStream()">
+      <div class="form-group">
+        <label for="keyword-stream">Keyword</label>
+        <input type="text" class="form-control" ng-model="keywordStream">
+      </div>
+      <button class="button-3d">Submit</button>
+    </form>
+  </div>
+  <div class="arrow-3d" id="leftarrow-3d">
+    <button class="button-3d" id="left-3d"><span>&lt;</span></button>
+  </div>
+  <div class="arrow-3d" id="rightarrow-3d">
+    <button class="button-3d" id="right-3d"><span>&gt;</span></button>
+  </div>
+  <div id="menu-3d">
+    <button class="button-3d" id="flatten-3d">Flatten Layers</button>
+    <button class="button-3d" id="separate-3d">Separate Layers</button>
+    <button class="button-3d" id="stop-3d">Stop Adding Tweets</button>
+  </div>
 </div>

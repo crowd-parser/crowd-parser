@@ -76,7 +76,7 @@ angular.module('parserApp.display3dService', [])
     var xStart = -1000;
 
     var tweet = document.createElement( 'div' );
-    tweet.className = 'tweet';
+    tweet.className = 'tweet-3d';
     var normalizedScore = rawTweet[layerObj.resultsName].score;
     var bgRGBA;
     if (normalizedScore < -5) {
@@ -130,7 +130,7 @@ angular.module('parserApp.display3dService', [])
     layerObj.z = z;
 
     var ribbon = document.createElement('div');
-    ribbon.className = 'ribbon';
+    ribbon.className = 'ribbon-3d';
     var ribbonWidth = Math.abs(camera.position.z) * 10;
     ribbon.style.width = ribbonWidth;
 
@@ -179,7 +179,7 @@ angular.module('parserApp.display3dService', [])
 
     renderer = new THREE.CSS3DRenderer();
     renderer.setSize( window.innerWidth, window.innerHeight );
-    document.getElementById( 'container' ).appendChild( renderer.domElement );
+    document.getElementById( 'container-3d' ).appendChild( renderer.domElement );
 
     controls = new THREE.TrackballControls( camera, renderer.domElement );
     controls.rotateSpeed = 1;
@@ -189,7 +189,7 @@ angular.module('parserApp.display3dService', [])
     makeTweetLayer('baseLayerResults', 'word', layerSpacing);
     makeTweetLayer('emoticonLayerResults', 'emoji', 0);
 
-    addButtonEvent('separate', 'click', function(event) {
+    addButtonEvent('separate-3d', 'click', function(event) {
       for (var i = 1; i < layers.length; i++) {
         layers[i].tweets.forEach(function(tweet) {
           var tween = new TWEEN.Tween( tweet.obj.position )
@@ -205,7 +205,7 @@ angular.module('parserApp.display3dService', [])
       }
     });
 
-    addButtonEvent('flatten', 'click', function(event) {
+    addButtonEvent('flatten-3d', 'click', function(event) {
       for (var i = 1; i < layers.length; i++) {
         layers[i].tweets.forEach(function(tweet) {
           var tween = new TWEEN.Tween( tweet.obj.position )
@@ -221,20 +221,20 @@ angular.module('parserApp.display3dService', [])
       }
     });
 
-    addButtonEvent('stop', 'click', function(event) {
+    addButtonEvent('stop-3d', 'click', function(event) {
       keepAddingTweets = false;
     });
 
-    addButtonEvent('left', 'mouseover', function(event) {
+    addButtonEvent('left-3d', 'mouseover', function(event) {
       leftHover = true;
     });
-    addButtonEvent('left', 'mouseleave', function(event) {
+    addButtonEvent('left-3d', 'mouseleave', function(event) {
       leftHover = false;
     });
-    addButtonEvent('right', 'mouseover', function(event) {
+    addButtonEvent('right-3d', 'mouseover', function(event) {
       rightHover = true;
     });
-    addButtonEvent('right', 'mouseleave', function(event) {
+    addButtonEvent('right-3d', 'mouseleave', function(event) {
       rightHover = false;
     });
 

@@ -98,6 +98,7 @@ exports.filterTweetsByLayer = function(tweets, layerName, callback){
   var filteredTweets = [];
 
 
+
   calback(filteredTweets);
 
 }
@@ -422,6 +423,9 @@ exports.trigger = function(db,callback){
     console.log("==========DB exists===========");
     //callback();
   }
+
+  this.isLive = true;
+
 
 
   if(!NUKE_ALL_TABLES_ON_START) return;

@@ -1,16 +1,20 @@
 var allLayersAnalysis = require('./sentiment/allLayersAnalysis');
+var db = require('./database/database');
 
 module.exports = function(io, T) {
 
-  try {
-    var TCH = require('./config/twitter_CH_private');
-  } catch (e) {
-    console.log(e);
-    var TCH = T;
-  }
-
+  // try {
+  //   var TCH = require('./config/twitter_CH_private');
+  // } catch (e) {
+  //   console.log(e);
+  //   var TCH = T;
+  // }
 
   io.on('connection', function(socket) {
+
+    var streamDownload;
+
+    socket.on('start download', function(rate) {
     
     // Receives a constant sample stream of twitter statuses
     socket.on('twitter stream sample', function(num) {
@@ -24,7 +28,6 @@ module.exports = function(io, T) {
       var tweetsArray = [];
       
       var stream = T.stream('statuses/sample');
-
       stream.on('tweet', function(tweet) {
 
         if (tweet.lang === 'en') {
@@ -118,6 +121,37 @@ module.exports = function(io, T) {
       T.get('trends/place', {id: 23424977}, function(err, data) {
         socket.emit('twitter rest trending', data);
       });
+    });
+
+      streamDownload = T.stream('statuses/sample');
+      var count = 0;
+      rate = rate || 4;
+
+      streamDownload.on('tweet', function(tweet) {
+        if (tweet.lang === 'en') {
+          count++;
+          if (count === 1 || count % rate === 0) {
+            if(!db || !db.isLive){
+              console.log("WAITING FOR DB");
+              return;
+          }
+            db.addTweet(tweet, function(err, rows, fields) {
+              if (err) {
+                console.log(err);
+              } else {
+                io.emit('tweet added', tweet.id);
+                console.log('tweet added!', tweet.id);
+              }
+            })
+          }
+        }
+      });
+
+    });
+
+    socket.on('stop download', function() {
+      console.log('STOP *******************')
+      streamDownload.stop();
     });
 
   });

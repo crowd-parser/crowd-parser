@@ -4,6 +4,7 @@ angular.module('parserApp', [
   'parserApp.twitterService',
   'parserApp.wordcloudService',
   'parserApp.display3dService',
+  'parserApp.authService',
   'parserApp.directives.dirPagination',
   'ngCookies',
   'ngResource',
@@ -27,6 +28,11 @@ angular.module('parserApp', [
         url: '/dbPanel',
         templateUrl: 'app/dbPanel/dbPanel.html',
         controller: 'DBPanelCtrl'
+      })
+      .state('login', {
+        url: '/login',
+        templateUrl: 'app/login/login.html',
+        controller: 'LoginCtrl'
       });
 
     $urlRouterProvider

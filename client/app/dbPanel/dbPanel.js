@@ -1,18 +1,26 @@
 'use strict';
 
 angular.module('parserApp')
-  .controller('DBPanelCtrl', function ($scope) {
-    $scope.varA = 'buttonA does taskA';
-    $scope.varB = 'buttonB does taskB';
-    $scope.varC = 'buttonC does taskC';
-    $scope.textfieldA = "some default text";
-    $scope.taskA = function () {
-      console.log('doing task A, textfield contains ' + $scope.textfieldA);
+  .controller('DBPanelCtrl', function ($scope, Twitter) {
+
+    var socket = Twitter.socket;
+
+    $scope.startDownload = function() {
+
+      var rate = $scope.streamDownloadRate;
+      $scope.streamDownloadRate = '';
+
+      socket.emit('start download', rate);
+
     };
-    $scope.taskB = function () {
-      console.log('doing task B');
+
+    $scope.stopDownload = function() {
+      socket.emit('stop download');
     };
-    $scope.taskC = function () {
-      console.log('doing task C');
-    };
+
+    socket.on('tweet added', function(data) {
+      $scope.$apply(function() {
+        $scope.tweetAdded = 'Tweet added! --> ID: ' + data;
+      });
+    });
   });

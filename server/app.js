@@ -25,33 +25,6 @@ require('./routes')(app);
 app.database = require('./database/database.js');
 app.database.trigger(function(){console.log("TRIGGERED")});
 
-var ENABLE_LIVE_STREAM_WRITE_TO_DATABASE = false;
-
-if(ENABLE_LIVE_STREAM_WRITE_TO_DATABASE){
-  var stream = T.stream('statuses/sample');
-  var count = 0;
-  io.emit('tweet');
-  stream.on('tweet', function(tweet) {
-    if (tweet.lang === 'en') {
-      count++;
-      if (count === 1 || count % 30 === 0) {
-        if(!app.database || !app.database.isLive){
-          console.log("WAITING FOR DB");
-          return;
-        }
-        app.database.addTweet(tweet, function(err, rows, fields) {
-          if (err) {
-            console.log(err);
-          } else {
-            console.log('tweet added!', tweet.id);
-          }
-        })
-      }
-    }
-  });
-}
-
-
 // Start server
 server.listen(config.port, config.ip, function () {
   console.log('Express server listening on %d, in %s mode', config.port, app.get('env'));

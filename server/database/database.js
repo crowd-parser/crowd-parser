@@ -26,7 +26,7 @@ exports.db.connect(function(err){
 var TALK_TO_DEV_DATABASE = false;
   var NUKE_ALL_TABLES_ON_START = false; //false will prevent further debug stuff
     var FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS = []; //manually add test tweets here
-    var ADD_THESE_KEYWORDS = ["awesome"]; //manually add test keywords here
+    var ADD_THESE_KEYWORDS = ["Obama", "Apple", "Avengers"]; //manually add test keywords here
 
     var ADD_ALL_19_MEGS_OF_TEST_TWEETS = false;
       var ALL_THE_TEST_TWEETS = {};
@@ -123,7 +123,6 @@ exports.genericCreateTable = function(tableName, exampleObject, callback){
       }
       callback(err);
     });
-
 
 };
 
@@ -226,12 +225,12 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
   //this is all so we can push any objects at the db, regardless of table setup
 
   this.genericGetTableColumnNames(tableName, function(err, rows, fields){
-    that.genericDescribeTable('tweets');
+
     var tableColumns = [];
     for(var i = 0; i < rows.length; i++){
       tableColumns.push( "`" + rows[i]['COLUMN_NAME'] + "`");
     }
-    console.log(rows);
+
     startAdding(that, tableColumns);
   });
 
@@ -248,6 +247,7 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
     var queryStr;
     var temp;
     var count = listOfObjects.length;
+
     that.doAddingMessage(count);
 
       for (var i = 0; i < listOfObjects.length; i++) {
@@ -287,7 +287,8 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
 
 exports.doAddingMessage = function(count, moduloVal){
   moduloVal = moduloVal || 1;
-  if(count & moduloVal === 0){
+
+  if(count % moduloVal === 0){
     console.log("" + count + " ENTRIES REMAIN TO BE ADDED. ETA: " + Math.round(.08 * count / 60 * 100)/100 + " minutes");
   }
 };
@@ -326,22 +327,23 @@ exports.genericDropDatabase = function(name, callback){
 exports.genericDescribeTable = function(name){
   this.db.query("DESCRIBE " + name, function(err, rows, fields){
     console.log("TABLE DESCRIBE: " + name);
-    console.log(rows);
   });
 };
 
-exports.ADDALLTHETWEETS = function(){
+exports.ADDALLTHETWEETS = function(callback){
   if(ADD_ALL_19_MEGS_OF_TEST_TWEETS !== true) return;
   var indieCall = function(err){
     if(err){
       console.log(err);
+    }else{
     }
   };
 
   var finalCall = function(){
     console.log("A BILLION TWEETS ADDED");
+    callback();
   };
-
+  console.log("HERE");
   this.genericAddToTable('tweets', ALL_THE_TEST_TWEETS , indieCall, finalCall);
 };
 
@@ -386,12 +388,13 @@ exports.trigger = function(db,callback){
           //there are two functions being passed in here, a callback per add, and a callback for the end of adds
 
           that.genericAddToTable('tweets', addTheseTweets, that.errCB, function(msg){
-            // that.getAllTweets(function(err, rows, fields){
-            //   that.ADDALLTHETWEETS();
-            //    for(var i = 0; i < ADD_THESE_KEYWORDS.length; i++){
-            //     that.addKeyword(ADD_THESE_KEYWORDS[i]);
-            //   }
-            // });
+            that.getAllTweets(function(err, rows, fields){
+              that.ADDALLTHETWEETS(function(){
+                  for(var i = 0; i < ADD_THESE_KEYWORDS.length; i++){
+                    that.addKeyword(ADD_THESE_KEYWORDS[i]);
+                  }
+              });
+            });
           });
         });
       });

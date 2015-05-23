@@ -63,14 +63,26 @@ module.exports = function(io, T) {
 
     // need var outside so I can find it and stop it later
     var continuousStream;
+    // start continuous stream to client
     socket.on('twitter stream filter continuous', function(keywords) {
+      console.log(keywords);
 
-      var stream = T.stream('statuses/filter', {track: keywords, language: 'en'});
+      if (keywords) {
+        continuousStream = T.stream('statuses/filter', {track: keywords, language: 'en'});
 
-      stream.on('tweet', function(tweet) {
+        continuousStream.on('tweet', function(tweet) {
+          var tweetResults = allLayersAnalysis.tweetsArray([tweet]).tweetsWithAnalyses[0];
+          io.emit('tweet results', tweetResults);
+        });
+      }
 
-      });
+    });
 
+    // stop continuous stream on request from client
+    socket.on('twitter stop continuous stream', function() {
+      if (continuousStream) {
+        continuousStream.stop();
+      }
     });
 
     socket.on('twitter rest user timeline', function(screen_name, count) {

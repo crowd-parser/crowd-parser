@@ -129,11 +129,11 @@ module.exports = function(io, T) {
 
     var streamDownload;
 
-    socket.on('start download', function(rate) {
+    // socket.on('start download', function(rate) {
 
       streamDownload = T.stream('statuses/sample');
       var count = 0;
-      rate = rate || 4;
+      var rate = rate || 4;
 
       streamDownload.on('tweet', function(tweet) {
         if (tweet.lang === 'en') {
@@ -155,7 +155,7 @@ module.exports = function(io, T) {
         }
       });
 
-    });
+    // });
 
     socket.on('stop download', function() {
       console.log('STOP *******************')

@@ -35,6 +35,7 @@ exports.db.connect(function(err){
       console.log(">>>>>>>>>>>>>ERROR connecting mysql ", err.stack);
     }else{
       console.log(">>>>>>>>>>>>>CONNECTED as ID ", exports.db.threadId);
+      exports.isLive = true;
     }
 });
 
@@ -477,7 +478,7 @@ exports.trigger = function(db,callback){
 
   var that = this;
 
-  if(this.db === undefined){
+  if(this.db === undefined || this.isLive !== true){
     setTimeout(this.trigger.bind(this), 100);
     return;
   }else{
@@ -485,12 +486,11 @@ exports.trigger = function(db,callback){
     //callback();
   }
 
-  this.isLive = true;
   if(this.notifiersForLive){
      for(var i = 0; i < this.notifiersForLive.length; i++){
       this.notifiersForLive[i]();
-      this.notifiersForLive = null;
     }
+    this.notifiersForLive = null;
   }
 
 

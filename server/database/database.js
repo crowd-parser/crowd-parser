@@ -502,19 +502,19 @@ exports.trigger = function(db,callback){
 
 
   //TODO UNDO THIS
-  that.getAllTweets(function(err, rows, fields){
-    console.log("NUMBER OF CURRENT TWEETS: ", rows.length);
+  // that.getAllTweets(function(err, rows, fields){
+  //   console.log("NUMBER OF CURRENT TWEETS: ", rows.length);
 
-    that.addKeyword("potus", function(tweets){
-      console.log(tweets.length);
-    //  //that.createLayerTableBase();
-    });
+  //   that.addKeyword("potus", function(tweets){
+  //     console.log(tweets.length);
+  //   //  //that.createLayerTableBase();
+  //   });
 
-  });
+  // });
 
   if(!NUKE_ALL_TABLES_ON_START || !THIS_IS_REALLY_SURE_YOU_WANT_TO_NUKE_EVERYTHING) return;
 
-  that.genericDropDatabase(this.databaseToTalkTo, function(err){
+/*  that.genericDropDatabase(this.databaseToTalkTo, function(err){
 
     that.createDatabase(that.databaseToTalkTo,function(err){
 
@@ -543,7 +543,7 @@ exports.trigger = function(db,callback){
         });
       });
     });
-  });
+  });*/
 };
 
 //===========================================

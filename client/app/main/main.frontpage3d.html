@@ -1,0 +1,27 @@
+<div class="mini-3d-display">
+  <div id="mini-container-3d"></div>
+  <div class="mini-keyword-form-3d form-inline">
+    <form>
+      <div class="form-group">
+      <!--
+        <label for="keyword-stream">Keyword</label>
+        <input type="text" class="form-control" ng-model="keywordStream" disabled>
+      </div>
+      <button class="button-3d" disabled>Submit</button>
+      -->
+    </form>
+  </div>
+  <div class="arrow-3d" id="mini-leftarrow-3d">
+    <button class="button-3d" id="left-3d"><span>&lt;</span></button>
+  </div>
+  <div class="arrow-3d" id="mini-rightarrow-3d">
+    <button class="button-3d" id="right-3d"><span>&gt;</span></button>
+  </div>
+  <div id="mini-menu-3d">
+    <button class="button-3d" type="notSubmit" ng-click="streamFakeTweets()">Stream Fake Tweets</button>
+    <button class="button-3d" type="notSubmit" ng-click="fullScreen()">Full Screen</button>
+    <button class="button-3d" id="flatten-3d">Flatten Layers</button>
+    <button class="button-3d" id="separate-3d">Separate Layers</button>
+    <button ng-click="stopTweets()" class="button-3d" id="stop-3d">Stop Adding Tweets</button>
+  </div>
+</div>

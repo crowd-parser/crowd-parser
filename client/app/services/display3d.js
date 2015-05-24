@@ -37,7 +37,7 @@ angular.module('parserApp.display3dService', [])
       layers.forEach(function(layer) {
         var cameraDistanceFromTarget = new THREE.Vector3();
         cameraDistanceFromTarget.subVectors(camera.position, controls.target);
-        var newRibbonWidth = Math.abs(cameraDistanceFromTarget.length()) * 6;
+        var newRibbonWidth = Math.abs(cameraDistanceFromTarget.length()) * 14;
         layer.ribbonEl.style.width = newRibbonWidth + 'px';
         layer.ribbonEl.children[0].style.left = (newRibbonWidth/2 - 1000) + 'px';
       });
@@ -141,7 +141,7 @@ angular.module('parserApp.display3dService', [])
 
     var ribbon = document.createElement('div');
     ribbon.className = 'ribbon-3d';
-    var ribbonWidth = Math.abs(camera.position.z) * 10;
+    var ribbonWidth = Math.abs(camera.position.z) * 14;
     ribbon.style.width = ribbonWidth + 'px';
 
     var ribbonText = document.createElement( 'div' );
@@ -182,16 +182,18 @@ angular.module('parserApp.display3dService', [])
     }, false);
   };
 
-  var init = function() {
+  var init = function(containerID, cameraY, cameraZ, height) {
+
+    height = height || window.innerHeight;
 
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-    camera.position.z = 1000;
-    camera.position.y = 200;
+    camera = new THREE.PerspectiveCamera( 75, window.innerWidth / height, 0.1, 1000 );
+    camera.position.z = cameraZ || 1000;
+    camera.position.y = cameraY || 200;
 
     renderer = new THREE.CSS3DRenderer();
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    document.getElementById( 'container-3d' ).appendChild( renderer.domElement );
+    renderer.setSize( window.innerWidth, height);
+    document.getElementById( containerID ).appendChild( renderer.domElement );
 
     controls = new THREE.TrackballControls( camera, renderer.domElement );
     controls.rotateSpeed = 1;

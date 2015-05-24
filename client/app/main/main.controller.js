@@ -1,9 +1,11 @@
 'use strict';
 
 angular.module('parserApp')
-  .controller('MainCtrl', function ($scope, Twitter, Wordcloud) {
+  .controller('MainCtrl', function ($scope, $state, Twitter, Wordcloud) {
 
   // =========== Setup ============= //
+
+  $state.transitionTo('main.frontpage3d');
 
   $scope.startingView = true;
   var socket = Twitter.socket;

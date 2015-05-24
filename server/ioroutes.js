@@ -3,12 +3,12 @@ var db = require('./database/database');
 
 module.exports = function(io, T) {
 
-  // try {
-  //   var TCH = require('./config/twitter_CH_private');
-  // } catch (e) {
-  //   console.log(e);
-  //   var TCH = T;
-  // }
+  try {
+    var TCH = require('./config/twitter_CH_private');
+  } catch (e) {
+    console.log(e);
+    var TCH = T;
+  }
 
   io.on('connection', function(socket) {
 

@@ -16,8 +16,8 @@ angular.module('parserApp.display3dService', [])
 
   var scene, camera, renderer, controls, prevCameraPosition;
 
-  var keepAddingTweets = true;
   var layers = [];
+  var frontLayerZ = 0;
   var layerSpacing = 300;
 
   // left and right mouse hover buttons
@@ -190,7 +190,7 @@ angular.module('parserApp.display3dService', [])
 
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-    camera.position.z = 1100;
+    camera.position.z = 1000;
     camera.position.y = 300;
 
     renderer = new THREE.CSS3DRenderer();
@@ -202,38 +202,39 @@ angular.module('parserApp.display3dService', [])
     controls.maxDistance = 4000;
     controls.addEventListener( 'change', render );
 
-    makeTweetLayer('baseLayerResults', 'word', layerSpacing);
-    makeTweetLayer('emoticonLayerResults', 'emoji', 0);
+    makeTweetLayer('baseLayerResults', 'word', frontLayerZ);
+    makeTweetLayer('emoticonLayerResults', 'emoji', frontLayerZ - layerSpacing);
 
     addButtonEvent('separate-3d', 'click', function(event) {
-      for (var i = 1; i < layers.length; i++) {
+      for (var i = 0; i < layers.length; i++) {
         layers[i].tweets.forEach(function(tweet) {
           var tween = new TWEEN.Tween( tweet.obj.position )
-            .to( {z: 0}, 1000 )
+            .to( {z: frontLayerZ - layerSpacing*i}, 1000 )
             .easing( TWEEN.Easing.Exponential.InOut )
             .start();
         });
         var tween = new TWEEN.Tween( layers[i].ribbonObj.position )
-          .to( {z: -1}, 1000 )
+          .to( {z: frontLayerZ - layerSpacing*i - 1}, 1000 )
           .easing( TWEEN.Easing.Exponential.InOut )
           .start();
-        layers[i].z = 0;
+        layers[i].z = frontLayerZ - layerSpacing*i - 1;
       }
     });
 
     addButtonEvent('flatten-3d', 'click', function(event) {
-      for (var i = 1; i < layers.length; i++) {
+      console.log(frontLayerZ);
+      for (var i = 0; i < layers.length; i++) {
         layers[i].tweets.forEach(function(tweet) {
           var tween = new TWEEN.Tween( tweet.obj.position )
-            .to( {z: layerSpacing-1}, 1000 )
+            .to( {z: frontLayerZ - 2*i}, 1000 )
             .easing( TWEEN.Easing.Exponential.InOut )
             .start();
         });
         var tween = new TWEEN.Tween( layers[i].ribbonObj.position )
-          .to( {z: layerSpacing-2}, 1000 )
+          .to( {z: frontLayerZ - 2*i - 1}, 1000 )
           .easing( TWEEN.Easing.Exponential.InOut )
           .start();
-        layers[i].z = layerSpacing-1;
+        layers[i].z = frontLayerZ - 2*i;
       }
     });
 

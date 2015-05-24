@@ -424,12 +424,11 @@ exports.genericDropDatabase = function(name, callback){
   this.db.query("DROP DATABASE IF EXISTS " + name, callback);
 };
 
-exports.notifiersForLive = [];
-
 exports.tellMeWhenDatabaseIsLive = function(callback){
   if(this.isLive){
     callback();
   }else{
+    this.notifiersForLive = this.notifiersForLive || [];
     this.notifiersForLive.push(callback);
   }
 };
@@ -473,6 +472,8 @@ exports.testTweet5 = {"created_at":"Wed May 20 23:16:04 +0000 2015","id":6011637
 //this is called in app.js after the database module is exported
 //it processes the debug commands at the top of the file, we'll remove it in production
 exports.trigger = function(db,callback){
+  if(this.triggerHasRun) return;
+  this.triggerHasRun = true;
 
   var that = this;
 
@@ -485,10 +486,13 @@ exports.trigger = function(db,callback){
   }
 
   this.isLive = true;
-  for(var i = 0; i < this.notifiersForLive.length; i++){
-    this.notifiersForLive[i]();
-    this.notifiersForLive = null;
+  if(this.notifiersForLive){
+     for(var i = 0; i < this.notifiersForLive.length; i++){
+      this.notifiersForLive[i]();
+      this.notifiersForLive = null;
+    }
   }
+
 
   that.changeToDatabase(that.databaseToTalkTo, that.errCB);
 

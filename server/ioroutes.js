@@ -115,6 +115,12 @@ module.exports = function(io, T) {
       });
     });
 
+    socket.on('home timeline', function() {
+      T.get('statuses/home_timeline', {count: 200}, function(err, data) {
+        socket.emit('home timeline', data);
+      });
+    });
+
     socket.on('twitter rest trending', function() {
       T.get('trends/place', {id: 23424977}, function(err, data) {
         socket.emit('twitter rest trending', data);
@@ -155,6 +161,8 @@ module.exports = function(io, T) {
       console.log('STOP *******************')
       streamDownload.stop();
     });
+
+
 
   });
 

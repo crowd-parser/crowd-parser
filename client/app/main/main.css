@@ -97,8 +97,56 @@ header {
   transform-style: preserve-3d;
 }
 
-.home-panel {
+.starting-section-container {
+    background: #FCFFF5;
+    text-align: center;
+    padding-top: 20px;
+    padding-bottom: 30px;
+    margin-top: -20px;
+}
+
+.starting-section-container h3 {
+    color: #193441;
+}
+
+.tweets-continuous-display {
+    color: #FFF;
+    background: #3E606F;
+    height: 250px;
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+
+.tweets-feelings-display {
+    color: #FFF;
     background: #91AA9D;
-    width: 50%;
-    height: 500px;
+    height: 250px;
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+
+.tweets-discovery-display {
+    color: #FFF;
+    background: #D1DBBD;
+    height: 250px;
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+
+.user-explore-display {
+    color: #424242;
+    background: #FFF;
+    height: 250px;
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+
+.user-section {
+    float: left;
+    width: 33%;
+    margin-top: 60px;
+}
+
+.user-section-icon {
+    font-size: 70px;
 }

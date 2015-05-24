@@ -43,6 +43,28 @@ header img {
     color: #DCAF72;
 }
 
+.customized-query {
+    color: #79737F;
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.customized-query input {
+    height: 22px;
+    padding-left: 3px;
+    padding-right: 3px;
+    border-radius: 5px;
+}
+
+.customized-query button {
+    font-size: 11px;
+    height: 20px;
+    padding-top: 2px;
+    padding-left: 5px;
+    padding-right: 5px;
+    margin-left: 5px;
+}
+
 .tweet-sentiment {
     background: #FFF;
     color: #000;
@@ -66,6 +88,7 @@ header img {
 .tweet-layer-results {
     display: inline-block;
     width: 49%;
+    margin-top: -10px;
 }
 
 .layer-heading {

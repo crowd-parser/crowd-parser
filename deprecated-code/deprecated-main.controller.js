@@ -3,6 +3,7 @@
   var countToGet = countToGet;
   var wordsArray;
   var twitterStreamFilterTopics;
+  $scope.tweetsArray = [];
 
   var twitterHelpers = {
     resetStreamSample: function() {
@@ -109,5 +110,33 @@
         twitterHelpers.calculateFilterIrrelevantTweetsCount($scope.numberReceived, $scope.topicsTotalReceived);
 
         twitterHelpers.createWordCloudForStream();
+      });
+    });
+
+    $scope.getTwitterRestUserTimeline = function() {
+
+      $scope.startingView = false;
+
+      $scope.tweetsArray = [];
+
+      var screenname = $scope.twitterRestUserTimelineScreenname;
+      $scope.twitterRestUserTimelineScreenname = '';
+
+      countToGet = $scope.twitterRestUserTimelineCount;
+      $scope.twitterRestUserTimelineCount = '';
+
+      socket.emit('twitter rest user timeline',screenname, countToGet);
+      return false;
+    };
+
+    socket.on('twitter rest user timeline', function(data) {
+      $scope.$apply(function() {
+        $scope.tweetsArray = data;
+      });
+    });
+    
+    socket.on('twitter rest search', function(data) {
+      $scope.$apply(function() {
+        $scope.tweetsArray = data.statuses;
       });
     });

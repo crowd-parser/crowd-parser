@@ -1,10 +1,10 @@
 'use strict';
 
 angular.module('parserApp', [
+  'parserApp.headerService',
   'parserApp.twitterService',
   'parserApp.display3dService',
   'parserApp.authService',
-  'parserApp.directives.dirPagination',
   'ngCookies',
   'ngResource',
   'ngSanitize',

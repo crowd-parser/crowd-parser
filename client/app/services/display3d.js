@@ -6,7 +6,6 @@ angular.module('parserApp.display3dService', [])
 
   // TODO
   // - set pan limits
-  // - turn unscored tweets transparent when flattening layers
   // - do something about layer titles overlapping when flattening layers
   // - make text go away when zoomed out past a certain distance
   // - show more info when zoomed in closer than a certain distance?
@@ -108,7 +107,8 @@ angular.module('parserApp.display3dService', [])
       if (normalizedScore === 0) {
         bgRGBA = '225,225,225,0.8';
       }
-      tweet.style.backgroundColor = 'rgba(' + bgRGBA + ')';
+      var baseBGColor = 'rgba(' + bgRGBA + ')';
+      tweet.style.backgroundColor = baseBGColor;
 
       var username = document.createElement( 'div' );
       username.className = 'username';
@@ -131,7 +131,7 @@ angular.module('parserApp.display3dService', [])
       object.position.z = layerObj.z;
       scene.add( object );
 
-      layerObj.tweets.push({obj: object, el: tweet});
+      layerObj.tweets.push({obj: object, el: tweet, baseBGColor: baseBGColor});
 
     });
 
@@ -139,7 +139,6 @@ angular.module('parserApp.display3dService', [])
 
   var makeTweetLayer = function(layerResultsProp, layerTitle, z) {
     var layerObj = {};
-    layerObj.name = layerTitle;
     layerObj.tweets = [];
     layerObj.resultsName = layerResultsProp;
     layerObj.title = layerTitle;
@@ -154,7 +153,9 @@ angular.module('parserApp.display3dService', [])
     ribbonText.className = 'layer-title';
     ribbonText.textContent = layerTitle + ' layer';
     ribbonText.style.left = (ribbonWidth/2 - 800) + 'px';
+    ribbonText.style.opacity = 1;
     ribbon.appendChild( ribbonText );
+    layerObj.titleEl = ribbonText;
 
     var ribbonObject = new THREE.CSS3DObject( ribbon );
     ribbonObject.position.x = 0;
@@ -191,7 +192,7 @@ angular.module('parserApp.display3dService', [])
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
     camera.position.z = 1000;
-    camera.position.y = 300;
+    camera.position.y = 200;
 
     renderer = new THREE.CSS3DRenderer();
     renderer.setSize( window.innerWidth, window.innerHeight );
@@ -208,16 +209,44 @@ angular.module('parserApp.display3dService', [])
     addButtonEvent('separate-3d', 'click', function(event) {
       for (var i = 0; i < layers.length; i++) {
         layers[i].tweets.forEach(function(tweet) {
-          var tween = new TWEEN.Tween( tweet.obj.position )
+          new TWEEN.Tween( tweet.obj.position )
             .to( {z: frontLayerZ - layerSpacing*i}, 1000 )
             .easing( TWEEN.Easing.Exponential.InOut )
             .start();
+
+          if (tweet.baseBGColor === 'rgba(225,225,225,0.8)') {
+            new TWEEN.Tween( {val: 0} )
+              .to ( {val: 0.8}, 1000 )
+              .easing( TWEEN.Easing.Exponential.InOut )
+              .onUpdate( function () {
+                tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
+              })
+              .start();
+          }
         });
-        var tween = new TWEEN.Tween( layers[i].ribbonObj.position )
+        new TWEEN.Tween( layers[i].ribbonObj.position )
           .to( {z: frontLayerZ - layerSpacing*i - 1}, 1000 )
           .easing( TWEEN.Easing.Exponential.InOut )
           .start();
+        if (i > 0) {
+          new TWEEN.Tween( layers[i].titleEl.style )
+            .to( {opacity: 1}, 500 )
+            .easing( TWEEN.Easing.Exponential.InOut )
+            .start();
+        }
         layers[i].z = frontLayerZ - layerSpacing*i - 1;
+        if (i === 0) {
+          var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
+            .to( {opacity: 0}, 500)
+            .easing( TWEEN.Easing.Quadratic.InOut )
+            .onComplete(function () {
+              layers[0].titleEl.textContent = layers[0].title + ' layer';
+            });
+          var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
+            .to( {opacity: 1}, 500)
+            .easing( TWEEN.Easing.Quadratic.InOut );
+          fadeOut.chain(fadeIn).start();
+        }
       }
     });
 
@@ -225,16 +254,46 @@ angular.module('parserApp.display3dService', [])
       console.log(frontLayerZ);
       for (var i = 0; i < layers.length; i++) {
         layers[i].tweets.forEach(function(tweet) {
-          var tween = new TWEEN.Tween( tweet.obj.position )
+          new TWEEN.Tween( tweet.obj.position )
             .to( {z: frontLayerZ - 2*i}, 1000 )
             .easing( TWEEN.Easing.Exponential.InOut )
             .start();
+
+          if (tweet.baseBGColor === 'rgba(225,225,225,0.8)') {
+            new TWEEN.Tween( {val: 0.8} )
+              .to ( {val: 0}, 1000 )
+              .easing( TWEEN.Easing.Exponential.InOut )
+              .onUpdate( function () {
+                tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
+              })
+              .start();
+          }
         });
-        var tween = new TWEEN.Tween( layers[i].ribbonObj.position )
+        new TWEEN.Tween( layers[i].ribbonObj.position )
           .to( {z: frontLayerZ - 2*i - 1}, 1000 )
           .easing( TWEEN.Easing.Exponential.InOut )
           .start();
+        if (i > 0) {
+          new TWEEN.Tween( layers[i].titleEl.style )
+            .to( {opacity: 0}, 500)
+            .easing( TWEEN.Easing.Exponential.InOut )
+            .start();
+        }
         layers[i].z = frontLayerZ - 2*i;
+        if (i === 0) {
+          var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
+            .to( {opacity: 0}, 500)
+            .easing( TWEEN.Easing.Quadratic.InOut )
+            .onComplete(function () {
+              layers[0].titleEl.textContent = layers.map(function (item) {
+                return item.title;
+              }).join(' + ') + ' layers';
+            });
+          var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
+            .to( {opacity: 1}, 500)
+            .easing( TWEEN.Easing.Quadratic.InOut );
+          fadeOut.chain(fadeIn).start();
+        }
       }
     });
 

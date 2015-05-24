@@ -15,16 +15,14 @@ db.tellMeWhenDatabaseIsLive(function() {
 });
 
 router.post('/', function(req, res, next) {
-
-
-  bcrypt.hash(req.body.password, null, null, function(err, hash) {
-    console.log(hash);
-    db.addAdmin({username: req.body.username, password: hash}, function(err) {
-      console.log(err, 'test');
-    })
-    
+  db.addAdmin({username: req.body.username, password: req.body.password}, function(err) {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log('success!');
+      res.send('success.');
+    }
   })
-
 });
 
 module.exports = router;

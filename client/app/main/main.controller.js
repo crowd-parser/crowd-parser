@@ -59,6 +59,15 @@ angular.module('parserApp')
   };
 
   // =========== twitter-stream-sample section ============ //
+
+  // socket.emit('home timeline');
+
+  // socket.on('home timeline', function(data) {
+  //   console.log(data);
+  //   $scope.$apply(function() {
+  //     $scope.tweetsContinuousDisplay = JSON.stringify(data);
+  //   });
+  // });
   
   $scope.getTwitterStreamSample = function() {
 

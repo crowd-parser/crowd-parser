@@ -550,4 +550,4 @@ exports.trigger = function(db,callback){
 
 exports.addAdmin = function(admin, callback){
   this.genericAddToTable('admin', [admin], callback, null);
-}
+};

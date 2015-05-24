@@ -25,11 +25,6 @@ require('./routes')(app);
 app.database = require('./database/database.js');
 app.database.trigger();
 
-// app.database.genericCreateTable('admin', {username: 'name', password: 'password'}, function(err, res) {
-//   console.log('TESTSETESTES')
-//   console.log(err, res);
-// });
-
 // Start server
 server.listen(config.port, config.ip, function () {
   console.log('Express server listening on %d, in %s mode', config.port, app.get('env'));

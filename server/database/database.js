@@ -426,6 +426,7 @@ exports.genericDropDatabase = function(name, callback){
 };
 
 exports.tellMeWhenDatabaseIsLive = function(callback){
+  console.log("==========ASKED FOR CALLBACK==============");
   if(this.isLive){
     callback();
   }else{
@@ -474,17 +475,22 @@ exports.testTweet5 = {"created_at":"Wed May 20 23:16:04 +0000 2015","id":6011637
 //it processes the debug commands at the top of the file, we'll remove it in production
 exports.trigger = function(db,callback){
   if(this.triggerHasRun) return;
-  this.triggerHasRun = true;
 
   var that = this;
 
   if(this.db === undefined || this.isLive !== true){
+    console.log("========waiting for db==========");
     setTimeout(this.trigger.bind(this), 100);
     return;
   }else{
     console.log("==========DB exists===========");
     //callback();
   }
+
+  this.triggerHasRun = true;
+
+  that.changeToDatabase(that.databaseToTalkTo, that.errCB);
+
 
   if(this.notifiersForLive){
      for(var i = 0; i < this.notifiersForLive.length; i++){
@@ -494,7 +500,6 @@ exports.trigger = function(db,callback){
   }
 
 
-  that.changeToDatabase(that.databaseToTalkTo, that.errCB);
 
   //TODO UNDO THIS
   that.getAllTweets(function(err, rows, fields){

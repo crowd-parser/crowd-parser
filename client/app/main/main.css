@@ -4,6 +4,11 @@ header {
     padding: 40px 0;
 }
 
+header img {
+    width: 85%;
+    max-width: 700px;
+}
+
 .footer {
     text-align: center;
     padding: 30px 0;
@@ -19,21 +24,42 @@ header {
     border: 1px solid #000;
 }
 
+.queries-container {
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.queries-container-heading {
+    font-size: 16px;
+}
+
+.other-queries {
+    display: inline-block;
+    color: #FBD99E;
+    cursor: pointer;
+}
+
+.other-queries:hover {
+    color: #DCAF72;
+}
+
 .tweet-sentiment {
     background: #FFF;
+    color: #000;
     text-align: center;
     width: 85%;
     margin: 0 auto;
     padding: 15px;
-    border: 1px solid #000;
+    border-radius: 25px;
 }
 
 .tweet-username {
     color: #B1B1B1;
+    font-size: 13px;
 }
 
 .tweet-text {
-    font-size: 24px;
+    font-size: 16px;
     margin-bottom: 15px;
 }
 
@@ -43,29 +69,44 @@ header {
 }
 
 .layer-heading {
-    font-size: 19px;
+    font-size: 15px;
     font-weight: bold;
     margin-bottom: 8px;
 }
 
+.overall-sentiment {
+    width: 180px;
+    padding-top: 4px;
+    margin: 0 auto;
+    border: 1px solid #5B5B5B;
+    border-radius: 15px;
+}
+
+.emoticon-pos-neg {
+    color: #A3A3A3;
+    font-size: 12px;
+    margin-top: -9px;
+}
+
 .tweet-layer-results img {
-    margin-top: 5px;
+    height: 37px;
+    margin-top: 4px;
 }
 
 .sentiment-score {
     display: inline-block;
-    font-size: 30px;
+    font-size: 22px;
     font-weight: bold;
-    width: 50px;
-    height: 50px;
-    padding-top: 12px;
+    width: 35px;
+    height: 35px;
+    padding-top: 4px;
     border: 2px solid #000;
     border-radius: 50%;
 }
 
 .sentiment-image {
-    height: 53px;
-    margin-bottom: 15px;
+    height: 37px;
+    margin-bottom: 10px;
 }
 
 .positive-score {
@@ -74,6 +115,10 @@ header {
 
 .negative-score {
     color: #91412D;
+}
+
+.tweet-sentiment button {
+    margin-top: 8px;
 }
 
 .positive-word {
@@ -109,36 +154,29 @@ header {
     color: #193441;
 }
 
-.tweets-continuous-display {
+.display-band {
     color: #FFF;
-    background: #3E606F;
-    height: 250px;
+    min-height: 250px;
     margin-top: 40px;
     margin-bottom: 40px;
+    padding: 22px;
+}
+
+.tweets-continuous-display {
+    background: #3E606F;
 }
 
 .tweets-feelings-display {
-    color: #FFF;
     background: #91AA9D;
-    height: 250px;
-    margin-top: 40px;
-    margin-bottom: 40px;
 }
 
 .tweets-discovery-display {
-    color: #FFF;
     background: #D1DBBD;
-    height: 250px;
-    margin-top: 40px;
-    margin-bottom: 40px;
 }
 
 .user-explore-display {
     color: #424242;
     background: #FFF;
-    height: 250px;
-    margin-top: 40px;
-    margin-bottom: 40px;
 }
 
 .user-section {

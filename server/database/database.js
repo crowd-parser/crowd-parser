@@ -177,22 +177,25 @@ exports.changeColumnProperty = function(tableName){
 };
 
 exports.genericCreateTable = function(tableName, exampleObject, callback){
-    var AI = "AUTO_INCREMENT";
-    // dontIgnoreId = true; //TODO UNDO
+    var AI = "AUTO_INCREMENT"; //left over from when there were multiple options
     var str = ("CREATE TABLE IF NOT EXISTS " + this.db.escapeId(tableName) + ' (id INTEGER PRIMARY KEY ' + AI + ',');
     var key;
     var type;
     var that = this;
 
-
     exampleObject = this.rearchitectArrWithDeepObjects([exampleObject])[0];
 
     for(key in exampleObject){
         //TODO just doing all text for now, will specify based on content later
-      type = "TEXT";
+        //there have been isues with larger than 32 bit ints here
+      if(isNaN(exampleObject[key]) ){
+        type = "TEXT";
+      }else{
+        console.log("ADDING INTEGER FIELD OF: ", key);
+        type = "INTEGER";
+      }
       str = str + " " + key + " " + type + ',';
     }
-
     str = str.slice(0, -1);
     str = str + ")";
     this.db.query(str, function(err){
@@ -202,7 +205,6 @@ exports.genericCreateTable = function(tableName, exampleObject, callback){
       }
       callback(err);
     });
-
 };
 
 
@@ -214,9 +216,9 @@ exports.rearchitectArrWithDeepObjects = function(arr){
   var temp;
 
   var tryToPushObject = function(thing, nameSoFar, finalObject){
-       if(nameSoFar !== ""){
-          finalObject[that.db.escapeId(nameSoFar)] = that.db.escape(thing);
-        }
+    if(nameSoFar !== ""){
+      finalObject[that.db.escapeId(nameSoFar)] = that.db.escape(thing);
+    }
   };
 
   var recurse = function(thing, nameSoFar, finalObject){
@@ -253,9 +255,7 @@ exports.rearchitectArrWithDeepObjects = function(arr){
       recurse(arr[i], "", newObj);
       newArr.push(newObj);
     }
-
     return newArr;
-
 };
 
 
@@ -263,8 +263,7 @@ exports.rearchitectArrWithDeepObjects = function(arr){
 //=============== ADD STUFF ====================
 exports.addKeyword = function(keyword, callbackForTweets){
   var that = this;
-  // keyword = this.db.escapeId(keyword);
-  this.temp.kObj = {keyword: keyword, tableName: "tweets_containing_" + keyword};
+  this.temp.kObj = {keyword: keyword, tableName: "tweets_containing_" + keyword, lastHighestIndexed: 0};
   this.temp.kCB = {callbackForTweets: callbackForTweets, tweets:false};
 
   this.genericCreateTable("keywords", that.temp.kObj , function(err){
@@ -285,15 +284,12 @@ exports.addKeyword = function(keyword, callbackForTweets){
                 finalSet.push(obj);
               }
               that.genericAddToTable(that.temp.kObj['tableName'], finalSet, null, function(){
-                // that.genericGetAll(that.temp.kObj['tableName'], function(err, rows){
 
                   if(that.temp.kCB.callbackForTweets){
                     that.temp.kCB.callbackForTweets(that.temp.kCB.tweets);
                   }
 
-                // });
               });
-
             });
           });
         });
@@ -304,7 +300,7 @@ exports.addKeyword = function(keyword, callbackForTweets){
 
 exports.addTweet = function(tweet, callback){
   this.genericAddToTable('tweets', [tweet], callback, null);
-}
+};
 
 exports.addTweets = function(tweets, callbackPer, callbackEnd){
 
@@ -375,7 +371,7 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
         queryStr = queryStr + ' )';
 
         queryStr = insertStr + queryStr;
-console.log(queryStr);
+
         that.db.query(queryStr, function(err){
           count--;
 
@@ -426,6 +422,16 @@ exports.changeToDatabase = function(name, callback){
 
 exports.genericDropDatabase = function(name, callback){
   this.db.query("DROP DATABASE IF EXISTS " + name, callback);
+};
+
+exports.notifiersForLive = [];
+
+exports.tellMeWhenDatabaseIsLive = function(callback){
+  if(this.isLive){
+    callback();
+  }else{
+    this.notifiersForLive.push(callback);
+  }
 };
 
 // ==============================================
@@ -479,6 +485,10 @@ exports.trigger = function(db,callback){
   }
 
   this.isLive = true;
+  for(var i = 0; i < this.notifiersForLive.length; i++){
+    this.notifiersForLive[i]();
+    this.notifiersForLive = null;
+  }
 
   that.changeToDatabase(that.databaseToTalkTo, that.errCB);
 
@@ -486,10 +496,10 @@ exports.trigger = function(db,callback){
   that.getAllTweets(function(err, rows, fields){
     console.log("NUMBER OF CURRENT TWEETS: ", rows.length);
 
-    // that.addKeyword("potus", function(tweets){
-    //  console.log(tweets.length);
+    that.addKeyword("potus", function(tweets){
+      console.log(tweets.length);
     //  //that.createLayerTableBase();
-    // });
+    });
 
   });
 

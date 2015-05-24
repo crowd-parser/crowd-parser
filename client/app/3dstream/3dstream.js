@@ -5,6 +5,8 @@ angular.module('parserApp')
     var socket = Twitter.socket;
     $scope.tweetData = [];
     $scope.tweetCount = 0;
+    var runFakeTweets = false;
+    var intervalID;
 
     window.camera = Display3d.init();
     Display3d.animate();
@@ -20,6 +22,46 @@ angular.module('parserApp')
     $scope.$on('$locationChangeStart', function (event, next, current) {
       socket.emit('twitter stop continuous stream');
     });
+
+    var fakeScore = function () {
+      if (Math.random() < 0.6) {
+        return 0;
+      }
+      return Math.round(-1 + 2 * Math.random());
+    };
+
+    var fakeText = function () {
+      var length = 10 + 100 * Math.random();
+      var chars = "abcdefghijklmnopqurstuvwxyz";
+      var text = '';
+      for (var i = 0; i < length; i++) {
+        if (3 * Math.random() <= 1 && text[text.length-1] !== ' ') {
+          text += ' '
+        }
+        text += chars[Math.floor(chars.length * Math.random())];
+      }
+      return text;
+    };
+
+    var addFakeTweet = function () {
+      if (runFakeTweets === true) {
+        var fakeTweet = {};
+        fakeTweet.baseLayerResults = { score: fakeScore() };
+        fakeTweet.emoticonLayerResults = { score: fakeScore() };
+        fakeTweet.username = 'user' + Math.round(1000 * Math.random());
+        fakeTweet.text = fakeText();
+        $scope.tweetData.push(fakeTweet);
+        Display3d.addTweet(fakeTweet, $scope.tweetCount);
+        $scope.tweetCount++;
+      }
+    };
+
+    $scope.streamFakeTweets = function () {
+      // stop any existing stream
+      socket.emit('twitter stop continuous stream');
+      runFakeTweets = true;
+      intervalID = setInterval(addFakeTweet, 500);
+    };
 
     $scope.start3DKeywordStream = function () {
       // stop any existing stream
@@ -44,5 +86,9 @@ angular.module('parserApp')
 
     $scope.stopTweets = function () {
       socket.emit('twitter stop continuous stream');
+      runFakeTweets = false;
+      if (intervalID) {
+        clearInterval(intervalID);
+      }
     };
   });

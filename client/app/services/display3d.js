@@ -15,6 +15,8 @@ angular.module('parserApp.display3dService', [])
 
   var scene, camera, renderer, controls, prevCameraPosition;
 
+  var layersSeparated = true;
+
   var layers = [];
   var frontLayerZ = 0;
   var layerSpacing = 300;
@@ -200,92 +202,98 @@ angular.module('parserApp.display3dService', [])
     makeTweetLayer('emoticonLayerResults', 'emoji', frontLayerZ - layerSpacing);
 
     addButtonEvent('separate-3d', 'click', function(event) {
-      for (var i = 0; i < layers.length; i++) {
-        layers[i].tweets.forEach(function(tweet) {
-          new TWEEN.Tween( tweet.obj.position )
-            .to( {z: frontLayerZ - layerSpacing*i}, 1000 )
+      if (!layersSeparated) {
+        for (var i = 0; i < layers.length; i++) {
+          layers[i].tweets.forEach(function(tweet) {
+            new TWEEN.Tween( tweet.obj.position )
+              .to( {z: frontLayerZ - layerSpacing*i}, 1000 )
+              .easing( TWEEN.Easing.Exponential.InOut )
+              .start();
+
+            if (tweet.baseBGColor === 'rgba(225,225,225,0.8)') {
+              new TWEEN.Tween( {val: 0} )
+                .to ( {val: 0.8}, 1000 )
+                .easing( TWEEN.Easing.Exponential.InOut )
+                .onUpdate( function () {
+                  tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
+                })
+                .start();
+            }
+          });
+          new TWEEN.Tween( layers[i].ribbonObj.position )
+            .to( {z: frontLayerZ - layerSpacing*i - 1}, 1000 )
             .easing( TWEEN.Easing.Exponential.InOut )
             .start();
-
-          if (tweet.baseBGColor === 'rgba(225,225,225,0.8)') {
-            new TWEEN.Tween( {val: 0} )
-              .to ( {val: 0.8}, 1000 )
+          if (i > 0) {
+            new TWEEN.Tween( layers[i].titleEl.style )
+              .to( {opacity: 1}, 500 )
               .easing( TWEEN.Easing.Exponential.InOut )
-              .onUpdate( function () {
-                tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
-              })
               .start();
           }
-        });
-        new TWEEN.Tween( layers[i].ribbonObj.position )
-          .to( {z: frontLayerZ - layerSpacing*i - 1}, 1000 )
-          .easing( TWEEN.Easing.Exponential.InOut )
-          .start();
-        if (i > 0) {
-          new TWEEN.Tween( layers[i].titleEl.style )
-            .to( {opacity: 1}, 500 )
-            .easing( TWEEN.Easing.Exponential.InOut )
-            .start();
+          layers[i].z = frontLayerZ - layerSpacing*i - 1;
+          if (i === 0) {
+            var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
+              .to( {opacity: 0}, 500)
+              .easing( TWEEN.Easing.Quadratic.InOut )
+              .onComplete(function () {
+                layers[0].titleEl.textContent = layers[0].title + ' layer';
+              });
+            var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
+              .to( {opacity: 1}, 500)
+              .easing( TWEEN.Easing.Quadratic.InOut );
+            fadeOut.chain(fadeIn).start();
+          }
         }
-        layers[i].z = frontLayerZ - layerSpacing*i - 1;
-        if (i === 0) {
-          var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
-            .to( {opacity: 0}, 500)
-            .easing( TWEEN.Easing.Quadratic.InOut )
-            .onComplete(function () {
-              layers[0].titleEl.textContent = layers[0].title + ' layer';
-            });
-          var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
-            .to( {opacity: 1}, 500)
-            .easing( TWEEN.Easing.Quadratic.InOut );
-          fadeOut.chain(fadeIn).start();
-        }
+        layersSeparated = true;
       }
     });
 
     addButtonEvent('flatten-3d', 'click', function(event) {
-      for (var i = 0; i < layers.length; i++) {
-        layers[i].tweets.forEach(function(tweet) {
-          new TWEEN.Tween( tweet.obj.position )
-            .to( {z: frontLayerZ - 2*i}, 1000 )
+      if (layersSeparated) {
+        for (var i = 0; i < layers.length; i++) {
+          layers[i].tweets.forEach(function(tweet) {
+            new TWEEN.Tween( tweet.obj.position )
+              .to( {z: frontLayerZ - 2*i}, 1000 )
+              .easing( TWEEN.Easing.Exponential.InOut )
+              .start();
+
+            if (tweet.baseBGColor === 'rgba(225,225,225,0.8)') {
+              new TWEEN.Tween( {val: 0.8} )
+                .to ( {val: 0}, 1000 )
+                .easing( TWEEN.Easing.Exponential.InOut )
+                .onUpdate( function () {
+                  tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
+                })
+                .start();
+            }
+          });
+          new TWEEN.Tween( layers[i].ribbonObj.position )
+            .to( {z: frontLayerZ - 2*i - 1}, 1000 )
             .easing( TWEEN.Easing.Exponential.InOut )
             .start();
-
-          if (tweet.baseBGColor === 'rgba(225,225,225,0.8)') {
-            new TWEEN.Tween( {val: 0.8} )
-              .to ( {val: 0}, 1000 )
+          if (i > 0) {
+            new TWEEN.Tween( layers[i].titleEl.style )
+              .to( {opacity: 0}, 500)
               .easing( TWEEN.Easing.Exponential.InOut )
-              .onUpdate( function () {
-                tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
-              })
               .start();
           }
-        });
-        new TWEEN.Tween( layers[i].ribbonObj.position )
-          .to( {z: frontLayerZ - 2*i - 1}, 1000 )
-          .easing( TWEEN.Easing.Exponential.InOut )
-          .start();
-        if (i > 0) {
-          new TWEEN.Tween( layers[i].titleEl.style )
-            .to( {opacity: 0}, 500)
-            .easing( TWEEN.Easing.Exponential.InOut )
-            .start();
+          layers[i].z = frontLayerZ - 2*i;
+          if (i === 0) {
+            var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
+              .to( {opacity: 0}, 500)
+              .easing( TWEEN.Easing.Quadratic.InOut )
+              .onComplete(function () {
+                layers[0].titleEl.textContent = layers.map(function (item) {
+                  return item.title;
+                }).join(' + ') + ' layers';
+              });
+            var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
+              .to( {opacity: 1}, 500)
+              .easing( TWEEN.Easing.Quadratic.InOut );
+            fadeOut.chain(fadeIn).start();
+          }
         }
-        layers[i].z = frontLayerZ - 2*i;
-        if (i === 0) {
-          var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
-            .to( {opacity: 0}, 500)
-            .easing( TWEEN.Easing.Quadratic.InOut )
-            .onComplete(function () {
-              layers[0].titleEl.textContent = layers.map(function (item) {
-                return item.title;
-              }).join(' + ') + ' layers';
-            });
-          var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
-            .to( {opacity: 1}, 500)
-            .easing( TWEEN.Easing.Quadratic.InOut );
-          fadeOut.chain(fadeIn).start();
-        }
+        layersSeparated = false;
       }
     });
 

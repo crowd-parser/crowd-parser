@@ -96,3 +96,9 @@ header {
   -o-transform-style: preserve-3d;  
   transform-style: preserve-3d;
 }
+
+.home-panel {
+    background: #91AA9D;
+    width: 50%;
+    height: 500px;
+}

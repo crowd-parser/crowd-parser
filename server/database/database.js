@@ -548,6 +548,26 @@ exports.trigger = function(db,callback){
 
 //===========================================
 
+// exports.db.query('USE production');
+// exports.db.query("INSERT INTO admin VALUES('aaa', 'bbb', null);", function(err, rows) {
+//   console.log(err, rows);
+// });
+
 exports.addAdmin = function(admin, callback){
-  this.genericAddToTable('admin', [admin], callback, null);
+  console.log(admin);
+  this.db.query('USE production');
+  this.db.query("INSERT INTO admin VALUES('" + admin.username + "', '" + admin.password + "', null);", function(err, rows) {
+    console.log(err, rows);
+  });
+};
+
+exports.findAdmin = function(username, callback) {
+  this.db.query('USE production;');
+  this.db.query('SELECT * FROM admin;', function(err, rows, fields) {
+    if (err) {
+      console.log(err);
+    } else {
+      callback(rows);
+    }
+  });
 };

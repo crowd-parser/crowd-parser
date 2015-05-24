@@ -6,23 +6,24 @@ var router = express.Router();
 var bcrypt = require('bcrypt-nodejs');
 var db = require('../../database/database');
 
-db.tellMeWhenDatabaseIsLive(function() {
-  console.log('EOIWJ:LDKFJ')
-  db.genericCreateTable('admin', {username: 'name', password: 'password'}, function(err, res) {
-    console.log('TESTSETESTES')
-    console.log(err, res);
-  });
-});
+// db.db.query('USE production');
+// db.db.query("INSERT INTO admin VALUES('aaa', 'bbb', null);", function(err, rows) {
+//   console.log(err, rows);
+// });
 
 router.post('/', function(req, res, next) {
-  db.addAdmin({username: req.body.username, password: req.body.password}, function(err) {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log('success!');
-      res.send('success.');
-    }
-  })
+  console.log(req.body);
+  // db.db.query('USE production');
+  // db.db.query('INSERT INTO admin VALUES("' + req.body.username + '", "' + req.body.password + '", null);', function(err, results) {
+  //   console.log(err, rows);
+  //   res.send('success!');
+  // });
+  db.db.query('USE production');
+  db.db.query("INSERT INTO admin VALUES('aaa', 'bbb', null);", function(err, rows) {
+    console.log(err, rows);
+    res.send('success!')
+  });
+  console.log('after db')
 });
 
 module.exports = router;

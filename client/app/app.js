@@ -2,7 +2,6 @@
 
 angular.module('parserApp', [
   'parserApp.twitterService',
-  'parserApp.wordcloudService',
   'parserApp.display3dService',
   'parserApp.authService',
   'parserApp.directives.dirPagination',

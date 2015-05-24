@@ -1,0 +1,130 @@
+// DEPRECATED HTML CODE FOR VARIOUS TWITTER SEARCHES
+
+<div class="container">
+  <div class="starting-view" ng-show="startingView">
+
+
+    <div class="app-section">
+
+      <h3>The Latest Million Tweets</h3>
+      How's Twitter feeling overall?<br>
+      <strong>Chart here</strong><br>
+      How's Twitter feeling about _______?<br>
+      <form>
+        <input type="text" placeholder="TODO: Query database of million tweets">
+        <button>Submit</button>
+      </form>
+      Is Twitter confused? You can help.<br>
+      <strong>Paginated list of tweets and their analysis. Users interact and mark how accurate, what was off, words that should be added/changed.</strong>
+    </div>
+
+    <div class="app-section">
+      <h3>Twitter's journey through time</h3>
+
+      <strong>Charts</strong><br>
+      About "Hillary Clinton"<br>
+      About the "SuperBowl"<br>
+      About "Obamacare"<br>
+      About "ice cream"<br>
+      About "death"<br><br>
+
+      Is twitter confused? You can help.<br><br>
+
+      Begin another Twitter journey (general, topic)<br><br>
+
+      <strong>Twitter Stream Filter</strong>
+
+      <form ng-submit="getTwitterStreamFilter()">
+        <div class="form-group">
+          <label for="twitter-stream-filter-count">How many Tweets do you want to analyze?</label>
+          <input type="number" class="form-control" ng-model="twitterStreamFilterCount">
+        </div>
+        <div class="form-group">
+          <label for="twitter-stream-filter-topics">What topics do you want to analyze? (separate by commas</label>
+          <input type="text" class="form-control" ng-model="twitterStreamFilterTopics">
+        </div>
+        <button class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+
+    <div class="app-section">
+      <h3>Snapshot of Twitter's current mood</h3>
+
+      Topics currently on Twitter's mind:<br><br>
+
+        <strong>Top 10 trending topics in USA</strong>
+        <div ng-repeat="topic in trendingTopics">
+        <a ng-click="searchTrendingTopic(topic.query)">{{topic.name}}</a>
+      </div>
+
+      Choose a topic: ________<br><br>
+
+      <strong>Twitter REST Search</strong>
+
+      <form ng-submit="getTwitterRestSearch()">
+        <div class="form-group">
+          <label for="twitter-rest-search-query">Query</label>
+          <input type="text" class="form-control" ng-model="twitterRestSearchQuery">
+        </div>
+        <div class="form-group">
+          <label for="twitter-rest-search-result-type">recent or mixed (with popular)? (popular only returns 15 at most</label>
+          <input type="text" class="form-control" ng-model="twitterRestSearchResultType">
+        </div>
+        <div class="form-group">
+          <label for="twitter-rest-search-count">How many tweets would you like to retrieve (up to 100)?</label>
+          <input type="number" class="form-control" ng-model="twitterRestSearchCount">
+        </div>
+        <button class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+
+    <div class="app-section">
+      <h3>How are Twitter's friends feeling?</h3>
+
+      <strong>Twitter REST User Timeline</strong>
+
+      <form ng-submit="getTwitterRestUserTimeline()">
+        <div class="form-group">
+          <label for="twitter-rest-user-timeline-screenname">Screenname of Twitter user</label>
+          <input type="text" class="form-control" ng-model="twitterRestUserTimelineScreenname">
+        </div>
+        <div class="form-group">
+          <label for="twitter-rest-user-timeline-count">How many tweets would you like to retrieve (up to 200)?</label>
+          <input type="number" class="form-control" ng-model="twitterRestUserTimelineCount">
+        </div>
+        <button class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+  </div>
+
+
+  <div class="results-view" ng-hide="startingView">
+    <button class="btn btn-info" ng-click="startingView = true">Back</button>
+
+    <hr>
+
+      Number of tweets received: {{numberReceived}}<br>
+      <div ng-repeat="topicNumberReceived in topicsEachReceived">
+        {{topicNumberReceived.topic}}: {{topicNumberReceived.count}}
+      </div>
+      Random tweets: {{numberLeftOver}}
+
+      <div class="d3"></div>
+
+    </div>
+  </div>
+
+  
+
+  <h2>Twitter Stream Sample</h2>
+
+  <form ng-submit="getTwitterStreamSample()">
+    <div class="form-group">
+      <label for="twitter-stream-sample-count">How many Tweets do you want to analyze?</label>
+      <input type="number" class="form-control" ng-model="twitterStreamSampleCount">
+    </div>
+    <button class="btn btn-primary">Submit</button>
+  </form>
+
+
+  // DEPRECATED JS CONTROLLER CODE

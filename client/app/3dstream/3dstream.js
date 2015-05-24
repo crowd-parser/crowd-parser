@@ -6,7 +6,7 @@ angular.module('parserApp')
     $scope.tweetData = [];
     $scope.tweetCount = 0;
 
-    Display3d.init();
+    window.camera = Display3d.init();
     Display3d.animate();
 
     // stops stream if user leaves page

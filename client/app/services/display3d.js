@@ -33,7 +33,9 @@ angular.module('parserApp.display3dService', [])
     if (!camera.position.equals(prevCameraPosition)) {
       // if so, adjust ribbon width so you don't see the left/right ends of the ribbon
       layers.forEach(function(layer) {
-        var newRibbonWidth = Math.abs(camera.position.z) * 5;
+        var cameraDistanceFromTarget = new THREE.Vector3();
+        cameraDistanceFromTarget.subVectors(camera.position, controls.target);
+        var newRibbonWidth = Math.abs(cameraDistanceFromTarget.length()) * 6;
         layer.ribbonEl.style.width = newRibbonWidth + 'px';
         layer.ribbonEl.children[0].style.left = (newRibbonWidth/2 - 1000) + 'px';
       });
@@ -41,18 +43,9 @@ angular.module('parserApp.display3dService', [])
 
     prevCameraPosition.copy(camera.position);
 
-
-    // every 60 ticks add a tweet
+    // code for doing something every 30 ticks
     // if (tick >= 30 && keepAddingTweets) {
     //   tick = 0;
-    //   var newTweetIndex = layers[0].tweets.length;
-    //   var x = newTweetIndex;
-    //   if (x > 23) {
-    //     x = x % 23;
-    //   }
-    //   for (var j = 0; j < layers.length; j++) {
-    //     addTweet(tweetData[x], layers[j], newTweetIndex);
-    //   }
     // }
 
     if (leftHover) {
@@ -251,7 +244,6 @@ angular.module('parserApp.display3dService', [])
     });
 
     addButtonEvent('flatten-3d', 'click', function(event) {
-      console.log(frontLayerZ);
       for (var i = 0; i < layers.length; i++) {
         layers[i].tweets.forEach(function(tweet) {
           new TWEEN.Tween( tweet.obj.position )
@@ -316,7 +308,9 @@ angular.module('parserApp.display3dService', [])
 
     prevCameraPosition = new THREE.Vector3();
     prevCameraPosition.copy(camera.position);
+    return camera;
   };
+
 
 
   return {

@@ -13,6 +13,8 @@ angular.module('parserApp')
   var countToGet = countToGet;
   var wordsArray;
   var twitterStreamFilterTopics;
+  var tweetsDisplayArray = [];
+  var displayNumber;
 
   var twitterHelpers = {
     resetStreamSample: function() {
@@ -61,8 +63,6 @@ angular.module('parserApp')
   };
 
   // =========== twitter-stream-sample section ============ //
-
-  // socket.emit('home timeline');
 
   // socket.on('home timeline', function(data) {
   //   console.log(data);
@@ -187,6 +187,12 @@ angular.module('parserApp')
 
   socket.on('twitter rest trending', function(data) {
     $scope.$apply(function() {
+      $scope.trendingArray = data[0].trends;
+    });
+    $scope.displayedQuery = $scope.trendingArray[Math.floor(Math.random() * 10)].name;
+    
+    socket.emit('twitter rest search', $scope.displayedQuery, 'mixed', 100);
+    $scope.$apply(function() {
       $scope.trendingTopics = data[0].trends;
     });
   });
@@ -212,10 +218,23 @@ angular.module('parserApp')
       tweet.text = textArray.join(' ');
     });
 
+    tweetsDisplayArray = data.tweetsWithAnalyses;
+
     $scope.$apply(function() {
-      $scope.allLayers = data;
+      displayNumber = Math.floor(Math.random() * tweetsDisplayArray.length);
+      $scope.allLayers = tweetsDisplayArray[displayNumber];
     });
   });
+
+  $scope.nextTweet = function() {
+    displayNumber = Math.floor(Math.random() * tweetsDisplayArray.length);
+    $scope.allLayers = tweetsDisplayArray[displayNumber];
+  };
+
+  $scope.newDisplayedQuery = function(query) {
+    $scope.displayedQuery = query;
+    socket.emit('twitter rest search', query, 'mixed', 100);
+  };
 
   var world = document.getElementById( 'world' );
   var d = 0;

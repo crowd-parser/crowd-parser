@@ -107,7 +107,7 @@ module.exports = function(io, T) {
 
     socket.on('twitter rest search', function(query, result_type, count) {
       T.get('search/tweets', {q: query, count: count, result_type: result_type}, function(err, data) {
-        socket.emit('twitter rest search', data);
+        // socket.emit('twitter rest search', data);
 
         var allLayersResults = allLayersAnalysis.tweetsArray(data.statuses);
                   
@@ -116,8 +116,13 @@ module.exports = function(io, T) {
     });
 
     socket.on('home timeline', function() {
-      T.get('statuses/home_timeline', {count: 200}, function(err, data) {
-        socket.emit('home timeline', data);
+      T.get('statuses/home_timeline', {count: 50}, function(err, data) {
+        console.log(data);
+        var allLayersResults = allLayersAnalysis.tweetsArray(data);
+                  
+        io.emit('all layers', allLayersResults);
+
+        // socket.emit('home timeline', data);
       });
     });
 
@@ -133,7 +138,7 @@ module.exports = function(io, T) {
 
       streamDownload = T.stream('statuses/sample');
       var count = 0;
-      rate = rate || 4;
+      var rate = rate || 4;
 
       streamDownload.on('tweet', function(tweet) {
         if (tweet.lang === 'en') {

@@ -1,14 +1,25 @@
 'use strict';
 
 angular.module('parserApp')
-  .controller('3dStreamCtrl', function ($scope, Twitter, Display3d) {
+  .controller('3dStreamCtrl', function ($scope, $state, $location, Twitter, Display3d) {
     var socket = Twitter.socket;
     $scope.tweetData = [];
     $scope.tweetCount = 0;
     var runFakeTweets = false;
     var intervalID;
+    var containerID = 'container-3d';
+    var cameraZ;
+    var cameraY;
+    var displayHeight = window.innerHeight;
 
-    window.camera = Display3d.init();
+    if ($state.current.name === 'main.frontpage3d') {
+      containerID = 'mini-container-3d';
+      cameraZ = 800;
+      cameraY = 100;
+      displayHeight = 250;
+    };
+
+    window.camera = Display3d.init(containerID, cameraY, cameraZ, displayHeight);
     Display3d.animate();
 
     // stops stream if user leaves page
@@ -61,6 +72,10 @@ angular.module('parserApp')
       socket.emit('twitter stop continuous stream');
       runFakeTweets = true;
       intervalID = setInterval(addFakeTweet, 500);
+    };
+
+    $scope.fullScreen = function () {
+      $location.path('/3dstream');
     };
 
     $scope.start3DKeywordStream = function () {

@@ -19,6 +19,10 @@ angular.module('parserApp', [
         templateUrl: 'app/main/main.html',
         controller: 'MainCtrl'
       })
+      .state('main.frontpage3d', {
+        templateUrl: 'app/main/main.frontpage3d.html',
+        controller: '3dStreamCtrl'
+      })
       .state('3dstream', {
         url: '/3dstream',
         templateUrl: 'app/3dstream/3dstream.html',

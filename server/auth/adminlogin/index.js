@@ -58,4 +58,12 @@ router.post('/showTableSize', function(req, res, next) {
   })
 });
 
+router.get('/showAllKeywords', function(req, res, next) {
+  db.db.query('SELECT * FROM keywords;', function(err, rows) {
+    console.log(err, rows);
+
+    res.send(rows);
+  });
+})
+
 module.exports = router;

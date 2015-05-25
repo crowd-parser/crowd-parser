@@ -5,10 +5,19 @@
   <div>{{tableBeingViewed}}</div>
   <div>{{tableSize}}</div>
 
+  <h3>List of keywords</h3>
+  <div ng-repeat="keyword in keywordsList">
+    <div>{{keyword.id}} | {{keyword.keyword}} | {{keyword.tableName}}</div>
+  </div>
+
+  <h3>List of Layers</h3>
+
   <h3>List of tables</h3>
   <div ng-repeat="table in dbtables">
-    {{table["Tables_in_production"]}} | <span ng-click="showTableSize(table.table)">Show size</span> | <span>Show contents</span>
+    {{table["Tables_in_production"]}} | <span ng-click="showTableSize(table.table)">Show size</span>
   </div>
+
+  <button class="btn btn-info" ng-click="showAllKeywords()">Show all keywords</button>
     
   <div class="admin-dashboard" style="background: #FFF; padding: 20px">
 

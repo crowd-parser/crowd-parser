@@ -18,6 +18,14 @@ angular.module('parserApp')
       });
     };
 
+    $scope.showAllKeywords = function() {
+      $http.get('/auth/adminlogin/showAllKeywords')
+        .success(function(data) {
+          console.log(data);
+          $scope.keywordsList = data;
+        });
+    };
+
     $scope.startDownload = function() {
 
       var rate = $scope.streamDownloadRate;

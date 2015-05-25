@@ -13,6 +13,7 @@ angular.module('parserApp')
 
     $scope.showTableSize = function(tableName) {
       $http.post('/auth/adminlogin/showTableSize', {tableName: tableName}).success(function(data) {
+        $scope.tableBeingViewed = tableName;
         $scope.tableSize = data;
       });
     };

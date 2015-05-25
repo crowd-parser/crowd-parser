@@ -33,10 +33,15 @@ router.get('/getTables', function(req, res, next) {
   
   db.db.query('USE production');
   db.db.query('SHOW TABLES;', function(err, response) {
-    response.forEach(function(table) {
-      table.table = table["Tables_in_production"];
-    })
-    res.send(response);
+    try {
+      response.forEach(function(table) {
+        table.table = table["Tables_in_production"];
+      })
+      res.send(response);
+    } catch(e) {
+      console.log(e);
+      res.send(response);
+    }
   });
 
 });

@@ -1,4 +1,5 @@
 //TODO
+//investigate connection open and closing for performance
 //runtime keyword search
 //store layer results
 //handle emojis inputted into db
@@ -8,22 +9,19 @@
 
 //USAGE
 /*
+        addNewLayer - <layerName> <callback>
+        redoLayer - <layerName> <callback>
+        deleteLayer - <layerName> <callback>
 
-        addTweet(
-                  tweetObject,
-                  callbackForEachAdd<err, rows, fields>,
-                  );
+        addNewKeyword - <keyword> <callback>
+        redoKeyword - <keyword> <callback>
+        deleteKeyword - <keyword> <callback>
 
-        addTweets(
-                  arrOfTweetObjects,
-                  callbackForEachAdd<err, rows, fields>,
-                  callbackAtEnd< >
-                  );
+        createDatabase - <databaseName> <callback>
+        changeToDatabase - <databaseName> <callback>
+        deleteDatbase - <databaseName> <callback>
 
-        addKeyword(
-                  keyword,
-                  callbackAtEndWithTweets< arrayOfObjects >
-                  );
+        executeFullChainForIncomingTweets - <[tweetObjects]> <callback>
 */
 
 //stores connection information from non-shared database configuration file
@@ -39,8 +37,8 @@ exports.db.connect(function(err){
     }
 });
 
-exports.layerBaseWordsFunction = require('../sentiment/baseWordsLayer/baseWordsLayerAnalysis.js');
-exports.layerEmoticonsFunction = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js');
+exports.layer_Base_Function = require('../sentiment/baseWordsLayer/baseWordsLayerAnalysis.js');
+exports.layer_Emoticons_Function = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js');
 
 /*==================================================================*/
 
@@ -48,11 +46,11 @@ exports.layerEmoticonsFunction = require('../sentiment/emoticonLayer/emoticonLay
 
 /*============= DEBUG and MACRO SETTINGS =================*/
 //ONLY SET THIS IF YOU PLAN TO CHANGE SCHEMA, OTHERWISE LEAVE AS IS
-var TALK_TO_DEV_DATABASE = false;
-  var NUKE_ALL_TABLES_ON_START = false; //false will prevent further debug stuff
-  var THIS_IS_REALLY_SURE_YOU_WANT_TO_NUKE_EVERYTHING = false;
+var TALK_TO_DEV_DATABASE = true;
+  var NUKE_ALL_TABLES_ON_START = true; //false will prevent further debug stuff
+  var THIS_IS_REALLY_SURE_YOU_WANT_TO_NUKE_EVERYTHING = true;
     var FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS = []; //manually add test tweets here
-    var ADD_THESE_KEYWORDS = ["Obama", "Apple", "Avengers"]; //manually add test keywords here
+    var ADD_THESE_KEYWORDS = ["Awesome", "you", "starting"]; //manually add test keywords here
 
     var ADD_ALL_19_MEGS_OF_TEST_TWEETS = false;
       var ALL_THE_TEST_TWEETS = {};
@@ -86,36 +84,42 @@ exports.genericGetTableColumnNames = function(tableName, callback){
   this.db.query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION",[this.databaseToTalkTo, tableName] , callback);
 };
 
-exports.genericGetItemsWithTextColumnContaining = function(tableName, columnName, string, callback){
-  this.db.query("SELECT * FROM " + tableName +  " WHERE " + columnName + " LIKE '%" + string + "%'", callback);
+exports.genericGetItemsWithTextColumnContaining = function(lastId, tableName, columnName, string, callback){
+  var idSelect = "";
+  if(lastId){
+    idSelect = "id >" + lastId + " AND ";
+  }
+  this.db.query("SELECT * FROM " + tableName +  " WHERE " + idSelect + columnName + " LIKE '%" + string + "%'", callback);
 };
+
 
 exports.searchForTweetsWithKeyword = function(keyword, callback){
-  this.genericGetItemsWithTextColumnContaining("tweets", "text", keyword, callback);
+  this.genericGetItemsWithTextColumnContaining(null, "tweets", "text", keyword, callback);
 };
 
-exports.searchInTweetsForKeyword = function(keyword, tweets, callback){
-  //TODO;
+exports.filterTweetsFromIdByKeyword = function(id, keyword){
+  this.db.query("INSERT INTO tweets_containing_" + keyword + " (tweet_id) SELECT id FROM tweets WHERE id > " + id);
 };
 
-exports.searchForValueInColumn = function(tableName, columnName, value){
-  //TODO;
-};
+exports.filterTweetObjectsForLayer  = function(rows, layerName,callback){
 
-exports.filterTweetsByLayer = function(tweets, layerName, callback){
-  //return only the tweets that also exist in the layer table
-  var filteredTweets = [];
+  var addThese = [];
 
-  //a layer will just have a list of tweet primary keys
-  //so the tweets that come in here must come from the database first
+  for(var i = 0; i < rows.length; i++){
+    addThese.push({result: that["layer_"+layerName+"_Function"](rows[i].text), tweet_id: rows[i].id});
+  }
 
-  //that probably means we should use a database join on them
-
-
-  calback(filteredTweets);
+  that.genericAddToTable(layerName,addThese,null,callback,true);
 
 };
 
+exports.getLayerNames = function(cb){
+  if(this.cache.layerList){
+    cb(this.cache.layerList)
+  }else{
+    this.generic
+  }
+}
 
 //===========================================
 
@@ -124,38 +128,40 @@ exports.filterTweetsByLayer = function(tweets, layerName, callback){
 
 //============== CREATE STUFF ==================
 
-exports.createLayerTableBase = function(callback){
-  this.genericCreateLayerTable("base", this.layerBaseWordsFunction, callback);
-};
-
-exports.createLayerTableEmoticon = function(callback){
-  this.genericCreateLayerTable("emoticon", this.layerEmoticonsFunction, callback);
-};
-
-exports.genericCreateLayerTable = function(layerName, layerFunc, finalCB){
+exports.addNewLayer = function(layerName, finalCB){
   var that = this;
-  this.getAllTweets(function(err, rows, fields){
-    layerName = "layer_" + layerName;
-    that.temp.cLT = {layerName: layerName, layerFunc: layerFunc, rows: rows, finalCB: finalCB};
-    that.genericCreateTable(that.temp.cLT.layerName,{result: 1}, function(){
-      that.addForeignKey(that.temp.cLT.layerName, "tweet_id", "tweets", "id", function(){
-        that.setColumnToUnique("tweets","tweet_id", function(){
+  this.genericCreateTable("layerNames",{layerName: layerName}, function(){
 
-          var addThese = [];
 
-          for(var i = 0; i < rows.length; i++){
-            if(i % 100 === 0) console.log("PROCESSED TWEETS: ", i);
-            addThese.push({result: that.temp.cLT.layerFunc(that.temp.cLT.rows[i].text), tweet_id: that.temp.cLT.rows[i].id});
-          }
+    that.getAllTweets(function(err, rows, fields){
+      layerName = "layer_" + layerName;
+      that.temp.cLT = {layerName: layerName, rows: rows, finalCB: finalCB};
+      that.genericAddToTable("layerNames", {layerName: layerName});
+      that.genericCreateTable(that.temp.cLT.layerName,{result: 1}, function(){
+        that.addForeignKey(that.temp.cLT.layerName, "tweet_id", "tweets", "id", function(){
+          that.setColumnToUnique("tweets","tweet_id", function(){
 
-          that.genericAddToTable(that.temp.cLT.layerName,addThese,null,function(){
-            that.temp.cLT.finalCB(that.temp.cLT.rows);
+            //call filter helper function here now if wanted
+            //maybe we just allow table creation and then leave it empty here for now.
+            that.filterTweetObjectsForLayer(rows, layerName, finalCB);
+            //that.temp.cLT.finalCB();
+
           });
-
         });
       });
     });
   });
+};
+
+exports.redoLayer = function(layerName, finalCB){
+  var that = this;
+  this.genericDropTable("layer_" + layerName, function(){
+    that.addNewLayer(layerName, finalCB);
+  })
+};
+
+exports.deleteLayer = function(layerName, cb){
+  this.genericDropTable(layerName, cb);
 };
 
 exports.addForeignKey = function(thisTable, thisTableColumn, thatTable, thatTableColumn, callback){
@@ -173,9 +179,6 @@ exports.setColumnToUnique = function(tableName, columnName, callback){
   this.db.query("ALTER IGNORE TABLE " + tableName + " ADD UNIQUE (" + columnName + ")", callback);
 };
 
-exports.changeColumnProperty = function(tableName){
-  //ALTER TABLE table_name ALTER COLUMN column_name datatype
-};
 
 exports.genericCreateTable = function(tableName, exampleObject, callback){
     var AI = "AUTO_INCREMENT"; //left over from when there were multiple options
@@ -190,10 +193,10 @@ exports.genericCreateTable = function(tableName, exampleObject, callback){
         //TODO just doing all text for now, will specify based on content later
         //there have been isues with larger than 32 bit ints here
       if(isNaN(exampleObject[key]) ){
-        type = "TEXT";
+        type = "VARCHAR(200)";
       }else{
-        console.log("ADDING INTEGER FIELD OF: ", key);
-        type = "INTEGER";
+        //console.log("ADDING INTEGER FIELD OF: ", key);
+        type = "BIGINT";
       }
       str = str + " " + key + " " + type + ',';
     }
@@ -260,9 +263,99 @@ exports.rearchitectArrWithDeepObjects = function(arr){
 };
 
 
+exports.asyncMap = function(funcs, finalCB){
+  var count = funcs.length;
+  var finalResults = [];
+
+  var cb = function(index, result){
+    finalResults[index] = result;
+    count--;
+    if(count === 0){
+      finalCB(finalResults);
+    }
+  };
+
+  for(var i = 0; i < funcs.length; i++){
+    funcs[i](cb);
+  }
+};
 
 //=============== ADD STUFF ====================
-exports.addKeyword = function(keyword, callbackForTweets){
+exports.cache = exports.cache || {};
+exports.executeFullChainForIncomingTweets = function(tweets){
+
+  //store tweets in database - need IDs from dB
+
+  var that = this;
+
+  this.genericAddToTable('tweets', tweets, null, function(err, rows, fields){
+    //tweets added to database, done
+    var testForKeywordListCache = function(main){
+      that.genericGetAll('keywords', function(err, rows, fields){
+        that.cache.keywordList = [];
+        for(var i = 0; i < rows.length; i++){
+          that.cache.keywordList.push(rows[i].keyword);
+        }
+        main(rows);
+      });
+    };
+
+    var main = function(rows){
+      for(var i = 0; that.cache.keywordList.length; i++){
+        filterTweetsFromIdByKeyword(rows[0].id, that.cache.keywordList[i]);
+      }
+      //database is now cranking on updating keyword lists
+
+      //server starts processing layers
+        //pull a layer names
+        //loop and run layer functions
+
+        var testForLayerListCache = function(finishLayers){
+          that.genericGetAll('layers', function(err, rows, fields){
+            that.cache.layers = [];
+            for(var i = 0; i < rows.length; i++){
+              that.cache.layers.push(rows[i].layer);
+            }
+            finishLayers(rows);
+          });
+        };
+
+        var finishLayers = function(){
+          //user async map
+          for(var i = 0; that.cache.layerList.length; i++){
+            filterTweetObjectsForLayer(rows, that.cache.layerList[i]);
+          }
+        };
+
+        if(that.cache.layerList){
+          testForLayerListCache(finishLayers);
+        }else{
+          finishLayers(rows);
+        }
+
+
+      //then use a loop to tell db to insert into with result data and id
+
+      //at this point, maybe earliet, we could have sent the tweets back to the server to
+        //send to all clients on the wire
+
+
+    };
+
+    if(that.cache.keywordList){
+      testForKeywordListCache(main);
+    }else{
+      main(rows);
+    }
+
+
+
+  }, true);
+
+};
+
+
+exports.addNewKeyword = function(keyword, callbackForTweets){
   var that = this;
   this.temp.kObj = {keyword: keyword, tableName: "tweets_containing_" + keyword, lastHighestIndexed: 0};
   this.temp.kCB = {callbackForTweets: callbackForTweets, tweets:false};
@@ -299,32 +392,37 @@ exports.addKeyword = function(keyword, callbackForTweets){
   });
 };
 
-exports.addTweet = function(tweet, callback){
-  this.genericAddToTable('tweets', [tweet], callback, null);
+exports.redoKeyword = function(keyword, callbackForTweets){
+  var taht = this;
+  this.genericDropTable(keyword, function(){
+    that.addNewKeyword(keyword, callbackForTweets);
+  });
 };
 
-exports.addTweets = function(tweets, callbackPer, callbackEnd){
+exports.deleteKeyword = function(keyword, callback){
+  this.genericDropTable(keyword, callback);
+}
 
-  var newCallbackPer = function(err, rows, fields){
-    //could reindex on keywords here, or something
-    //maybe set them as not indexed yet, like in a columln
-    if(callbackPer) callbackPer(err, rows, fields);
-  }
+// exports.addTweet = function(tweet, callback){
+//   this.genericAddToTable('tweets', [tweet], callback, null);
+// };
 
-  var finalCallback = function(){
-    if(callbackEnd) callBackEnd();
-  };
+// exports.addTweets = function(tweets, callbackPer, callbackEnd){
 
-  this.genericAddToTable('tweets', tweets, newCallbackPer, finalCallback);
-};
+//   var newCallbackPer = function(err, rows, fields){
+//     //could reindex on keywords here, or something
+//     //maybe set them as not indexed yet, like in a columln
+//     if(callbackPer) callbackPer(err, rows, fields);
+//   }
 
-exports.updateKeywordListsForTweets = function(tweets, callbackEnd){
-  //TODO
-  //take highest id for tweet in list then search all tweets higher than that on all keywords.
-};
+//   var finalCallback = function(){
+//     if(callbackEnd) callBackEnd();
+//   };
 
+//   this.genericAddToTable('tweets', tweets, newCallbackPer, finalCallback, null);
+// };
 
-exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, callbackAtEnd){
+exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, callbackAtEnd, doBulkAdd){
 
   var that = this;
   callbackPerAdd = callbackPerAdd || this.errCB;
@@ -349,7 +447,7 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
       insertStr = insertStr + holder[i] + ", ";
     }
     insertStr = insertStr.slice(0, -2);
-    insertStr = insertStr + ' ) VALUES (';
+    insertStr = insertStr + ' ) VALUES ';
 
     var queryStr;
     var temp;
@@ -357,6 +455,8 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
 
     that.doAddingMessage(count);
 
+    if(doBulkAdd !== true){
+      insertStr = insertStr += '(';
       for (var i = 0; i < listOfObjects.length; i++) {
         queryStr = "";
           for(var j = 0; j < holder.length; j++){
@@ -385,12 +485,28 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
             }else{
 
             }
-
           }
         });
       }
+    }else{
+      insertStr += "?";
+      callbackAtEnd = callbackAtEnd || callbackPerAdd;
+      that.db.query(insertStr,listOfObjects, callbackAtEnd);
+      //do bulk add
+    }
   };
 };
+
+
+
+//===============================================
+
+
+
+// =============== MAINTENANCE ==================
+exports.temp = {};
+
+exports.errCB = function(err){if(err)console.log(err)};
 
 exports.doAddingMessage = function(count, moduloVal){
   moduloVal = moduloVal || 1;
@@ -399,15 +515,6 @@ exports.doAddingMessage = function(count, moduloVal){
     console.log("" + count + " ENTRIES REMAIN TO BE ADDED. ETA: " + Math.round(.08 * count / 60 * 100)/100 + " minutes");
   }
 };
-
-//==============================================
-
-
-
-
-// =============== MAINTENANCE ==================
-exports.temp = {};
-exports.errCB = function(err){if(err)console.log(err)};
 
 exports.genericDropTable = function(tableName, callback){
   this.db.query("DROP TABLE IF EXISTS " + tableName, callback);
@@ -421,7 +528,7 @@ exports.changeToDatabase = function(name, callback){
   this.db.query("USE " + name, callback);
 };
 
-exports.genericDropDatabase = function(name, callback){
+exports.genericDropDatabase = exports.deleteDatabase = function(name, callback){
   this.db.query("DROP DATABASE IF EXISTS " + name, callback);
 };
 
@@ -514,36 +621,36 @@ exports.trigger = function(db,callback){
 
   if(!NUKE_ALL_TABLES_ON_START || !THIS_IS_REALLY_SURE_YOU_WANT_TO_NUKE_EVERYTHING) return;
 
-/*  that.genericDropDatabase(this.databaseToTalkTo, function(err){
+  // that.genericDropDatabase(this.databaseToTalkTo, function(err){
 
-    that.createDatabase(that.databaseToTalkTo,function(err){
+  //   that.createDatabase(that.databaseToTalkTo,function(err){
 
-      that.changeToDatabase(that.databaseToTalkTo, function(err){
+  //     that.changeToDatabase(that.databaseToTalkTo, function(err){
 
-        that.genericCreateTable('tweets', that.testTweet1, function(err){
-          that.setColumnToUnique('tweets', 'id_str', function(){
-            var addTheseTweets;
-            if(FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS.length > 0){
-              addTheseTweets = FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS;
-            }else{
-              addTheseTweets = [that.testTweet1, that.testTweet2, that.testTweet3, that.testTweet4, that.testTweet5];
-            }
-            //there are two functions being passed in here, a callback per add, and a callback for the end of adds
+  //       that.genericCreateTable('tweets', that.testTweet1, function(err){
+  //         that.setColumnToUnique('tweets', 'id_str', function(){
+  //           var addTheseTweets;
+  //           if(FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS.length > 0){
+  //             addTheseTweets = FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS;
+  //           }else{
+  //             addTheseTweets = [that.testTweet1, that.testTweet2, that.testTweet3, that.testTweet4, that.testTweet5];
+  //           }
+  //           //there are two functions being passed in here, a callback per add, and a callback for the end of adds
 
-            that.genericAddToTable('tweets', addTheseTweets, that.errCB, function(msg){
-              that.getAllTweets(function(err, rows, fields){
-                that.ADDALLTHETWEETS(function(){
-                    for(var i = 0; i < ADD_THESE_KEYWORDS.length; i++){
-                      that.addKeyword(ADD_THESE_KEYWORDS[i]);
-                    }
-                });
-              });
-            });
-          });
-        });
-      });
-    });
-  });*/
+  //           that.genericAddToTable('tweets', addTheseTweets, that.errCB, function(msg){
+  //             that.getAllTweets(function(err, rows, fields){
+  //               that.ADDALLTHETWEETS(function(){
+  //                   for(var i = 0; i < ADD_THESE_KEYWORDS.length; i++){
+  //                     that.addKeyword(ADD_THESE_KEYWORDS[i]);
+  //                   }
+  //               });
+  //             });
+  //           });
+  //         });
+  //       });
+  //     });
+  //   });
+  // });
 };
 
 //===========================================

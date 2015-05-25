@@ -1,11 +1,21 @@
 'use strict';
 
 angular.module('parserApp')
-  .controller('DBPanelCtrl', function ($scope, $state, Twitter, Auth) {
+  .controller('DBPanelCtrl', function ($http, $scope, $state, Twitter, Auth) {
 
     Auth.checkAuth();
 
     var socket = Twitter.socket;
+
+    $http.get('/auth/adminlogin/getTables').success(function(data) {
+      $scope.dbtables = data;
+    });
+
+    $scope.showTableSize = function(tableName) {
+      $http.post('/auth/adminlogin/showTableSize', {tableName: tableName}).success(function(data) {
+        $scope.tableSize = data;
+      });
+    };
 
     $scope.startDownload = function() {
 

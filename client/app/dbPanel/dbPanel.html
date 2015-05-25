@@ -1,10 +1,16 @@
 <div class="container">
 
   <button class="btn btn-danger" ng-click="logout()">Logout</button>
+
+  <h3>List of tables</h3>
+  <div ng-repeat="table in dbtables">
+    {{table.table}} | <span ng-click="showTableSize(table.table)">Show size: {{tableSize}}</span> | <span>Show contents</span>
+  </div>
     
   <div class="admin-dashboard" style="background: #FFF; padding: 20px">
 
     <form ng-submit="startDownload()">
+      <h1>Start tweet stream, download into database</h1>
       <div class="form-group">
         <label for="stream-download-rate">Stream download rate</label>
         <input type="number" class="form-control" ng-model="streamDownloadRate">
@@ -14,7 +20,30 @@
     
     <br>
     <button class="btn btn-danger" ng-click="stopDownload()">Stop!</button>
+
+    <hr>
+
+    <form ng-submit="addNewKeyword()">
+      <h1>Add new keyword to database</h1>
+      <div class="form-group">
+        <label for="add-new-keyword">New keyword</label>
+        <input type="number" class="form-control" ng-model="newKeyword">
+      </div>
+      <button class="btn btn-success">Add Keyword</button>
+    </form>
+
+    <hr>
+
+    <form ng-submit="addNewKeyword()">
+      <h1>Delete keyword from database</h1>
+      <div class="form-group">
+        <label for="add-new-keyword">Delete this keyword</label>
+        <input type="number" class="form-control" ng-model="deleteKeyword">
+      </div>
+      <button class="btn btn-danger">Delete Keyword</button>
+    </form>
   </div>
+
 
   <div class="download-status" style="background: #FFF; padding: 10px; text-align: center; margin-top: 15px">
     {{tweetAdded}}

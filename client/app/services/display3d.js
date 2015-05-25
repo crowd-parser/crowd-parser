@@ -20,12 +20,20 @@ angular.module('parserApp.display3dService', [])
   var layers = [];
   var frontLayerZ = 0;
   var layerSpacing = 300;
+  var ribbonTitleOffset = -1000;
 
   // left and right mouse hover buttons
   var leftHover = false;
   var rightHover = false;
   var scrollSpeed = 15;
   var tick = 0;
+
+  // tweet display settings
+  var rows = 4;
+  var ySpacing = 200;
+  var yStart = 300;
+  var xSpacing = 320;
+  var xStart = -800;
 
   var animate = function() {
     requestAnimationFrame( animate );
@@ -39,7 +47,7 @@ angular.module('parserApp.display3dService', [])
         cameraDistanceFromTarget.subVectors(camera.position, controls.target);
         var newRibbonWidth = Math.abs(cameraDistanceFromTarget.length()) * 14;
         layer.ribbonEl.style.width = newRibbonWidth + 'px';
-        layer.ribbonEl.children[0].style.left = (newRibbonWidth/2 - 1000) + 'px';
+        layer.ribbonEl.children[0].style.left = (newRibbonWidth/2 + ribbonTitleOffset) + 'px';
       });
     }
 
@@ -74,12 +82,6 @@ angular.module('parserApp.display3dService', [])
   };
 
   var addTweet = function(rawTweet, index) {
-
-    var rows = 4;
-    var ySpacing = 200;
-    var yStart = 300;
-    var xSpacing = 320;
-    var xStart = -800;
 
     layers.forEach(function(layerObj) {
 
@@ -147,7 +149,7 @@ angular.module('parserApp.display3dService', [])
     var ribbonText = document.createElement( 'div' );
     ribbonText.className = 'layer-title';
     ribbonText.textContent = layerTitle + ' layer';
-    ribbonText.style.left = (ribbonWidth/2 - 800) + 'px';
+    ribbonText.style.left = (ribbonWidth/2 + ribbonTitleOffset) + 'px';
     ribbonText.style.opacity = 1;
     ribbon.appendChild( ribbonText );
     layerObj.titleEl = ribbonText;
@@ -182,14 +184,34 @@ angular.module('parserApp.display3dService', [])
     }, false);
   };
 
-  var init = function(containerID, cameraY, cameraZ, height) {
+  var init = function(context) {
+    console.log(context);
 
-    height = height || window.innerHeight;
+    var height = window.innerHeight;
+    var containerID = 'container-3d';
+    var cameraY, cameraZ;
+
+    rows = 4;
+    layers = [];
+
+    // overwrite defaults if in mini window
+    if (context === 'mini') {
+      containerID = 'mini-container-3d';
+      cameraZ = 400;
+      cameraY = 0;
+      height = 250;
+      rows = 2;
+      xStart = -1200;
+      ySpacing = 180;
+      layerSpacing = 125;
+    }
+
+    yStart = ((rows-1)*ySpacing)/2;
 
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / height, 0.1, 1000 );
-    camera.position.z = cameraZ || 1000;
-    camera.position.y = cameraY || 200;
+    camera.position.z = cameraZ !== undefined ? cameraZ : 1000;
+    camera.position.y = cameraY !== undefined ? cameraY : 200;
 
     renderer = new THREE.CSS3DRenderer();
     renderer.setSize( window.innerWidth, height);

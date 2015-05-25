@@ -1,12 +1,12 @@
 <div class="3d-display">
   <div id="container-3d"></div>
   <div class="keyword-form-3d form-inline">
-    <form ng-submit="start3DKeywordStream()">
+    <form>
       <div class="form-group">
         <label for="keyword-stream">Keyword</label>
         <input type="text" class="form-control" ng-model="keywordStream" disabled>
       </div>
-      <button class="button-3d" disabled>Submit</button>
+      <button class="button-3d"  ng-click="start3DKeywordStream()"disabled>Submit</button>
       <button class="button-3d" type="notSubmit" ng-click="streamFakeTweets()">Stream Fake Tweets</button>
     </form>
   </div>

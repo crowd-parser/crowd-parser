@@ -66,6 +66,8 @@ angular.module('parserApp')
     socket.emit('twitter rest search', query, 'mixed', 100);
   };
 
+  $scope.helpUsForm = false;
+
   // ========== LISTENER THAT RECEIVES TWITTER DATA WITH SENTIMENT ANALYSIS RESULTS ============ //
 
   socket.on('all layers', function(data) {

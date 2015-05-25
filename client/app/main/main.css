@@ -159,6 +159,25 @@ header img {
     font-weight: bold;
 }
 
+.help-us-form {
+    margin: 0 50px;
+}
+
+.help-us-form .tweet-text {
+    font-size: 13px;
+    padding: 5px 5px;
+    margin: 0 auto;
+    max-width: 440px;
+    border: 1px solid #D1C6DB;
+    border-radius: 4px;
+}
+
+.help-us-form textarea {
+    max-width: 440px;
+    margin: 0 auto;
+    height: 75px;
+}
+
 .viewport {
     background: #FFF;
 }
@@ -220,4 +239,25 @@ header img {
 
 .user-section-icon {
     font-size: 70px;
+}
+
+@media (max-width: 540px) {
+    .tweet-sentiment {
+        width: 100%;
+    }
+    .help-us-form {
+        margin: 0 20px;
+    }
+}
+
+@media (max-width: 390px) {
+    .display-band {
+        padding: 0;
+    }
+    .tweet-sentiment {
+        border-radius: 0;
+    }
+    .help-us-form {
+        margin: 0;
+    }
 }

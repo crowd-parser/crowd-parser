@@ -34,6 +34,9 @@
       <!-- Display username and number of followers -->
 
       <div class="tweet-username">{{allLayers.username}} ({{allLayers.followers_count}} followers)</div>
+
+      <!-- Display tweet text with escaped HTML -->
+
       <div ng-bind-html="allLayers.text" class="tweet-text"></div>
 
       <!-- Display results from the base common words layer analysis -->
@@ -88,7 +91,29 @@
 
       <!-- Click to help out our algorithm -->
 
-      <button class="btn btn-warning">Disagree? Help us out!</button>
+      <button class="btn btn-warning" ng-click="helpUsForm=!helpUsForm">Disagree? Help us out!</button>
+
+      <div class="help-us-form-section" ng-show="helpUsForm">
+
+        <hr>
+
+        <form class="help-us-form">
+          <h4>Suggest improvements!</h4>
+          <div class="form-group">
+            <label for="tweet-text">Tweet text</label>
+            <div ng-bind-html="allLayers.text" class="tweet-text"></div>
+          </div>
+          <div class="form-group">
+            <label for="describe-problem">Describe the problem</label>
+            <textarea class="form-control"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="suggest-solution">Suggest a solution</label>
+            <textarea class="form-control" placeholder="Examples: Add/remove/change a word | Add a conditional (if this word... then...) | Make a new layer that recognizes (e.g., movies)"></textarea>
+          </div>
+          <button class="btn btn-primary">Submit</button>
+        </form>
+      </div>
     </div>
 
   </div>

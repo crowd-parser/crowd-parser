@@ -1,7 +1,9 @@
 'use strict';
 
 angular.module('parserApp')
-  .controller('DBPanelCtrl', function ($scope, Twitter) {
+  .controller('DBPanelCtrl', function ($scope, $state, Twitter, Auth) {
+
+    Auth.checkAuth();
 
     var socket = Twitter.socket;
 
@@ -23,4 +25,9 @@ angular.module('parserApp')
         $scope.tweetAdded = 'Tweet added! --> ID: ' + data;
       });
     });
+
+    $scope.logout = function() {
+      localStorage.removeItem('com.crowdparser');
+      $state.transitionTo('main');
+    };
   });

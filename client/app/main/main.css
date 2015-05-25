@@ -149,6 +149,11 @@ header img {
     margin-top: 4px;
 }
 
+.positive-word {
+    color: green;
+    font-weight: bold;
+}
+
 .negative-word {
     color: red;
     font-weight: bold;

@@ -106,9 +106,9 @@ module.exports = function(io, T) {
     });
 
     socket.on('twitter rest search', function(query, result_type, count) {
+
       T.get('search/tweets', {q: query, count: count, result_type: result_type}, function(err, data) {
         // socket.emit('twitter rest search', data);
-
         var allLayersResults = allLayersAnalysis.tweetsArray(data.statuses);
                   
         io.emit('all layers', allLayersResults);

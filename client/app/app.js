@@ -29,8 +29,7 @@ angular.module('parserApp', [
             controller: '3dStreamCtrl'
           },
           'tweets-sentiment-display': {
-            templateUrl: 'app/main/main.tweets-sentiment-display.html',
-            controller: 'MainCtrl'
+            templateUrl: 'app/main/main.tweets-sentiment-display.html'
           }
         }
       })

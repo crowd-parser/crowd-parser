@@ -41,10 +41,9 @@ angular.module('parserApp')
 
   // ========== GET REQUESTS FOR TWITTER DATA =========== //
 
-  $scope.getTwitterRestSearch = function() {
+  $scope.getTwitterRestSearch = function(query) {
 
-    var query = $scope.twitterRestSearchQuery;
-    $scope.twitterRestSearchQuery = '';
+    $('.rest-query-input').val('');
 
     Twitter.getTwitterRestSearch(query);
 

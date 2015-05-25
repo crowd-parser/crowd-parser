@@ -1,11 +1,28 @@
 <div class="display-band tweets-feelings-display">
   <div class="tweets-sentiment">
+
+    <!-- Displays top 10 trending topics -->
+
     <div class="queries-container">
+
+      <!-- Displays the current trending topic being viewed -->
+
       <div class="queries-container-heading">Viewing tweets for trending topic: <strong>{{displayedQuery}}</strong></div>
+
+      <!-- Displays the 10 trending topics for user to click on and view tweets for -->
+
       <em>Choose another trending topic:</em><br>
+
+      <!-- Clickable trending topics listed using ng-repeat -->
+
       <div class="other-queries" ng-repeat="trend in trendingArray" ng-click="newDisplayedQuery(trend.name)">{{trend.name}}&nbsp;&nbsp;&nbsp;</div>
+
+      
+
       <div class="customized-query">
-        <input type="text" placeholder="Choose another topic" ng-model="twitterRestSearchQuery"><button class="btn btn-default" ng-click="getTwitterRestSearch()">Submit</button>
+        <form ng-submit="getTwitterRestSearch(twitterRestSearchQuery)">
+          <input type="text" placeholder="Choose another topic" ng-model="twitterRestSearchQuery" class="rest-query-input"><button class="btn btn-default">Submit</button>
+        </form>
       </div>
     </div>
     <div class="tweet-sentiment">

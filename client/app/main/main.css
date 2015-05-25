@@ -179,6 +179,14 @@ header img {
     height: 75px;
 }
 
+.modal-dialog {
+    width: 98%;
+}
+
+.modal {
+    color: #000;
+}
+
 .viewport {
     background: #FFF;
 }

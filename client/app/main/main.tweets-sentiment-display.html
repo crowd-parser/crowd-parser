@@ -84,8 +84,7 @@
 
         <img src="{{allLayers.overallResults.score > 0 ? '../assets/images/positivesmiley.png' : allLayers.overallResults.score < 0 ? '../assets/images/negativesmiley.png' : '../assets/images/neutralsmiley.png'}}" class="sentiment-image">
       </div>
-      <br>
-      <!-- Click to advance to another tweet -->
+      <branaly      <!-- Click to advance to another tweet -->
 
       <button class="btn btn-info" ng-click="nextTweet()">Next Tweet</button> 
 
@@ -111,8 +110,49 @@
             <label for="suggest-solution">Suggest a solution</label>
             <textarea class="form-control" placeholder="Examples: Add/remove/change a word | Add a conditional (if this word... then...) | Make a new layer that recognizes (e.g., movies)"></textarea>
           </div>
-          <button class="btn btn-primary">Submit</button>
+          <button class="btn btn-primary">Submit</button> 
+          <button type="button" class="btn btn-info" data-toggle="modal" data-target="#myModal">
+            Discuss suggestions
+          </button>
         </form>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">Discuss Suggestions</h4>
+            <div class="modal-body">
+              View and comment on other suggestions.
+            </div>
+          </div>
+          <div class="modal-body">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Tweet Text</th>
+                  <th>Problem</th>
+                  <th>Suggestion</th>
+                  <th>Comments</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>tweet text: {{suggestion.tweetText}}</td>
+                  <td>problem: {{suggestion.problem}}</td>
+                  <td>suggestion: {{suggestion.suggestion}}</td>
+                  <td># comments: {{suggestion.commentCount}} comments</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
       </div>
     </div>
 

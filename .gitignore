@@ -8,3 +8,4 @@ dist
 server/config/twitter-config.js
 server/database/database-config-1.js
 server/config/twitter_CH_private.js
+server/auth/adminlogin/adminloginsecret.js

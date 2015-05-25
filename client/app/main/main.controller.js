@@ -18,6 +18,7 @@ angular.module('parserApp')
   socket.emit('twitter rest trending');
 
   // Receives and displays trending topics on initialization
+  $scope.trendingArray = [];
   socket.on('twitter rest trending', function(data) {
 
     // Display the array of trending topics (clickable)
@@ -38,6 +39,12 @@ angular.module('parserApp')
 
   // This number is randomized and represents the index of the tweetsDisplayArray that will be displayed
   var displayNumber;
+
+  $scope.suggestion = {
+    tweetText: 'I don\'t hate dogs',
+    problem: 'don\'t negates hate',
+    suggestion: 'handle negations'
+  };
 
   // ========== GET REQUESTS FOR TWITTER DATA =========== //
 
@@ -65,6 +72,8 @@ angular.module('parserApp')
     // Perform a new REST search for the trending topic clicked on
     socket.emit('twitter rest search', query, 'mixed', 100);
   };
+
+  $scope.helpUsForm = false;
 
   // ========== LISTENER THAT RECEIVES TWITTER DATA WITH SENTIMENT ANALYSIS RESULTS ============ //
 

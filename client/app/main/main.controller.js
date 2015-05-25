@@ -9,7 +9,7 @@ angular.module('parserApp')
   Header.init();
 
   // Initializes the 3D streaming view/state
-  $state.transitionTo('main.frontpage3d');
+  $state.transitionTo('main.components');
 
   // "socket" is used for socket.io events
   var socket = Twitter.socket;
@@ -98,5 +98,11 @@ angular.module('parserApp')
 
     // Display the new random tweet
     $scope.allLayers = tweetsDisplayArray[displayNumber];
+  };
+})
+.directive('tweetsSentimentDisplayBand', function() {
+  return {
+    restrict: 'E',
+    templateUrl: 'tweets-sentiment-display-band.html'
   };
 });

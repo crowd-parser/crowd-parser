@@ -98,6 +98,7 @@ header img {
 }
 
 .overall-sentiment {
+    background: #FCFFF5;
     width: 180px;
     padding-top: 4px;
     margin: 0 auto;
@@ -118,6 +119,7 @@ header img {
 
 .sentiment-score {
     display: inline-block;
+    background: #FFF;
     font-size: 22px;
     font-weight: bold;
     width: 35px;
@@ -141,12 +143,10 @@ header img {
 }
 
 .tweet-sentiment button {
-    margin-top: 8px;
-}
-
-.positive-word {
-    color: green;
-    font-weight: bold;
+    font-size: 11px;
+    height: 19px;
+    padding: 1px 5px;
+    margin-top: 4px;
 }
 
 .negative-word {
@@ -175,6 +175,11 @@ header img {
 
 .starting-section-container h3 {
     color: #193441;
+}
+
+.front-page-3d {
+    margin-top: 40px;
+    margin-bottom: 40px;
 }
 
 .display-band {

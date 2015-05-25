@@ -11,6 +11,7 @@ canvas { width: 100%; height: 100% }
 .mini-3d-display {
   position: relative;
   background-color: #000;
+  height: 300px;
 }
 
 #container-3d {
@@ -40,7 +41,7 @@ canvas { width: 100%; height: 100% }
 
 #mini-menu-3d {
   position: absolute;
-  top: 195px;
+  bottom: 20px;
   width: 100%;
   text-align: center;
 }
@@ -58,18 +59,17 @@ canvas { width: 100%; height: 100% }
 }
 
 #mini-leftarrow-3d {
-  position: relative;
-  width: 200px;
+  position: absolute;
+  top: 50px;
   left: 30px;
   height: 200px;
-  float: left;
 }
 
 #mini-rightarrow-3d {
-  position: relative;
+  position: absolute;
+  top: 50px;
   right: 130px;
   height: 200px;
-  float: right;
 }
 
 .keyword-form-3d {
@@ -103,7 +103,6 @@ canvas { width: 100%; height: 100% }
 .ribbon-3d {
   position: absolute;
   width: 10000px;
-  height: 1000px;
   background-color: rgba(0,132,180,0.25);
 }
 
@@ -117,8 +116,8 @@ canvas { width: 100%; height: 100% }
 
 #mini-container-3d .ribbon-3d {
   position: absolute;
-  width: 10000px;
-  height: 500px;
+  width: 100%;
+  height: 100%;
   background-color: rgba(0,132,180,0.25);
 }
 
@@ -126,8 +125,8 @@ canvas { width: 100%; height: 100% }
     position: absolute;
     top: 20px;
 /*    left: 4000px;*/
-    font-size: 70px;
-    font-weight: 400;
+    font-size: 55px;
+    font-weight: 300;
     color: rgba(0,132,180,0.75);
   }
 

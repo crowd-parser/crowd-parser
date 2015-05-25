@@ -72,7 +72,7 @@ header img {
     width: 85%;
     margin: 0 auto;
     padding: 15px;
-    border-radius: 25px;
+    border-radius: 7px;
 }
 
 .tweet-username {
@@ -87,7 +87,7 @@ header img {
 
 .tweet-layer-results {
     display: inline-block;
-    width: 49%;
+    width: 33%;
     margin-top: -10px;
 }
 
@@ -98,6 +98,7 @@ header img {
 }
 
 .overall-sentiment {
+    display: inline-block;
     background: #FCFFF5;
     width: 180px;
     padding-top: 4px;
@@ -239,6 +240,15 @@ header img {
 
 .user-section-icon {
     font-size: 70px;
+}
+
+@media (max-width: 745px) {
+    .tweet-layers-results {
+        width: 49%;
+    }
+    .overall-sentiment {
+        display: block;
+    }
 }
 
 @media (max-width: 540px) {

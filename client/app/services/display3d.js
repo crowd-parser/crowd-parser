@@ -35,6 +35,16 @@ angular.module('parserApp.display3dService', [])
   var xSpacing = 320;
   var xStart = -800;
 
+  var adjustRibbonWidth = function() {
+    layers.forEach(function(layer) {
+      var cameraDistanceFromTarget = new THREE.Vector3();
+      cameraDistanceFromTarget.subVectors(camera.position, controls.target);
+      var newRibbonWidth = Math.abs(cameraDistanceFromTarget.length()) * 14;
+      layer.ribbonEl.style.width = newRibbonWidth + 'px';
+      layer.ribbonEl.children[0].style.left = (newRibbonWidth/2 + ribbonTitleOffset) + 'px';
+    });
+  };
+
   var animate = function() {
     requestAnimationFrame( animate );
     tick++;
@@ -42,13 +52,7 @@ angular.module('parserApp.display3dService', [])
     // check if camera has moved
     if (!camera.position.equals(prevCameraPosition)) {
       // if so, adjust ribbon width so you don't see the left/right ends of the ribbon
-      layers.forEach(function(layer) {
-        var cameraDistanceFromTarget = new THREE.Vector3();
-        cameraDistanceFromTarget.subVectors(camera.position, controls.target);
-        var newRibbonWidth = Math.abs(cameraDistanceFromTarget.length()) * 14;
-        layer.ribbonEl.style.width = newRibbonWidth + 'px';
-        layer.ribbonEl.children[0].style.left = (newRibbonWidth/2 + ribbonTitleOffset) + 'px';
-      });
+      adjustRibbonWidth();
     }
 
     prevCameraPosition.copy(camera.position);
@@ -209,12 +213,15 @@ angular.module('parserApp.display3dService', [])
     yStart = ((rows-1)*ySpacing)/2;
 
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera( 75, window.innerWidth / height, 0.1, 1000 );
+    camera = new THREE.PerspectiveCamera( 75, document.getElementById(containerID).clientWidth / height, 0.1, 1000 );
     camera.position.z = cameraZ !== undefined ? cameraZ : 1000;
     camera.position.y = cameraY !== undefined ? cameraY : 200;
 
     renderer = new THREE.CSS3DRenderer();
-    renderer.setSize( window.innerWidth, height);
+    renderer.setSize( document.getElementById(containerID).clientWidth, height);
+    window.onresize = function () {
+      renderer.setSize( document.getElementById(containerID).clientWidth, height);
+    };
     document.getElementById( containerID ).appendChild( renderer.domElement );
 
     controls = new THREE.TrackballControls( camera, renderer.domElement );

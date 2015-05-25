@@ -1,11 +1,10 @@
 'use strict';
 
 angular.module('parserApp', [
+  'parserApp.headerService',
   'parserApp.twitterService',
-  'parserApp.wordcloudService',
   'parserApp.display3dService',
   'parserApp.authService',
-  'parserApp.directives.dirPagination',
   'ngCookies',
   'ngResource',
   'ngSanitize',
@@ -19,9 +18,20 @@ angular.module('parserApp', [
         templateUrl: 'app/main/main.html',
         controller: 'MainCtrl'
       })
-      .state('main.frontpage3d', {
-        templateUrl: 'app/main/main.frontpage3d.html',
-        controller: '3dStreamCtrl'
+      // .state('main.frontpage3d', {
+      //   templateUrl: 'app/main/main.frontpage3d.html',
+      //   controller: '3dStreamCtrl'
+      // })
+      .state('main.components', {
+        views: {
+          'frontpage3d': {
+            templateUrl: 'app/main/main.frontpage3d.html',
+            controller: '3dStreamCtrl'
+          },
+          'tweets-sentiment-display': {
+            templateUrl: 'app/main/main.tweets-sentiment-display.html'
+          }
+        }
       })
       .state('3dstream', {
         url: '/3dstream',

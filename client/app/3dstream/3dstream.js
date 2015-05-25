@@ -12,7 +12,7 @@ angular.module('parserApp')
     var cameraY;
     var displayHeight = window.innerHeight;
 
-    if ($state.current.name === 'main.frontpage3d') {
+    if ($state.current.name === 'main.components') {
       containerID = 'mini-container-3d';
       cameraZ = 800;
       cameraY = 100;

@@ -1,0 +1,95 @@
+<div class="display-band tweets-feelings-display">
+  <div class="tweets-sentiment">
+
+    <!-- Displays top 10 trending topics -->
+
+    <div class="queries-container">
+
+      <!-- Displays the current trending topic being viewed -->
+
+      <div class="queries-container-heading">Viewing tweets for trending topic: <strong>{{displayedQuery}}</strong></div>
+
+      <!-- Displays the 10 trending topics for user to click on and view tweets for -->
+
+      <em>Choose another trending topic:</em><br>
+
+      <!-- Clickable trending topics listed using ng-repeat -->
+
+      <div class="other-queries" ng-repeat="trend in trendingArray" ng-click="newDisplayedQuery(trend.name)">{{trend.name}}&nbsp;&nbsp;&nbsp;</div>
+
+      <!-- Form to submit a REST search query -->
+
+      <div class="customized-query">
+        <form ng-submit="getTwitterRestSearch(twitterRestSearchQuery)">
+          <input type="text" placeholder="Choose another topic" ng-model="twitterRestSearchQuery" class="rest-query-input"><button class="btn btn-default">Submit</button>
+        </form>
+      </div>
+
+    </div>
+
+    <!-- Display for tweets and sentiment analysis results -->
+
+    <div class="tweet-sentiment">
+
+      <!-- Display username and number of followers -->
+
+      <div class="tweet-username">{{allLayers.username}} ({{allLayers.followers_count}} followers)</div>
+      <div ng-bind-html="allLayers.text" class="tweet-text"></div>
+
+      <!-- Display results from the base common words layer analysis -->
+      
+      <div class="tweet-layer-results">
+        <div class="layer-heading">Common Words Layer</div> 
+
+        <!-- Set classname for scores so they will display in different colors -->
+
+        <div class="sentiment-score {{allLayers.baseLayerResults.score > 0 ? 'positive-score' : allLayers.baseLayerResults.score < 0 ? 'negative-score' : 'neutral-score'}}">{{allLayers.baseLayerResults.score}}</div>
+
+        <!-- Display the correct smiley image, depending on the score -->
+
+        <img src="{{allLayers.baseLayerResults.score > 0 ? '../assets/images/positivesmiley.png' : allLayers.baseLayerResults.score < 0 ? '../assets/images/negativesmiley.png' : '../assets/images/neutralsmiley.png'}}" class="sentiment-image">
+      </div>
+
+      <!-- Displays results from the emoticon layer analysis -->
+
+      <div class="tweet-layer-results">
+        <div class="layer-heading">Emoticon Layer</div> 
+
+        <!-- List out the positive and negative emoticons found in the tweet -->
+
+        <div class="emoticon-pos-neg"><strong>Positive:</strong> {{allLayers.emoticonLayerResults.positiveWords.join(', ') || 'n/a'}} | <strong>Negative:</strong> {{allLayers.emoticonLayerResults.negativeWords.join(', ') || 'n/a'}}</div>
+
+        <!-- Set classname for scores so they will display in different colors -->
+
+        <div class="sentiment-score {{allLayers.emoticonLayerResults.score > 0 ? 'positive-score' : allLayers.emoticonLayerResults.score < 0 ? 'negative-score' : 'neutral-score'}}">{{allLayers.emoticonLayerResults.score}}</div>
+
+        <!-- Display the correct smiley image, depending on the score -->
+
+        <img src="{{allLayers.emoticonLayerResults.score > 0 ? '../assets/images/positivesmiley.png' : allLayers.emoticonLayerResults.score < 0 ? '../assets/images/negativesmiley.png' : '../assets/images/neutralsmiley.png'}}" class="sentiment-image">
+      </div>
+
+      <!-- Displays overall results that aggregate all layers -->
+
+      <div class="overall-sentiment">
+        <div class="layer-heading">Overall Sentiment</div> 
+
+        <!-- Set classname for scores so they will display in different colors -->
+
+        <div class="sentiment-score {{allLayers.overallResults.score > 0 ? 'positive-score' : allLayers.overallResults.score < 0 ? 'negative-score' : 'neutral-score'}}">{{allLayers.overallResults.score}}</div>
+
+        <!-- Display the correct smiley image, depending on the score -->
+
+        <img src="{{allLayers.overallResults.score > 0 ? '../assets/images/positivesmiley.png' : allLayers.overallResults.score < 0 ? '../assets/images/negativesmiley.png' : '../assets/images/neutralsmiley.png'}}" class="sentiment-image">
+      </div>
+
+      <!-- Click to advance to another tweet -->
+
+      <button class="btn btn-info" ng-click="nextTweet()">Next Tweet</button> 
+
+      <!-- Click to help out our algorithm -->
+
+      <button class="btn btn-warning">Disagree? Help us out!</button>
+    </div>
+
+  </div>
+</div>

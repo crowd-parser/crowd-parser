@@ -20,13 +20,14 @@ angular.module('parserApp.display3dService', [])
   var layers = [];
   var frontLayerZ = 0;
   var layerSpacing = 300;
-  var ribbonTitleOffset = -1000;
   var ribbonHeight = 1000;
 
   // left and right mouse hover buttons
   var leftHover = false;
   var rightHover = false;
   var scrollSpeed = 15;
+  var neverAutoScroll = false;
+  var rightAutoScroll = false;
   var tick = 0;
 
   // tweet display settings
@@ -62,9 +63,14 @@ angular.module('parserApp.display3dService', [])
       }
       var newRibbonWidth = getDisplayWidthAtPoint(0,farthestYOnRibbon,layer.z) + 10;
       layer.ribbonEl.style.width = newRibbonWidth + 'px';
+      layer.ribbonEl.style.height = ribbonHeight + 'px';
       var titleWidth = layer.ribbonEl.children[0].clientWidth;
-      layer.ribbonEl.children[0].style.left = (newRibbonWidth/2 - getDisplayWidthAtPoint(0,ribbonHeight/2,0)/2 + titleWidth) + 'px';
+      layer.ribbonEl.children[0].style.left = (newRibbonWidth/2 - getDisplayWidthAtPoint(controls.target.x,ribbonHeight/2,0)/2 + titleWidth) + 'px';
     });
+  };
+
+  var autoScrollToggle = function () {
+    neverAutoScroll = !neverAutoScroll;
   };
 
   var animate = function() {
@@ -84,8 +90,6 @@ angular.module('parserApp.display3dService', [])
       tick = 0;
     }
 
-    var rightAutoScroll = false;
-
     // auto scroll if tweets are falling off the right
     if (!leftHover && !rightHover) {
       if (layers[0].tweets.length) {
@@ -103,13 +107,17 @@ angular.module('parserApp.display3dService', [])
 
 
     if (leftHover) {
+      scrollSpeed = 15;
       camera.position.x -= scrollSpeed;
       controls.target.x -= scrollSpeed;
       for (var i = 0; i < layers.length; i++) {
         layers[i].ribbonObj.position.x -= scrollSpeed;
       }
     }
-    if (rightHover || rightAutoScroll) {
+    if (rightHover || (rightAutoScroll && !neverAutoScroll)) {
+      if (rightHover) {
+        scrollSpeed = 15;
+      }
       camera.position.x += scrollSpeed;
       controls.target.x += scrollSpeed;
       for (var i = 0; i < layers.length; i++) {
@@ -234,6 +242,7 @@ angular.module('parserApp.display3dService', [])
     var cameraY, cameraZ;
 
     rows = 4;
+    ribbonHeight = 1000;
     layers = [];
 
     // overwrite defaults if in mini window
@@ -398,7 +407,8 @@ angular.module('parserApp.display3dService', [])
     addTweet: addTweet,
     makeTweetLayer: makeTweetLayer,
     init: init,
-    animate: animate
+    animate: animate,
+    autoScrollToggle: autoScrollToggle
   };
 });
   

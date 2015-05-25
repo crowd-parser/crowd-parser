@@ -5,6 +5,7 @@ angular.module('parserApp')
     var socket = Twitter.socket;
     $scope.tweetData = [];
     $scope.tweetCount = 0;
+    $scope.autoScroll = 'ON';
     var runFakeTweets = false;
     var intervalID;
 
@@ -58,6 +59,15 @@ angular.module('parserApp')
         $scope.tweetData.push(fakeTweet);
         Display3d.addTweet(fakeTweet, $scope.tweetCount);
         $scope.tweetCount++;
+      }
+    };
+
+    $scope.autoScrollToggle = function () {
+      Display3d.autoScrollToggle();
+      if ($scope.autoScroll === 'ON') {
+        $scope.autoScroll = 'OFF';
+      } else {
+        $scope.autoScroll = 'ON';
       }
     };
 

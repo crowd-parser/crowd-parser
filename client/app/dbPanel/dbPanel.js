@@ -37,6 +37,38 @@ angular.module('parserApp')
       });
     });
 
+    $scope.addNewLayer = function() {
+
+    };
+
+    $scope.redoLayer = function() {
+
+    };
+
+    $scope.deleteLayer = function() {
+
+    };
+
+    $scope.addNewKeyword = function() {
+
+    };
+
+    $scope.redoKeyword = function() {
+
+    };
+
+    $scope.deleteKeyword = function() {
+
+    };
+
+    $scope.createDatabase = function() {
+
+    };
+
+    $scope.changeToDatabase = function() {
+
+    };
+
     $scope.logout = function() {
       localStorage.removeItem('com.crowdparser');
       $state.transitionTo('main');

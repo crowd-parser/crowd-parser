@@ -21,6 +21,9 @@
         changeToDatabase - <databaseName> <callback>
         deleteDatbase - <databaseName> <callback>
 
+        getLayerNames - <callback>
+        getKeywordNames - <callback>
+
         executeFullChainForIncomingTweets - <[tweetObjects]> <callback>
 */
 
@@ -36,9 +39,6 @@ exports.db.connect(function(err){
       exports.isLive = true;
     }
 });
-
-exports.layer_Base_Function = require('../sentiment/baseWordsLayer/baseWordsLayerAnalysis.js');
-exports.layer_Emoticons_Function = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js');
 
 /*==================================================================*/
 
@@ -68,30 +68,11 @@ var TALK_TO_DEV_DATABASE = true;
 /*==================================================================*/
 
 
-
-
-//============ GET STUFF ===================
+//============ TWEETS ===================
 
 exports.getAllTweets = function(callback){
   this.db.query('SELECT * FROM tweets', callback);
 };
-
-exports.genericGetAll = function(tableName, callback){
-  this.db.query('SELECT * FROM ' + tableName, callback);
-};
-
-exports.genericGetTableColumnNames = function(tableName, callback){
-  this.db.query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION",[this.databaseToTalkTo, tableName] , callback);
-};
-
-exports.genericGetItemsWithTextColumnContaining = function(lastId, tableName, columnName, string, callback){
-  var idSelect = "";
-  if(lastId){
-    idSelect = "id >" + lastId + " AND ";
-  }
-  this.db.query("SELECT * FROM " + tableName +  " WHERE " + idSelect + columnName + " LIKE '%" + string + "%'", callback);
-};
-
 
 exports.searchForTweetsWithKeyword = function(keyword, callback){
   this.genericGetItemsWithTextColumnContaining(null, "tweets", "text", keyword, callback);
@@ -113,25 +94,96 @@ exports.filterTweetObjectsForLayer  = function(rows, layerName,callback){
 
 };
 
+exports.executeFullChainForIncomingTweets = function(tweets){
+
+  //store tweets in database - need IDs from dB
+
+  var that = this;
+
+  this.genericAddToTable('tweets', tweets, null, function(err, rows, fields){
+    //tweets added to database, done
+    var testForKeywordListCache = function(main){
+      that.genericGetAll('keywords', function(err, rows, fields){
+        that.cache.keywordList = [];
+        for(var i = 0; i < rows.length; i++){
+          that.cache.keywordList.push(rows[i].keyword);
+        }
+        main(rows);
+      });
+    };
+
+    var main = function(rows){
+      for(var i = 0; that.cache.keywordList.length; i++){
+        filterTweetsFromIdByKeyword(rows[0].id, that.cache.keywordList[i]);
+      }
+      //database is now cranking on updating keyword lists
+
+      //server starts processing layers
+        //pull a layer names
+        //loop and run layer functions
+
+        var testForLayerListCache = function(finishLayers){
+          that.genericGetAll('layers', function(err, rows, fields){
+            that.cache.layers = [];
+            for(var i = 0; i < rows.length; i++){
+              that.cache.layers.push(rows[i].layer);
+            }
+            finishLayers(rows);
+          });
+        };
+
+        var finishLayers = function(){
+          //user async map *** BACK HERE
+          for(var i = 0; that.cache.layerList.length; i++){
+            filterTweetObjectsForLayer(rows, that.cache.layerList[i]);
+          }
+
+          //when async map is done, send tweets back to server
+            //to send to client
+        };
+
+        if(that.cache.layerList){
+          testForLayerListCache(finishLayers);
+        }else{
+          finishLayers(rows);
+        }
+
+      //then use a loop to tell db to insert into with result data and id
+
+      //at this point, maybe earliet, we could have sent the tweets back to the server to
+        //send to all clients on the wire
+    };
+
+    if(that.cache.keywordList){
+      testForKeywordListCache(main);
+    }else{
+      main(rows);
+    }
+
+  }, true);
+
+};
+
+
+//=========== LAYERS ===================
+
+exports.layer_Base_Function = require('../sentiment/baseWordsLayer/baseWordsLayerAnalysis.js');
+exports.layer_Emoticons_Function = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js');
+
 exports.getLayerNames = function(cb){
   if(this.cache.layerList){
     cb(this.cache.layerList)
   }else{
-    this.generic
+    this.db.query("SELECT layerName FROM layerNames", function(err, rows){
+      expots.cache.layerList = rows;
+      cb(rows);
+    });
   }
-}
-
-//===========================================
-
-
-
-
-//============== CREATE STUFF ==================
+};
 
 exports.addNewLayer = function(layerName, finalCB){
   var that = this;
   this.genericCreateTable("layerNames",{layerName: layerName}, function(){
-
 
     that.getAllTweets(function(err, rows, fields){
       layerName = "layer_" + layerName;
@@ -162,6 +214,91 @@ exports.redoLayer = function(layerName, finalCB){
 
 exports.deleteLayer = function(layerName, cb){
   this.genericDropTable(layerName, cb);
+};
+
+
+//============= KEYWORDS ==================
+
+exports.addNewKeyword = function(keyword, callbackForTweets){
+  var that = this;
+  this.temp.kObj = {keyword: keyword, tableName: "tweets_containing_" + keyword, lastHighestIndexed: 0};
+  this.temp.kCB = {callbackForTweets: callbackForTweets, tweets:false};
+
+  this.genericCreateTable("keywords", that.temp.kObj , function(err){
+
+    that.genericAddToTable("keywords", [that.temp.kObj], null, function(){
+      that.genericCreateTable(that.temp.kObj['tableName'], { }, function(err){
+        that.addForeignKey(that.temp.kObj['tableName'], "tweet_id", "tweets", "id", function(err){
+
+          that.setColumnToUnique(that.temp.kObj['tableName'], "tweet_id", function(){
+            that.searchForTweetsWithKeyword(that.temp.kObj.keyword, function(err, rows, fields){
+              console.log("" + rows.length + " tweets found containing the keyword");
+              that.temp.kCB.tweets = rows;
+              var finalSet = [];
+              var obj;
+              for(var i = 0; i < rows.length; i++){
+                obj = {};
+                obj['tweet_id'] = rows[i].id;
+                finalSet.push(obj);
+              }
+              that.genericAddToTable(that.temp.kObj['tableName'], finalSet, null, function(){
+
+                  if(that.temp.kCB.callbackForTweets){
+                    that.temp.kCB.callbackForTweets(that.temp.kCB.tweets);
+                  }
+
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+};
+
+exports.redoKeyword = function(keyword, callbackForTweets){
+  var taht = this;
+  this.genericDropTable(keyword, function(){
+    that.addNewKeyword(keyword, callbackForTweets);
+  });
+};
+
+exports.deleteKeyword = function(keyword, callback){
+  this.genericDropTable(keyword, callback);
+}
+
+exports.getKeywordNames = function(cb){
+  if(this.cache.keywordList){
+    cb(this.cache.keywordList)
+  }else{
+    this.db.query("SELECT keyword FROM keywords", function(err, rows){
+      expots.cache.keywordList = rows;
+      cb(rows);
+    });
+  }
+};
+
+//===========================================
+
+
+
+
+//============== GENERICS ==================
+
+exports.genericGetAll = function(tableName, callback){
+  this.db.query('SELECT * FROM ' + tableName, callback);
+};
+
+exports.genericGetTableColumnNames = function(tableName, callback){
+  this.db.query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION",[this.databaseToTalkTo, tableName] , callback);
+};
+
+exports.genericGetItemsWithTextColumnContaining = function(lastId, tableName, columnName, string, callback){
+  var idSelect = "";
+  if(lastId){
+    idSelect = "id >" + lastId + " AND ";
+  }
+  this.db.query("SELECT * FROM " + tableName +  " WHERE " + idSelect + columnName + " LIKE '%" + string + "%'", callback);
 };
 
 exports.addForeignKey = function(thisTable, thisTableColumn, thatTable, thatTableColumn, callback){
@@ -212,7 +349,7 @@ exports.genericCreateTable = function(tableName, exampleObject, callback){
 };
 
 
-// ============================================
+// ============= HELPERS =================
 
 exports.rearchitectArrWithDeepObjects = function(arr){
   var that = this;
@@ -282,145 +419,6 @@ exports.asyncMap = function(funcs, finalCB){
 
 //=============== ADD STUFF ====================
 exports.cache = exports.cache || {};
-exports.executeFullChainForIncomingTweets = function(tweets){
-
-  //store tweets in database - need IDs from dB
-
-  var that = this;
-
-  this.genericAddToTable('tweets', tweets, null, function(err, rows, fields){
-    //tweets added to database, done
-    var testForKeywordListCache = function(main){
-      that.genericGetAll('keywords', function(err, rows, fields){
-        that.cache.keywordList = [];
-        for(var i = 0; i < rows.length; i++){
-          that.cache.keywordList.push(rows[i].keyword);
-        }
-        main(rows);
-      });
-    };
-
-    var main = function(rows){
-      for(var i = 0; that.cache.keywordList.length; i++){
-        filterTweetsFromIdByKeyword(rows[0].id, that.cache.keywordList[i]);
-      }
-      //database is now cranking on updating keyword lists
-
-      //server starts processing layers
-        //pull a layer names
-        //loop and run layer functions
-
-        var testForLayerListCache = function(finishLayers){
-          that.genericGetAll('layers', function(err, rows, fields){
-            that.cache.layers = [];
-            for(var i = 0; i < rows.length; i++){
-              that.cache.layers.push(rows[i].layer);
-            }
-            finishLayers(rows);
-          });
-        };
-
-        var finishLayers = function(){
-          //user async map
-          for(var i = 0; that.cache.layerList.length; i++){
-            filterTweetObjectsForLayer(rows, that.cache.layerList[i]);
-          }
-        };
-
-        if(that.cache.layerList){
-          testForLayerListCache(finishLayers);
-        }else{
-          finishLayers(rows);
-        }
-
-
-      //then use a loop to tell db to insert into with result data and id
-
-      //at this point, maybe earliet, we could have sent the tweets back to the server to
-        //send to all clients on the wire
-
-
-    };
-
-    if(that.cache.keywordList){
-      testForKeywordListCache(main);
-    }else{
-      main(rows);
-    }
-
-
-
-  }, true);
-
-};
-
-
-exports.addNewKeyword = function(keyword, callbackForTweets){
-  var that = this;
-  this.temp.kObj = {keyword: keyword, tableName: "tweets_containing_" + keyword, lastHighestIndexed: 0};
-  this.temp.kCB = {callbackForTweets: callbackForTweets, tweets:false};
-
-  this.genericCreateTable("keywords", that.temp.kObj , function(err){
-
-    that.genericAddToTable("keywords", [that.temp.kObj], null, function(){
-      that.genericCreateTable(that.temp.kObj['tableName'], { }, function(err){
-        that.addForeignKey(that.temp.kObj['tableName'], "tweet_id", "tweets", "id", function(err){
-
-          that.setColumnToUnique(that.temp.kObj['tableName'], "tweet_id", function(){
-            that.searchForTweetsWithKeyword(that.temp.kObj.keyword, function(err, rows, fields){
-              console.log("" + rows.length + " tweets found containing the keyword");
-              that.temp.kCB.tweets = rows;
-              var finalSet = [];
-              var obj;
-              for(var i = 0; i < rows.length; i++){
-                obj = {};
-                obj['tweet_id'] = rows[i].id;
-                finalSet.push(obj);
-              }
-              that.genericAddToTable(that.temp.kObj['tableName'], finalSet, null, function(){
-
-                  if(that.temp.kCB.callbackForTweets){
-                    that.temp.kCB.callbackForTweets(that.temp.kCB.tweets);
-                  }
-
-              });
-            });
-          });
-        });
-      });
-    });
-  });
-};
-
-exports.redoKeyword = function(keyword, callbackForTweets){
-  var taht = this;
-  this.genericDropTable(keyword, function(){
-    that.addNewKeyword(keyword, callbackForTweets);
-  });
-};
-
-exports.deleteKeyword = function(keyword, callback){
-  this.genericDropTable(keyword, callback);
-}
-
-// exports.addTweet = function(tweet, callback){
-//   this.genericAddToTable('tweets', [tweet], callback, null);
-// };
-
-// exports.addTweets = function(tweets, callbackPer, callbackEnd){
-
-//   var newCallbackPer = function(err, rows, fields){
-//     //could reindex on keywords here, or something
-//     //maybe set them as not indexed yet, like in a columln
-//     if(callbackPer) callbackPer(err, rows, fields);
-//   }
-
-//   var finalCallback = function(){
-//     if(callbackEnd) callBackEnd();
-//   };
-
-//   this.genericAddToTable('tweets', tweets, newCallbackPer, finalCallback, null);
-// };
 
 exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, callbackAtEnd, doBulkAdd){
 
@@ -659,6 +657,8 @@ exports.trigger = function(db,callback){
 // exports.db.query("INSERT INTO admin VALUES('aaa', 'bbb', null);", function(err, rows) {
 //   console.log(err, rows);
 // });
+
+/*================== ADMIN PANEL ====================*/
 
 exports.addAdmin = function(admin, callback){
   console.log(admin);

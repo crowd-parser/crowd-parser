@@ -20,12 +20,58 @@ angular.module('parserApp.display3dService', [])
   var layers = [];
   var frontLayerZ = 0;
   var layerSpacing = 300;
+  var ribbonHeight = 1000;
 
   // left and right mouse hover buttons
   var leftHover = false;
   var rightHover = false;
   var scrollSpeed = 15;
+  var neverAutoScroll = false;
+  var rightAutoScroll = false;
   var tick = 0;
+
+  // tweet display settings
+  var rows = 4;
+  var ySpacing = 200;
+  var yStart = 300;
+  var xSpacing = 320;
+  var xStart = -800;
+
+  var getDisplayWidthAtPoint = function(x,y,z) {
+    x = x || 0;
+    y = y || 0;
+    z = z || 0;
+    var cameraDistanceFromZPlane = new THREE.Vector3();
+    var zTarget = new THREE.Vector3(x,y,z);
+    cameraDistanceFromZPlane.subVectors(camera.position, zTarget);
+    var heightAtZPlane = 2 * cameraDistanceFromZPlane.length() * Math.tan(THREE.Math.degToRad(camera.fov)/2);
+    var widthAtZPlane = camera.aspect * heightAtZPlane;
+    return widthAtZPlane;
+  };
+
+  var adjustRibbonWidth = function() {
+    layers.forEach(function(layer) {
+      var cameraDistanceFromTarget = new THREE.Vector3();
+      var farthestYOnRibbon;
+      cameraDistanceFromTarget.subVectors(camera.position, controls.target);
+      // probably would be more precise to find out angle of camera vector relative
+      // to ribbon but this should work in most cases
+      if (camera.position.y >= 0) {
+        farthestYOnRibbon = -1 * ribbonHeight;
+      } else {
+        farthestYOnRibbon = ribbonHeight;
+      }
+      var newRibbonWidth = getDisplayWidthAtPoint(0,farthestYOnRibbon,layer.z) + 10;
+      layer.ribbonEl.style.width = newRibbonWidth + 'px';
+      layer.ribbonEl.style.height = ribbonHeight + 'px';
+      var titleWidth = layer.ribbonEl.children[0].clientWidth;
+      layer.ribbonEl.children[0].style.left = (newRibbonWidth/2 - getDisplayWidthAtPoint(controls.target.x,ribbonHeight/2,0)/2 + titleWidth) + 'px';
+    });
+  };
+
+  var autoScrollToggle = function () {
+    neverAutoScroll = !neverAutoScroll;
+  };
 
   var animate = function() {
     requestAnimationFrame( animate );
@@ -34,30 +80,44 @@ angular.module('parserApp.display3dService', [])
     // check if camera has moved
     if (!camera.position.equals(prevCameraPosition)) {
       // if so, adjust ribbon width so you don't see the left/right ends of the ribbon
-      layers.forEach(function(layer) {
-        var cameraDistanceFromTarget = new THREE.Vector3();
-        cameraDistanceFromTarget.subVectors(camera.position, controls.target);
-        var newRibbonWidth = Math.abs(cameraDistanceFromTarget.length()) * 14;
-        layer.ribbonEl.style.width = newRibbonWidth + 'px';
-        layer.ribbonEl.children[0].style.left = (newRibbonWidth/2 - 1000) + 'px';
-      });
+      adjustRibbonWidth();
     }
 
     prevCameraPosition.copy(camera.position);
 
     // code for doing something every 30 ticks
-    // if (tick >= 30 && keepAddingTweets) {
-    //   tick = 0;
-    // }
+    if (tick >= 30) {
+      tick = 0;
+    }
+
+    // auto scroll if tweets are falling off the right
+    if (!leftHover && !rightHover) {
+      if (layers[0].tweets.length) {
+        var lastTweetPosition = layers[0].tweets[layers[0].tweets.length-1].obj.position;
+        var rightEdge = getDisplayWidthAtPoint(controls.target.x, controls.target.y, controls.target.z)/2 + camera.position.x;
+        if ((lastTweetPosition.x + xSpacing) > rightEdge) {
+          var distanceToGo = (lastTweetPosition.x + xSpacing) - rightEdge;
+          scrollSpeed = 10 * distanceToGo/100;
+          rightAutoScroll = true;
+        } else {
+          rightAutoScroll = false;
+        }
+      }
+    }
+
 
     if (leftHover) {
+      scrollSpeed = 15;
       camera.position.x -= scrollSpeed;
       controls.target.x -= scrollSpeed;
       for (var i = 0; i < layers.length; i++) {
         layers[i].ribbonObj.position.x -= scrollSpeed;
       }
     }
-    if (rightHover) {
+    if (rightHover || (rightAutoScroll && !neverAutoScroll)) {
+      if (rightHover) {
+        scrollSpeed = 15;
+      }
       camera.position.x += scrollSpeed;
       controls.target.x += scrollSpeed;
       for (var i = 0; i < layers.length; i++) {
@@ -74,12 +134,6 @@ angular.module('parserApp.display3dService', [])
   };
 
   var addTweet = function(rawTweet, index) {
-
-    var rows = 4;
-    var ySpacing = 200;
-    var yStart = 300;
-    var xSpacing = 320;
-    var xStart = -800;
 
     layers.forEach(function(layerObj) {
 
@@ -140,14 +194,12 @@ angular.module('parserApp.display3dService', [])
     layerObj.z = z;
 
     var ribbon = document.createElement('div');
+    ribbon.style.height = ribbonHeight + 'px';
     ribbon.className = 'ribbon-3d';
-    var ribbonWidth = Math.abs(camera.position.z) * 14;
-    ribbon.style.width = ribbonWidth + 'px';
 
     var ribbonText = document.createElement( 'div' );
     ribbonText.className = 'layer-title';
     ribbonText.textContent = layerTitle + ' layer';
-    ribbonText.style.left = (ribbonWidth/2 - 800) + 'px';
     ribbonText.style.opacity = 1;
     ribbon.appendChild( ribbonText );
     layerObj.titleEl = ribbonText;
@@ -182,17 +234,42 @@ angular.module('parserApp.display3dService', [])
     }, false);
   };
 
-  var init = function(containerID, cameraY, cameraZ, height) {
+  var init = function(context) {
+    console.log(context);
 
-    height = height || window.innerHeight;
+    var height = window.innerHeight;
+    var containerID = 'container-3d';
+    var cameraY, cameraZ;
+
+    rows = 4;
+    ribbonHeight = 1000;
+    layers = [];
+
+    // overwrite defaults if in mini window
+    if (context === 'mini') {
+      containerID = 'mini-container-3d';
+      cameraZ = 200;
+      cameraY = 0;
+      height = document.getElementById(containerID).clientHeight;
+      rows = 1;
+      ySpacing = 180;
+      layerSpacing = 125;
+      ribbonHeight = 250;
+    }
 
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera( 75, window.innerWidth / height, 0.1, 1000 );
-    camera.position.z = cameraZ || 1000;
-    camera.position.y = cameraY || 200;
+    camera = new THREE.PerspectiveCamera( 75, document.getElementById(containerID).clientWidth / height, 0.1, 1000 );
+    camera.position.z = cameraZ !== undefined ? cameraZ : 1000;
+    camera.position.y = cameraY !== undefined ? cameraY : 200;
+
+    xStart = 0 - (getDisplayWidthAtPoint(0,0,0) / 2) + xSpacing/2;
+    yStart = ((rows-1)*ySpacing)/2;
 
     renderer = new THREE.CSS3DRenderer();
-    renderer.setSize( window.innerWidth, height);
+    renderer.setSize( document.getElementById(containerID).clientWidth, height);
+    window.onresize = function () {
+      renderer.setSize( document.getElementById(containerID).clientWidth, height);
+    };
     document.getElementById( containerID ).appendChild( renderer.domElement );
 
     controls = new THREE.TrackballControls( camera, renderer.domElement );
@@ -202,6 +279,7 @@ angular.module('parserApp.display3dService', [])
 
     makeTweetLayer('baseLayerResults', 'word', frontLayerZ);
     makeTweetLayer('emoticonLayerResults', 'emoji', frontLayerZ - layerSpacing);
+
 
     addButtonEvent('separate-3d', 'click', function(event) {
       if (!layersSeparated) {
@@ -318,6 +396,8 @@ angular.module('parserApp.display3dService', [])
 
     prevCameraPosition = new THREE.Vector3();
     prevCameraPosition.copy(camera.position);
+    render();
+    adjustRibbonWidth();
     return camera;
   };
 
@@ -327,7 +407,8 @@ angular.module('parserApp.display3dService', [])
     addTweet: addTweet,
     makeTweetLayer: makeTweetLayer,
     init: init,
-    animate: animate
+    animate: animate,
+    autoScrollToggle: autoScrollToggle
   };
 });
   

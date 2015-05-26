@@ -5,21 +5,16 @@ angular.module('parserApp')
     var socket = Twitter.socket;
     $scope.tweetData = [];
     $scope.tweetCount = 0;
+    $scope.autoScroll = 'ON';
     var runFakeTweets = false;
     var intervalID;
-    var containerID = 'container-3d';
-    var cameraZ;
-    var cameraY;
-    var displayHeight = window.innerHeight;
 
     if ($state.current.name === 'main.components') {
-      containerID = 'mini-container-3d';
-      cameraZ = 800;
-      cameraY = 100;
-      displayHeight = 250;
-    };
+      Display3d.init('mini');
+    } else {
+      Display3d.init();
+    }
 
-    window.camera = Display3d.init(containerID, cameraY, cameraZ, displayHeight);
     Display3d.animate();
 
     // stops stream if user leaves page
@@ -67,6 +62,15 @@ angular.module('parserApp')
       }
     };
 
+    $scope.autoScrollToggle = function () {
+      Display3d.autoScrollToggle();
+      if ($scope.autoScroll === 'ON') {
+        $scope.autoScroll = 'OFF';
+      } else {
+        $scope.autoScroll = 'ON';
+      }
+    };
+
     $scope.streamFakeTweets = function () {
       // stop any existing stream
       socket.emit('twitter stop continuous stream');
@@ -75,6 +79,9 @@ angular.module('parserApp')
     };
 
     $scope.fullScreen = function () {
+      $scope.tweetData = [];
+      $scope.tweetCount = 0;
+      $scope.stopTweets();
       $location.path('/3dstream');
     };
 

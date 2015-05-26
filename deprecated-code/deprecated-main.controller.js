@@ -1,3 +1,6 @@
+  // Initializes the 3D streaming view/state
+  $state.transitionTo('main.components');
+
   $scope.startingView = true;
 
   var countToGet = countToGet;
@@ -134,9 +137,59 @@
         $scope.tweetsArray = data;
       });
     });
-    
+
     socket.on('twitter rest search', function(data) {
       $scope.$apply(function() {
         $scope.tweetsArray = data.statuses;
       });
     });
+
+    // Store the tweets in an array to be accessed one at a time to display in main.html
+    tweetsDisplayArray = data.tweetsWithAnalyses;
+
+
+    // Display tweets one at a time in main.html
+    $scope.$apply(function() {
+
+      // Provides a random index that will be displayed from tweetsDisplayArray
+      displayNumber = Math.floor(Math.random() * tweetsDisplayArray.length);
+
+      // Display the random tweet in main.html
+      $scope.allLayers = tweetsDisplayArray[displayNumber];
+    });
+
+    // Displays another random tweet from tweetsDisplayArray, avoiding repeats
+    $scope.nextTweet = function() {
+
+      // Remove the currently viewed tweet from tweetsDisplayArray
+      tweetsDisplayArray.splice(displayNumber, 1);
+
+      // Generate a new random index to display
+      displayNumber = Math.floor(Math.random() * tweetsDisplayArray.length);
+
+      // Display the new random tweet
+      $scope.allLayers = tweetsDisplayArray[displayNumber];
+    };
+
+    .directive('tweetsSentimentDisplayBand', function() {
+      return {
+        restrict: 'E',
+        templateUrl: 'tweets-sentiment-display-band.html'
+      };
+    });
+
+    // Array for tweets that are displayed in the "sentiment" section
+    // Random tweets from this array are display, one at a time
+    var tweetsDisplayArray = [];
+
+    // This number is randomized and represents the index of the tweetsDisplayArray that will be displayed
+    var displayNumber;
+
+    $scope.suggestion = {
+      tweetText: 'I don\'t hate dogs',
+      problem: 'don\'t negates hate',
+      suggestion: 'handle negations'
+    };
+
+    // Randomly choose one of the ten trending topics to display first
+    $scope.displayedQuery = $scope.trendingArray[Math.floor(Math.random() * 10)].name;

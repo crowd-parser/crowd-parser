@@ -3,7 +3,7 @@
 }
 
 .navbar-default .navbar-brand {
-  color: #FFF;
+  color: #D1DBBD;
 }
 
 .navbar-default .navbar-brand:hover {
@@ -13,11 +13,11 @@
 
 .navbar-default .navbar-nav > .active > a {
   background: #193441;
-  color: #D1DBBD;
+  color: #FFF;
 }
 
 .navbar-default .navbar-nav > li > a {
-  color: #FFF;
+  color: #D1DBBD;
 }
 
 .navbar-default .navbar-nav > li > a:hover {

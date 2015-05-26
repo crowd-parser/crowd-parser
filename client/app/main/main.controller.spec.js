@@ -19,8 +19,9 @@ describe('Controller: MainCtrl', function () {
   // Initialize the controller and a mock scope
   beforeEach(inject(function (_$httpBackend_, $controller, $rootScope, _$http_) {
     $httpBackend = _$httpBackend_;
-    $httpBackend.expectGET('/api/things')
-      .respond(['HTML5 Boilerplate', 'AngularJS', 'Karma', 'Express']);
+
+    $httpBackend.expectGET('/database/getTweetsForKeyword')
+      .respond('tweets');
 
     scope = $rootScope.$new();
     MainCtrl = $controller('MainCtrl', {
@@ -29,10 +30,8 @@ describe('Controller: MainCtrl', function () {
     $http = _$http_;
   }));
 
-  it('should attach a list of things to the scope', function () {
-    $http.get('/api/things');
+  it('should retrieve tweets for a keyword', function() {
     $httpBackend.flush();
-    expect(scope.awesomeThings.length).toBe(4);
-    // expect(4).toBe(4);
-  });
+    expect(scope.tweetsForKeyword).toBe('tweets');
+  })
 });

@@ -1,8 +1,12 @@
 'use strict';
 
 angular.module('parserApp')
-  .controller('MainCtrl', function ($scope, $state, Header, Twitter) {
+  .controller('MainCtrl', function ($http, $scope, $state, Header, Twitter) {
 
+    Twitter.getTweetsForKeyword('Obama', function(data) {
+      console.log(data);
+      $scope.tweetsForKeyword = data;
+    });
   // =========== Setup ============= //
 
   // Makes the header rotate in 3D

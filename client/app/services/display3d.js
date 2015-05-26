@@ -15,6 +15,10 @@ angular.module('parserApp.display3dService', [])
     return elLo;
   };
 
+  var makeLoResMesh = function (layersSeparated, elData) {
+
+  };
+
   var getCameraDistanceFrom = function(camera,x,y,z) {
     var cameraDistance = new THREE.Vector3();
     var zTarget = new THREE.Vector3(x,y,z);
@@ -306,9 +310,9 @@ angular.module('parserApp.display3dService', [])
     });
 
   };
-var material = new THREE.MeshBasicMaterial( { color: 'rgb(0,132,180)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
-material.transparent = true;
-material.opacity = 0.5;
+var ribbonMaterial = new THREE.MeshBasicMaterial( { color: 'rgb(0,132,180)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
+ribbonMaterial.transparent = true;
+ribbonMaterial.opacity = 0.5;
   var makeTweetLayer = function(layerResultsProp, layerTitle, z) {
     var layerObj = {};
     layerObj.tweets = [];
@@ -318,7 +322,7 @@ material.opacity = 0.5;
 
     var ribbonGeo = new THREE.PlaneBufferGeometry( 1, ribbonHeight, 2, 2 );
     $window.ribbonGeo = ribbonGeo;
-    var ribbonMesh = new THREE.Mesh( ribbonGeo, material );
+    var ribbonMesh = new THREE.Mesh( ribbonGeo, ribbonMaterial );
     ribbonMesh.position.x = 0;
     ribbonMesh.position.y = 0;
     ribbonMesh.position.z = z-1;
@@ -351,7 +355,7 @@ material.opacity = 0.5;
   };
 
   var render = function() {
-    rendererCSS.render( sceneCSS, camera );
+    //rendererCSS.render( sceneCSS, camera );
     rendererGL.render( sceneGL, camera );
   };
 
@@ -380,7 +384,9 @@ material.opacity = 0.5;
     tick++;
 
     // check if camera has moved
-    if (!camera.position.equals(prevCameraPosition)) {
+    //if (!camera.position.equals(prevCameraPosition)) {
+    // check if camera has moved more than a certain amount
+    if (Math.abs(camera.position.length - prevCameraPosition.length) > 5) {
       // if so, adjust ribbon width so you don't see the left/right ends of the ribbon
       adjustRibbonWidth();
       updateTweetLOD();

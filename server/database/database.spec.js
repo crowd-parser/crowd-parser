@@ -202,3 +202,55 @@ describe('MANAGING DATABASES', function() {
     done();
   });
 });
+
+describe('CALLING DATABASE FUNCTIONS', function() {
+
+  it('should create a database correctly', function(done) {
+    
+    db.deleteDatabase('randomcreateddatabase', function(err, response) {
+
+      db.createDatabase('randomcreateddatabase', function(err, response) {
+        
+        expect(err).to.equal(null);
+        expect(response.warningCount).to.equal(0);
+        done();
+      });
+    });
+  });
+
+  it('should change to a database correctly', function(done) {
+
+    db.changeToDatabase('dev', function(err, response) {
+      
+      expect(err).to.equal(null);
+      done();
+    });
+  });
+
+  it('should error when changed to a non-existent database', function(done) {
+
+    db.changeToDatabase('idontexist', function(err, response) {
+
+      expect(response).to.equal(undefined);
+      done();
+    })
+  });
+});
+
+describe('CALLING TABLE FUNCTIONS', function() {
+
+  it('should create a table with a schema based on the passed in object', function(done) {
+
+    db.changeToDatabase('randomcreateddatabase');
+
+    db.genericDropTable('randomcreatedtable', function(err, response) {
+      
+      db.genericCreateTable('randomcreatedtable', {testProp1: 'Property 1', testProp2: 'Property 2'}, function(err, response) {
+        
+        expect(err).to.equal(null);
+        expect(response.warningCount).to.equal(0);
+        done();
+      });
+    });
+  });
+});

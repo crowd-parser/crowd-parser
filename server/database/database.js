@@ -376,12 +376,12 @@ exports.genericCreateTable = function(tableName, exampleObject, callback){
     }
     str = str.slice(0, -1);
     str = str + ")";
-    this.db.query(str, function(err){
+    this.db.query(str, function(err, response){
       if(!err){
       }else{
         console.log(err);
       }
-      callback(err);
+      callback(err, response);
     });
 };
 

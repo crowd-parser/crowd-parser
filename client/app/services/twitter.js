@@ -1,10 +1,17 @@
 angular.module('parserApp.twitterService', [])
 
-.factory('Twitter', function () {
+.factory('Twitter', function ($http) {
 
   // ========== Setup =============== //
   
   var socket = io();
+
+  var getTweetsForKeyword = function(keyword, cb) {
+    $http.get('/database/getTweetsForKeyword')
+      .success(function(data) {
+        cb(data);
+      });
+  };
 
   var getTwitterRestSearch = function(query) {
     socket.emit('twitter rest search', query, 'mixed', 100);
@@ -43,6 +50,8 @@ angular.module('parserApp.twitterService', [])
 
   return {
     socket: socket,
+
+    getTweetsForKeyword: getTweetsForKeyword,
 
     getTwitterRestSearch: getTwitterRestSearch,
 

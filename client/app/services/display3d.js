@@ -87,13 +87,121 @@ angular.module('parserApp.display3dService', [])
     return bgRGBA;
   };
 
+  var swapLOD = function (sceneCSS, tweet, el) {
+    var x = tweet.obj.position.x;
+    var y = tweet.obj.position.y;
+    var z = tweet.obj.position.z;
+    sceneCSS.remove(tweet.obj);
+
+    var object = new THREE.CSS3DObject( el );
+    object.position.x = x;
+    object.position.y = y;
+    object.position.z = z;
+    sceneCSS.add( object );
+    tweet.obj = object;
+    tweet.el = el;
+  };
+
+  var separateLayers = function (layers, frontLayerZ, layerSpacing) {
+    for (var i = 0; i < layers.length; i++) {
+      layers[i].tweets.forEach(function(tweet) {
+        new TWEEN.Tween( tweet.obj.position )
+          .to( {z: frontLayerZ - layerSpacing*i}, 1000 )
+          .easing( TWEEN.Easing.Exponential.InOut )
+          .start();
+
+        if (tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
+          new TWEEN.Tween( {val: 0} )
+            .to ( {val: 0.8}, 1000 )
+            .easing( TWEEN.Easing.Exponential.InOut )
+            .onUpdate( function () {
+              tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
+            })
+            .start();
+        }
+      });
+      new TWEEN.Tween( layers[i].ribbonObj.position )
+        .to( {z: frontLayerZ - layerSpacing*i - 1}, 1000 )
+        .easing( TWEEN.Easing.Exponential.InOut )
+        .start();
+      if (i > 0) {
+        new TWEEN.Tween( layers[i].titleEl.style )
+          .to( {opacity: 1}, 500 )
+          .easing( TWEEN.Easing.Exponential.InOut )
+          .start();
+      }
+      layers[i].z = frontLayerZ - layerSpacing*i - 1;
+      if (i === 0) {
+        var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
+          .to( {opacity: 0}, 500)
+          .easing( TWEEN.Easing.Quadratic.InOut )
+          .onComplete(function () {
+            layers[0].titleEl.textContent = layers[0].title + ' layer';
+          });
+        var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
+          .to( {opacity: 1}, 500)
+          .easing( TWEEN.Easing.Quadratic.InOut );
+        fadeOut.chain(fadeIn).start();
+      }
+    }
+  };
+
+  var flattenLayers = function (layers, frontLayerZ, layerSpacing) {
+    for (var i = 0; i < layers.length; i++) {
+      layers[i].tweets.forEach(function(tweet) {
+        new TWEEN.Tween( tweet.obj.position )
+          .to( {z: frontLayerZ - 2*i}, 1000 )
+          .easing( TWEEN.Easing.Exponential.InOut )
+          .start();
+
+        if (tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
+          new TWEEN.Tween( {val: 0.8} )
+            .to ( {val: 0}, 1000 )
+            .easing( TWEEN.Easing.Exponential.InOut )
+            .onUpdate( function () {
+              tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
+            })
+            .start();
+        }
+      });
+      new TWEEN.Tween( layers[i].ribbonObj.position )
+        .to( {z: frontLayerZ - 2*i - 1}, 1000 )
+        .easing( TWEEN.Easing.Exponential.InOut )
+        .start();
+      if (i > 0) {
+        new TWEEN.Tween( layers[i].titleEl.style )
+          .to( {opacity: 0}, 500)
+          .easing( TWEEN.Easing.Exponential.InOut )
+          .start();
+      }
+      layers[i].z = frontLayerZ - 2*i;
+      if (i === 0) {
+        var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
+          .to( {opacity: 0}, 500)
+          .easing( TWEEN.Easing.Quadratic.InOut )
+          .onComplete(function () {
+            layers[0].titleEl.textContent = layers.map(function (item) {
+              return item.title;
+            }).join(' + ') + ' layers';
+          });
+        var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
+          .to( {opacity: 1}, 500)
+          .easing( TWEEN.Easing.Quadratic.InOut );
+        fadeOut.chain(fadeIn).start();
+      }
+    }
+  };
+
   return {
     makeLoResElement: makeLoResElement,
     getCameraDistanceFrom: getCameraDistanceFrom,
     getDisplayWidthAtPoint: getDisplayWidthAtPoint,
     currentBGColor: currentBGColor,
     makeTweetElement: makeTweetElement,
-    calculateColorFromScore: calculateColorFromScore
+    calculateColorFromScore: calculateColorFromScore,
+    swapLOD: swapLOD,
+    separateLayers: separateLayers,
+    flattenLayers: flattenLayers
   };
 }])
 
@@ -108,7 +216,7 @@ angular.module('parserApp.display3dService', [])
   var THREE = $window.THREE;
   var TWEEN = $window.TWEEN;
 
-  var scene, camera, renderer, controls, prevCameraPosition;
+  var sceneCSS, sceneGL, camera, rendererCSS, rendererGL, controls, prevCameraPosition;
 
   var layersSeparated;
   var layers;
@@ -182,17 +290,15 @@ angular.module('parserApp.display3dService', [])
       var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, x, y, z );
       if (tweetDistance > 3000) {
         tweet = displayHelpers.makeLoResElement(layersSeparated, elData);
-        tweet.style.backgroundColor = displayHelpers.currentBGColor(layersSeparated, elData);
       } else {
         tweet = displayHelpers.makeTweetElement(layersSeparated, elData);
-        tweet.style.backgroundColor = displayHelpers.currentBGColor(layersSeparated, elData);
       }
 
       var object = new THREE.CSS3DObject( tweet );
       object.position.x = x;
       object.position.y = y;
       object.position.z = z;
-      scene.add( object );
+      sceneCSS.add( object );
 
       layerObj.tweets.push({obj: object, el: tweet, elData: elData});
 
@@ -223,7 +329,7 @@ angular.module('parserApp.display3dService', [])
     ribbonObject.position.y = 0;
     ribbonObject.position.z = z-1;
 
-    scene.add( ribbonObject );
+    sceneCSS.add( ribbonObject );
     layerObj.ribbonObj = ribbonObject;
     layerObj.ribbonEl = ribbon;
 
@@ -231,7 +337,7 @@ angular.module('parserApp.display3dService', [])
   };
 
   var render = function() {
-    renderer.render( scene, camera );
+    rendererCSS.render( sceneCSS, camera );
   };
 
   var updateTweetLOD = function () {
@@ -240,39 +346,15 @@ angular.module('parserApp.display3dService', [])
         var tweet = layers[layerIndex].tweets[t];
         var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, tweet.obj.position.x, tweet.obj.position.y, tweet.obj.position.z );
         if (tweetDistance > 3000 && tweet.el.className !== 'tweet-3d-lod-low') {
-          // switch to lower LOD
-          var x = tweet.obj.position.x;
-          var y = tweet.obj.position.y;
-          var z = tweet.obj.position.z;
-          scene.remove(tweet.obj);
 
           var elLo = displayHelpers.makeLoResElement(layersSeparated, tweet.elData);
-          elLo.style.backgroundColor = displayHelpers.currentBGColor(layersSeparated, tweet.elData);
-
-          var objectLo = new THREE.CSS3DObject( elLo );
-          objectLo.position.x = x;
-          objectLo.position.y = y;
-          objectLo.position.z = z;
-          scene.add( objectLo );
-          tweet.obj = objectLo;
-          tweet.el = elLo;
+          // switch to lower LOD
+          displayHelpers.swapLOD(sceneCSS, tweet, elLo);
         } else if (tweetDistance <= 3000 && tweet.el.className !== 'tweet-3d') {
-          // switch to higher LOD
-          var x = tweet.obj.position.x;
-          var y = tweet.obj.position.y;
-          var z = tweet.obj.position.z;
-          scene.remove(tweet.obj);
 
           var elHi = displayHelpers.makeTweetElement(layersSeparated, tweet.elData);
-          elHi.style.backgroundColor = displayHelpers.currentBGColor(layersSeparated, tweet.elData);
-
-          var objectHi = new THREE.CSS3DObject( elHi );
-          objectHi.position.x = x;
-          objectHi.position.y = y;
-          objectHi.position.z = z;
-          scene.add( objectHi );
-          tweet.obj = objectHi;
-          tweet.el = elHi;
+          // switch to higher LOD
+          displayHelpers.swapLOD(sceneCSS, tweet, elHi);
         }
       }
     }
@@ -364,7 +446,8 @@ angular.module('parserApp.display3dService', [])
     
     ribbonHeight = rows * ySpacing + 200;
 
-    scene = new THREE.Scene();
+    sceneCSS = new THREE.Scene();
+    sceneGL = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, document.getElementById(containerID).clientWidth / height, 0.1, 1000 );
     camera.position.z = cameraZ !== undefined ? cameraZ : 1000;
     camera.position.y = cameraY !== undefined ? cameraY : 200;
@@ -372,14 +455,23 @@ angular.module('parserApp.display3dService', [])
     xStart = 0 - (displayHelpers.getDisplayWidthAtPoint(camera,0,0,0) / 2) + xSpacing/2;
     yStart = ((rows-1)*ySpacing)/2;
 
-    renderer = new THREE.CSS3DRenderer();
-    renderer.setSize( document.getElementById(containerID).clientWidth, height);
+    rendererCSS = new THREE.CSS3DRenderer();
+    rendererCSS.setSize( document.getElementById(containerID).clientWidth, height);
     window.onresize = function () {
-      renderer.setSize( document.getElementById(containerID).clientWidth, height);
+      rendererCSS.setSize( document.getElementById(containerID).clientWidth, height);
     };
-    document.getElementById( containerID ).appendChild( renderer.domElement );
+    document.getElementById( containerID ).appendChild( rendererCSS.domElement );
 
-    controls = new THREE.TrackballControls( camera, renderer.domElement );
+    rendererGL = new THREE.WebGLRenderer();
+    rendererGL.setClearColor( 0x000000 );
+    rendererGL.setPixelRatio( window.devicePixelRatio );
+    rendererGL.setSize( document.getElementById(containerID).clientWidth, height );
+    window.onresize = function () {
+      rendererCSS.setSize( document.getElementById(containerID).clientWidth, height);
+    };
+    document.getElementById( containerID ).appendChild( rendererGL.domElement );
+
+    controls = new THREE.TrackballControls( camera, rendererCSS.domElement );
     controls.rotateSpeed = 1;
     controls.maxDistance = 10000;
     controls.addEventListener( 'change', render );
@@ -395,96 +487,14 @@ angular.module('parserApp.display3dService', [])
 
     addButtonEvent('separate-3d', 'click', function() {
       if (!layersSeparated) {
-        for (var i = 0; i < layers.length; i++) {
-          layers[i].tweets.forEach(function(tweet) {
-            new TWEEN.Tween( tweet.obj.position )
-              .to( {z: frontLayerZ - layerSpacing*i}, 1000 )
-              .easing( TWEEN.Easing.Exponential.InOut )
-              .start();
-
-            if (tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
-              new TWEEN.Tween( {val: 0} )
-                .to ( {val: 0.8}, 1000 )
-                .easing( TWEEN.Easing.Exponential.InOut )
-                .onUpdate( function () {
-                  tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
-                })
-                .start();
-            }
-          });
-          new TWEEN.Tween( layers[i].ribbonObj.position )
-            .to( {z: frontLayerZ - layerSpacing*i - 1}, 1000 )
-            .easing( TWEEN.Easing.Exponential.InOut )
-            .start();
-          if (i > 0) {
-            new TWEEN.Tween( layers[i].titleEl.style )
-              .to( {opacity: 1}, 500 )
-              .easing( TWEEN.Easing.Exponential.InOut )
-              .start();
-          }
-          layers[i].z = frontLayerZ - layerSpacing*i - 1;
-          if (i === 0) {
-            var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
-              .to( {opacity: 0}, 500)
-              .easing( TWEEN.Easing.Quadratic.InOut )
-              .onComplete(function () {
-                layers[0].titleEl.textContent = layers[0].title + ' layer';
-              });
-            var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
-              .to( {opacity: 1}, 500)
-              .easing( TWEEN.Easing.Quadratic.InOut );
-            fadeOut.chain(fadeIn).start();
-          }
-        }
+        displayHelpers.separateLayers(layers, frontLayerZ, layerSpacing);
         layersSeparated = true;
       }
     });
 
     addButtonEvent('flatten-3d', 'click', function() {
       if (layersSeparated) {
-        for (var i = 0; i < layers.length; i++) {
-          layers[i].tweets.forEach(function(tweet) {
-            new TWEEN.Tween( tweet.obj.position )
-              .to( {z: frontLayerZ - 2*i}, 1000 )
-              .easing( TWEEN.Easing.Exponential.InOut )
-              .start();
-
-            if (tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
-              new TWEEN.Tween( {val: 0.8} )
-                .to ( {val: 0}, 1000 )
-                .easing( TWEEN.Easing.Exponential.InOut )
-                .onUpdate( function () {
-                  tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
-                })
-                .start();
-            }
-          });
-          new TWEEN.Tween( layers[i].ribbonObj.position )
-            .to( {z: frontLayerZ - 2*i - 1}, 1000 )
-            .easing( TWEEN.Easing.Exponential.InOut )
-            .start();
-          if (i > 0) {
-            new TWEEN.Tween( layers[i].titleEl.style )
-              .to( {opacity: 0}, 500)
-              .easing( TWEEN.Easing.Exponential.InOut )
-              .start();
-          }
-          layers[i].z = frontLayerZ - 2*i;
-          if (i === 0) {
-            var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
-              .to( {opacity: 0}, 500)
-              .easing( TWEEN.Easing.Quadratic.InOut )
-              .onComplete(function () {
-                layers[0].titleEl.textContent = layers.map(function (item) {
-                  return item.title;
-                }).join(' + ') + ' layers';
-              });
-            var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
-              .to( {opacity: 1}, 500)
-              .easing( TWEEN.Easing.Quadratic.InOut );
-            fadeOut.chain(fadeIn).start();
-          }
-        }
+        displayHelpers.flattenLayers(layers, frontLayerZ, layerSpacing);
         layersSeparated = false;
       }
     });

@@ -125,5 +125,5 @@ angular.module('parserApp')
       }
     };
 
-    $scope.streamFakeTweets();
+    //$scope.streamFakeTweets();
   });

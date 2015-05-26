@@ -257,6 +257,7 @@ angular.module('parserApp.display3dService', [])
       var newRibbonWidth = displayHelpers.getDisplayWidthAtPoint(camera, 0, farthestYOnRibbon, layer.z) + 10;
       layer.ribbonEl.style.width = newRibbonWidth + 'px';
       layer.ribbonEl.style.height = ribbonHeight + 'px';
+      layer.ribbonMesh.scale.x = newRibbonWidth;
       var titleWidth = layer.ribbonEl.children[0].clientWidth;
       layer.ribbonEl.children[0].style.left = (newRibbonWidth/2 - displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x,ribbonHeight/2,0)/2 + titleWidth) + 'px';
     });
@@ -305,6 +306,7 @@ angular.module('parserApp.display3dService', [])
     });
 
   };
+var material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true, wireframeLinewidth: 1, side: THREE.DoubleSide } );
 
   var makeTweetLayer = function(layerResultsProp, layerTitle, z) {
     var layerObj = {};
@@ -312,6 +314,16 @@ angular.module('parserApp.display3dService', [])
     layerObj.resultsName = layerResultsProp;
     layerObj.title = layerTitle;
     layerObj.z = z;
+
+    var ribbonGeo = new THREE.PlaneBufferGeometry( 1, ribbonHeight, 2, 2 );
+    $window.ribbonGeo = ribbonGeo;
+    var ribbonMesh = new THREE.Mesh( ribbonGeo, material );
+    ribbonMesh.position.x = 0;
+    ribbonMesh.position.y = 0;
+    ribbonMesh.position.z = z-1;
+
+    sceneGL.add( ribbonMesh );
+    layerObj.ribbonMesh = ribbonMesh;
 
     var ribbon = document.createElement('div');
     ribbon.style.height = ribbonHeight + 'px';
@@ -338,6 +350,7 @@ angular.module('parserApp.display3dService', [])
 
   var render = function() {
     rendererCSS.render( sceneCSS, camera );
+    rendererGL.render( sceneGL, camera );
   };
 
   var updateTweetLOD = function () {
@@ -393,7 +406,6 @@ angular.module('parserApp.display3dService', [])
       }
     }
 
-
     if (leftHover) {
       scrollSpeed = 15;
       camera.position.x -= scrollSpeed;
@@ -448,7 +460,7 @@ angular.module('parserApp.display3dService', [])
 
     sceneCSS = new THREE.Scene();
     sceneGL = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera( 75, document.getElementById(containerID).clientWidth / height, 0.1, 1000 );
+    camera = new THREE.PerspectiveCamera( 75, document.getElementById(containerID).clientWidth / height, 10, 10000 );
     camera.position.z = cameraZ !== undefined ? cameraZ : 1000;
     camera.position.y = cameraY !== undefined ? cameraY : 200;
 
@@ -460,7 +472,8 @@ angular.module('parserApp.display3dService', [])
     window.onresize = function () {
       rendererCSS.setSize( document.getElementById(containerID).clientWidth, height);
     };
-    document.getElementById( containerID ).appendChild( rendererCSS.domElement );
+    rendererCSS.domElement.style.position = 'absolute';
+    rendererCSS.domElement.style.top = 0;
 
     rendererGL = new THREE.WebGLRenderer();
     rendererGL.setClearColor( 0x000000 );
@@ -469,7 +482,9 @@ angular.module('parserApp.display3dService', [])
     window.onresize = function () {
       rendererCSS.setSize( document.getElementById(containerID).clientWidth, height);
     };
+
     document.getElementById( containerID ).appendChild( rendererGL.domElement );
+    document.getElementById( containerID ).appendChild( rendererCSS.domElement );
 
     controls = new THREE.TrackballControls( camera, rendererCSS.domElement );
     controls.rotateSpeed = 1;

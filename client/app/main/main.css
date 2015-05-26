@@ -250,6 +250,33 @@ header img {
     font-size: 70px;
 }
 
+h1 {
+    font-size: 50px;
+    margin-top: 70px;
+    margin-bottom: 40px;
+}
+
+h2 {
+    margin-bottom: 67px;
+}
+
+.in-3d {
+    color: #91AA9D;
+    font-size: 70px;
+    font-weight: 100;
+}
+
+.click-to-begin-band {
+    background: #3E606F;
+    margin-top: 50px;
+    padding: 35px 0;
+}
+
+.click-to-begin {
+    background: #FFF;
+    font-size: 17px;
+}
+
 @media (max-width: 745px) {
     .tweet-layers-results {
         width: 49%;

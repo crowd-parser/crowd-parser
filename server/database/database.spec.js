@@ -178,6 +178,12 @@ describe('MANAGING TABLES', function() {
     expect(db.genericDropTable).to.be.a.function;
     done();
   });
+
+  it('should have a genericDescribeTable function', function(done) {
+
+    expect(db.genericDescribeTable).to.be.a.function;
+    done();
+  });
 });
 
 
@@ -246,10 +252,56 @@ describe('CALLING TABLE FUNCTIONS', function() {
     db.genericDropTable('randomcreatedtable', function(err, response) {
       
       db.genericCreateTable('randomcreatedtable', {testProp1: 'Property 1', testProp2: 'Property 2'}, function(err, response) {
-        
-        expect(err).to.equal(null);
-        expect(response.warningCount).to.equal(0);
-        done();
+
+        // db.genericAddToTable('randomcreatedtable', [{testProp1: 'add an item', testProp2: 'add a second item'}], function(err, rows, fields) {
+
+        //   console.log(err, rows, fields);
+        //   done();
+        // });
+
+        db.genericDescribeTable('randomcreatedtable', function(err, rows, fields) {
+          expect(rows[0].Field).to.equal('id');
+          expect(rows[1].Field).to.equal('testProp1');
+          expect(rows[2].Field).to.equal('testProp2');
+          done();
+        })
+      });
+    });
+  });
+
+  it('should create a table with a schema only one level deep when given an example object with nested objects', function(done) {
+
+    db.changeToDatabase('randomcreateddatabase');
+
+    db.genericDropTable('randomcreatedtablerecursed', function(err, response) {
+      
+      db.genericCreateTable('randomcreatedtablerecursed', {testProp1: 'Property 1', testProp2: {testProp3: 'Property 3', testProp4: {testProp5: 'testProp5'}}}, function(err, response) {
+
+        db.genericDescribeTable('randomcreatedtablerecursed', function(err, rows, fields) {
+          
+          expect(rows[0].Field).to.equal('id');
+          expect(rows[1].Field).to.equal('testProp1');
+          expect(rows[2].Field).to.equal('testProp2_testProp3');
+          expect(rows[3].Field).to.equal('testProp2_testProp4_testProp5');
+          done();
+        })
+      });
+    });
+  });
+
+  xit('should add an object to a table correctly', function(done) {
+
+    db.changeToDatabase('randomcreateddatabase');
+
+    db.genericDropTable('randomcreatedtable', function(err, response) {
+      
+      db.genericCreateTable('randomcreatedtable', {testProp1: 'Property 1', testProp2: 'Property 2'}, function(err, response) {
+
+        // db.genericAddToTable('randomcreatedtable', [{testProp1: 'add an item', testProp2: 'add a second item'}], function(err, rows, fields) {
+
+        //   console.log(err, rows, fields);
+        //   done();
+        // });
       });
     });
   });

@@ -611,8 +611,8 @@ exports.tellMeWhenDatabaseIsLive = function(callback){
 //================ TESTING ======================
 exports.genericDescribeTable = function(name, callback){
   this.db.query("DESCRIBE " + name, function(err, rows, fields){
-    console.log(rows);
-    callback(err,rows);
+
+    callback(err, rows, fields);
   });
 };
 

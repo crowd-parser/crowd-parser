@@ -15,12 +15,12 @@ angular.module('parserApp.display3dService', [])
 
   var scene, camera, renderer, controls, prevCameraPosition;
 
-  var layersSeparated = true;
+  var layersSeparated;
+  var layers;
+  var ribbonHeight;
 
-  var layers = [];
   var frontLayerZ = 0;
   var layerSpacing = 300;
-  var ribbonHeight = 1000;
 
   // left and right mouse hover buttons
   var leftHover = false;
@@ -31,7 +31,7 @@ angular.module('parserApp.display3dService', [])
   var tick = 0;
 
   // tweet display settings
-  var rows = 4;
+  var rows;
   var ySpacing = 200;
   var yStart = 300;
   var xSpacing = 320;
@@ -244,6 +244,7 @@ angular.module('parserApp.display3dService', [])
     rows = 4;
     ribbonHeight = 1000;
     layers = [];
+    layersSeparated = true;
 
     // overwrite defaults if in mini window
     if (context === 'mini') {

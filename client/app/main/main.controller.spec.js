@@ -30,7 +30,7 @@ describe('Controller: MainCtrl', function () {
     $http = _$http_;
   }));
 
-  it('should retrieve tweets for a keyword', function() {
+  it('should retrieve tweets for a keyword on main page load', function() {
     $httpBackend.flush();
     expect(scope.tweetsForKeyword).toBe('tweets');
   })

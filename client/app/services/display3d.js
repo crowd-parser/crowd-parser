@@ -2,7 +2,102 @@
 
 angular.module('parserApp.display3dService', [])
 
-.factory('Display3d', function ($document) {
+
+.factory('displayHelpers', ['$window', function($window){
+
+  var THREE = $window.THREE;
+
+  var makeLoResElement = function (layersSeparated, elData) {
+    var elLo = document.createElement( 'div' );
+    elLo.className = ( 'tweet-3d-lod-low' );
+    elLo.style.backgroundColor = currentBGColor(layersSeparated, elData);
+
+    return elLo;
+  };
+
+  var getCameraDistanceFrom = function(camera,x,y,z) {
+    var cameraDistance = new THREE.Vector3();
+    var zTarget = new THREE.Vector3(x,y,z);
+    cameraDistance.subVectors(camera.position, zTarget);
+    return cameraDistance.length();
+  };
+
+  var getDisplayWidthAtPoint = function(camera,x,y,z) {
+    x = x || 0;
+    y = y || 0;
+    z = z || 0;
+    var cameraDistanceFromZPlane = getCameraDistanceFrom(camera, x,y,z);
+    var heightAtZPlane = 2 * cameraDistanceFromZPlane * Math.tan(THREE.Math.degToRad(camera.fov)/2);
+    var widthAtZPlane = camera.aspect * heightAtZPlane;
+    return widthAtZPlane;
+  };
+
+  var currentBGColor = function (layersSeparated, elData) {
+    if (!layersSeparated && elData.baseBGColor === 'rgba(225,225,225,0.8)') {
+      return 'rgba(225,225,225,0)';
+    } else {
+      return elData.baseBGColor;
+    }
+  };
+
+  var makeTweetElement = function (layersSeparated, elData) {
+
+      var tweet = document.createElement( 'div' );
+      tweet.className = 'tweet-3d';
+      tweet.style.backgroundColor = elData.baseBGColor;
+
+      var username = document.createElement( 'div' );
+      username.className = 'username';
+      username.textContent = elData.username;
+      tweet.appendChild( username );
+
+      var tweetText = document.createElement( 'div' );
+      tweetText.className = 'tweetText';
+      tweetText.textContent = elData.text;
+      tweet.appendChild( tweetText );
+
+      var score = document.createElement( 'div' );
+      score.className = 'score';
+      score.textContent = elData.score;
+      tweet.appendChild( score );
+
+      tweet.style.backgroundColor = currentBGColor(layersSeparated, elData);
+
+      return tweet;
+
+  };
+
+  var calculateColorFromScore = function (score) {
+    var bgRGBA;
+    if (score < -5) {
+      score = -5;
+    }
+    if (score > 5) {
+      score = 5;
+    }
+    if (score < 0) {
+      bgRGBA = '225,0,0,' + (0.25 - score/10);
+    }
+    if (score > 0) {
+      bgRGBA = '0,180,225,' + (0.25 + score/10);
+    }
+    if (score === 0) {
+      bgRGBA = '225,225,225,0.8';
+    }
+    return bgRGBA;
+  };
+
+  return {
+    makeLoResElement: makeLoResElement,
+    getCameraDistanceFrom: getCameraDistanceFrom,
+    getDisplayWidthAtPoint: getDisplayWidthAtPoint,
+    currentBGColor: currentBGColor,
+    makeTweetElement: makeTweetElement,
+    calculateColorFromScore: calculateColorFromScore
+  };
+}])
+
+.factory('Display3d', ['$document', '$window', 'displayHelpers', function($document, $window, displayHelpers) {
 
   // TODO
   // - make text go away when zoomed out past a certain distance
@@ -10,6 +105,8 @@ angular.module('parserApp.display3dService', [])
   // - buttons next to each layer name - remove, solo, move fwd, move back
 
   var document = $document[0];
+  var THREE = $window.THREE;
+  var TWEEN = $window.TWEEN;
 
   var scene, camera, renderer, controls, prevCameraPosition;
 
@@ -35,21 +132,8 @@ angular.module('parserApp.display3dService', [])
   var xSpacing = 320;
   var xStart = -800;
 
-  var getCameraDistanceFrom = function(x,y,z) {
-    var cameraDistance = new THREE.Vector3();
-    var zTarget = new THREE.Vector3(x,y,z);
-    cameraDistance.subVectors(camera.position, zTarget);
-    return cameraDistance.length();
-  };
-
-  var getDisplayWidthAtPoint = function(x,y,z) {
-    x = x || 0;
-    y = y || 0;
-    z = z || 0;
-    var cameraDistanceFromZPlane = getCameraDistanceFrom(x,y,z);
-    var heightAtZPlane = 2 * cameraDistanceFromZPlane * Math.tan(THREE.Math.degToRad(camera.fov)/2);
-    var widthAtZPlane = camera.aspect * heightAtZPlane;
-    return widthAtZPlane;
+  var autoScrollToggle = function () {
+    neverAutoScroll = !neverAutoScroll;
   };
 
   var adjustRibbonWidth = function() {
@@ -62,161 +146,19 @@ angular.module('parserApp.display3dService', [])
       } else {
         farthestYOnRibbon = ribbonHeight;
       }
-      var newRibbonWidth = getDisplayWidthAtPoint(0,farthestYOnRibbon,layer.z) + 10;
+      var newRibbonWidth = displayHelpers.getDisplayWidthAtPoint(camera, 0, farthestYOnRibbon, layer.z) + 10;
       layer.ribbonEl.style.width = newRibbonWidth + 'px';
       layer.ribbonEl.style.height = ribbonHeight + 'px';
       var titleWidth = layer.ribbonEl.children[0].clientWidth;
-      layer.ribbonEl.children[0].style.left = (newRibbonWidth/2 - getDisplayWidthAtPoint(controls.target.x,ribbonHeight/2,0)/2 + titleWidth) + 'px';
+      layer.ribbonEl.children[0].style.left = (newRibbonWidth/2 - displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x,ribbonHeight/2,0)/2 + titleWidth) + 'px';
     });
   };
 
-  var autoScrollToggle = function () {
-    neverAutoScroll = !neverAutoScroll;
-  };
-
-  var currentBGColor = function (elData) {
-    if (!layersSeparated && elData.baseBGColor === 'rgba(225,225,225,0.8)') {
-      return 'rgba(225,225,225,0)';
-    } else {
-      return elData.baseBGColor;
-    }
-  };
-
-  var updateTweetLOD = function () {
-    for (var layerIndex = 0; layerIndex < layers.length; layerIndex++) {
-      for (var t = 0; t < layers[layerIndex].tweets.length; t++) {
-        var tweet = layers[layerIndex].tweets[t];
-        var tweetDistance = getCameraDistanceFrom( tweet.obj.position.x, tweet.obj.position.y, tweet.obj.position.z );
-        if (tweetDistance > 3000 && tweet.el.className !== 'tweet-3d-lod-low') {
-          // switch to lower LOD
-          var x = tweet.obj.position.x;
-          var y = tweet.obj.position.y;
-          var z = tweet.obj.position.z;
-          scene.remove(tweet.obj);
-
-          var elLo = makeLoResElement(tweet.elData);
-          elLo.style.backgroundColor = currentBGColor(tweet.elData);
-
-          var objectLo = new THREE.CSS3DObject( elLo );
-          objectLo.position.x = x;
-          objectLo.position.y = y;
-          objectLo.position.z = z;
-          scene.add( objectLo );
-          tweet.obj = objectLo;
-          tweet.el = elLo;
-        } else if (tweetDistance <= 3000 && tweet.el.className !== 'tweet-3d') {
-          // switch to higher LOD
-          var x = tweet.obj.position.x;
-          var y = tweet.obj.position.y;
-          var z = tweet.obj.position.z;
-          scene.remove(tweet.obj);
-
-          var elHi = makeTweetElement(tweet.elData);
-          elHi.style.backgroundColor = currentBGColor(tweet.elData);
-
-          var objectHi = new THREE.CSS3DObject( elHi );
-          objectHi.position.x = x;
-          objectHi.position.y = y;
-          objectHi.position.z = z;
-          scene.add( objectHi );
-          tweet.obj = objectHi;
-          tweet.el = elHi;
-        }
-      }
-    }
-  };
-
-  var animate = function() {
-    requestAnimationFrame( animate );
-    tick++;
-
-    // check if camera has moved
-    if (!camera.position.equals(prevCameraPosition)) {
-      // if so, adjust ribbon width so you don't see the left/right ends of the ribbon
-      adjustRibbonWidth();
-      updateTweetLOD();
-    }
-
-    prevCameraPosition.copy(camera.position);
-
-    // code for doing something every 30 ticks
-    if (tick >= 30) {
-      tick = 0;
-    }
-
-    // auto scroll if tweets are falling off the right
-    if (!leftHover && !rightHover) {
-      if (layers[0].tweets.length) {
-        var lastTweetPosition = layers[0].tweets[layers[0].tweets.length-1].obj.position;
-        var rightEdge = getDisplayWidthAtPoint(controls.target.x, controls.target.y, controls.target.z)/2 + camera.position.x;
-        if ((lastTweetPosition.x + xSpacing) > rightEdge) {
-          var distanceToGo = (lastTweetPosition.x + xSpacing) - rightEdge;
-          scrollSpeed = 10 * distanceToGo/100;
-          rightAutoScroll = true;
-        } else {
-          rightAutoScroll = false;
-        }
-      }
-    }
-
-
-    if (leftHover) {
-      scrollSpeed = 15;
-      camera.position.x -= scrollSpeed;
-      controls.target.x -= scrollSpeed;
-      for (var i = 0; i < layers.length; i++) {
-        layers[i].ribbonObj.position.x -= scrollSpeed;
-      }
-    }
-    if (rightHover || (rightAutoScroll && !neverAutoScroll)) {
-      if (rightHover) {
-        scrollSpeed = 15;
-      }
-      camera.position.x += scrollSpeed;
-      controls.target.x += scrollSpeed;
-      for (var i = 0; i < layers.length; i++) {
-        layers[i].ribbonObj.position.x += scrollSpeed;
-      }
-    }
-    TWEEN.update();
-    controls.update();
-    render();
-  };
-
-  var render = function() {
-    renderer.render( scene, camera );
-  };
-
-  var makeTweetElement = function (elData) {
-
-      var tweet = document.createElement( 'div' );
-      tweet.className = 'tweet-3d';
-      tweet.style.backgroundColor = elData.baseBGColor;
-
-      var username = document.createElement( 'div' );
-      username.className = 'username';
-      username.textContent = elData.username;
-      tweet.appendChild( username );
-
-      var tweetText = document.createElement( 'div' );
-      tweetText.className = 'tweetText';
-      tweetText.textContent = elData.text;
-      tweet.appendChild( tweetText );
-
-      var score = document.createElement( 'div' );
-      score.className = 'score';
-      score.textContent = elData.score;
-      tweet.appendChild( score );
-
-      return tweet;
-
-  };
-
-  var makeLoResElement = function (elData) {
-    var elLo = document.createElement( 'div' );
-    elLo.className = ( 'tweet-3d-lod-low' );
-
-    return elLo;
+  var addButtonEvent = function (buttonId, eventName, callback) {
+    var button = document.getElementById( buttonId );
+    button.addEventListener( eventName, function ( event ) {
+      callback(event);
+    }, false);
   };
 
   var addTweet = function(rawTweet, index) {
@@ -225,23 +167,8 @@ angular.module('parserApp.display3dService', [])
 
       var elData = {};
       
-      var normalizedScore = rawTweet[layerObj.resultsName].score;
-      var bgRGBA;
-      if (normalizedScore < -5) {
-        normalizedScore = -5;
-      }
-      if (normalizedScore > 5) {
-        normalizedScore = 5;
-      }
-      if (normalizedScore < 0) {
-        bgRGBA = '225,0,0,' + (0.25 - normalizedScore/10);
-      }
-      if (normalizedScore > 0) {
-        bgRGBA = '0,180,225,' + (0.25 + normalizedScore/10);
-      }
-      if (normalizedScore === 0) {
-        bgRGBA = '225,225,225,0.8';
-      }
+      var bgRGBA = displayHelpers.calculateColorFromScore(rawTweet[layerObj.resultsName].score);
+
       elData.baseBGColor = 'rgba(' + bgRGBA + ')';
       elData.username = rawTweet.username;
       elData.text = rawTweet.text;
@@ -252,13 +179,13 @@ angular.module('parserApp.display3dService', [])
       var z = layerObj.z;
       var tweet;
 
-      var tweetDistance = getCameraDistanceFrom( x, y, z );
+      var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, x, y, z );
       if (tweetDistance > 3000) {
-        tweet = makeLoResElement(elData);
-        tweet.style.backgroundColor = currentBGColor(elData);
+        tweet = displayHelpers.makeLoResElement(layersSeparated, elData);
+        tweet.style.backgroundColor = displayHelpers.currentBGColor(layersSeparated, elData);
       } else {
-        tweet = makeTweetElement(elData);
-        tweet.style.backgroundColor = currentBGColor(elData);
+        tweet = displayHelpers.makeTweetElement(layersSeparated, elData);
+        tweet.style.backgroundColor = displayHelpers.currentBGColor(layersSeparated, elData);
       }
 
       var object = new THREE.CSS3DObject( tweet );
@@ -303,11 +230,109 @@ angular.module('parserApp.display3dService', [])
     layers.push(layerObj);
   };
 
-  var addButtonEvent = function (buttonId, eventName, callback) {
-    var button = document.getElementById( buttonId );
-    button.addEventListener( eventName, function ( event ) {
-      callback(event);
-    }, false);
+  var render = function() {
+    renderer.render( scene, camera );
+  };
+
+  var updateTweetLOD = function () {
+    for (var layerIndex = 0; layerIndex < layers.length; layerIndex++) {
+      for (var t = 0; t < layers[layerIndex].tweets.length; t++) {
+        var tweet = layers[layerIndex].tweets[t];
+        var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, tweet.obj.position.x, tweet.obj.position.y, tweet.obj.position.z );
+        if (tweetDistance > 3000 && tweet.el.className !== 'tweet-3d-lod-low') {
+          // switch to lower LOD
+          var x = tweet.obj.position.x;
+          var y = tweet.obj.position.y;
+          var z = tweet.obj.position.z;
+          scene.remove(tweet.obj);
+
+          var elLo = displayHelpers.makeLoResElement(layersSeparated, tweet.elData);
+          elLo.style.backgroundColor = displayHelpers.currentBGColor(layersSeparated, tweet.elData);
+
+          var objectLo = new THREE.CSS3DObject( elLo );
+          objectLo.position.x = x;
+          objectLo.position.y = y;
+          objectLo.position.z = z;
+          scene.add( objectLo );
+          tweet.obj = objectLo;
+          tweet.el = elLo;
+        } else if (tweetDistance <= 3000 && tweet.el.className !== 'tweet-3d') {
+          // switch to higher LOD
+          var x = tweet.obj.position.x;
+          var y = tweet.obj.position.y;
+          var z = tweet.obj.position.z;
+          scene.remove(tweet.obj);
+
+          var elHi = displayHelpers.makeTweetElement(layersSeparated, tweet.elData);
+          elHi.style.backgroundColor = displayHelpers.currentBGColor(layersSeparated, tweet.elData);
+
+          var objectHi = new THREE.CSS3DObject( elHi );
+          objectHi.position.x = x;
+          objectHi.position.y = y;
+          objectHi.position.z = z;
+          scene.add( objectHi );
+          tweet.obj = objectHi;
+          tweet.el = elHi;
+        }
+      }
+    }
+  };
+
+  var animate = function() {
+    requestAnimationFrame( animate );
+    tick++;
+
+    // check if camera has moved
+    if (!camera.position.equals(prevCameraPosition)) {
+      // if so, adjust ribbon width so you don't see the left/right ends of the ribbon
+      adjustRibbonWidth();
+      updateTweetLOD();
+    }
+
+    prevCameraPosition.copy(camera.position);
+
+    // code for doing something every 30 ticks
+    if (tick >= 30) {
+      tick = 0;
+    }
+
+    // auto scroll if tweets are falling off the right
+    if (!leftHover && !rightHover) {
+      if (layers[0].tweets.length) {
+        var lastTweetPosition = layers[0].tweets[layers[0].tweets.length-1].obj.position;
+        var rightEdge = displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, controls.target.y, controls.target.z)/2 + camera.position.x;
+        if ((lastTweetPosition.x + xSpacing) > rightEdge) {
+          var distanceToGo = (lastTweetPosition.x + xSpacing) - rightEdge;
+          scrollSpeed = 10 * distanceToGo/100;
+          rightAutoScroll = true;
+        } else {
+          rightAutoScroll = false;
+        }
+      }
+    }
+
+
+    if (leftHover) {
+      scrollSpeed = 15;
+      camera.position.x -= scrollSpeed;
+      controls.target.x -= scrollSpeed;
+      for (var i = 0; i < layers.length; i++) {
+        layers[i].ribbonObj.position.x -= scrollSpeed;
+      }
+    }
+    if (rightHover || (rightAutoScroll && !neverAutoScroll)) {
+      if (rightHover) {
+        scrollSpeed = 15;
+      }
+      camera.position.x += scrollSpeed;
+      controls.target.x += scrollSpeed;
+      for (var i = 0; i < layers.length; i++) {
+        layers[i].ribbonObj.position.x += scrollSpeed;
+      }
+    }
+    TWEEN.update();
+    controls.update();
+    render();
   };
 
   var init = function(context) {
@@ -344,7 +369,7 @@ angular.module('parserApp.display3dService', [])
     camera.position.z = cameraZ !== undefined ? cameraZ : 1000;
     camera.position.y = cameraY !== undefined ? cameraY : 200;
 
-    xStart = 0 - (getDisplayWidthAtPoint(0,0,0) / 2) + xSpacing/2;
+    xStart = 0 - (displayHelpers.getDisplayWidthAtPoint(camera,0,0,0) / 2) + xSpacing/2;
     yStart = ((rows-1)*ySpacing)/2;
 
     renderer = new THREE.CSS3DRenderer();
@@ -361,14 +386,14 @@ angular.module('parserApp.display3dService', [])
     if (context === 'macro') {
       controls.maxDistance = 40000;
       ribbonHeight = 100;
-      xStart = 0 - (getDisplayWidthAtPoint(0,0,0) / 4);
+      xStart = 0 - (displayHelpers.getDisplayWidthAtPoint(camera,0,0,0) / 4);
     }
 
     makeTweetLayer('baseLayerResults', 'word', frontLayerZ);
     makeTweetLayer('emoticonLayerResults', 'emoji', frontLayerZ - layerSpacing);
 
 
-    addButtonEvent('separate-3d', 'click', function(event) {
+    addButtonEvent('separate-3d', 'click', function() {
       if (!layersSeparated) {
         for (var i = 0; i < layers.length; i++) {
           layers[i].tweets.forEach(function(tweet) {
@@ -415,7 +440,7 @@ angular.module('parserApp.display3dService', [])
       }
     });
 
-    addButtonEvent('flatten-3d', 'click', function(event) {
+    addButtonEvent('flatten-3d', 'click', function() {
       if (layersSeparated) {
         for (var i = 0; i < layers.length; i++) {
           layers[i].tweets.forEach(function(tweet) {
@@ -468,16 +493,16 @@ angular.module('parserApp.display3dService', [])
     //   keepAddingTweets = false;
     // });
 
-    addButtonEvent('left-3d', 'mouseover', function(event) {
+    addButtonEvent('left-3d', 'mouseover', function() {
       leftHover = true;
     });
-    addButtonEvent('left-3d', 'mouseleave', function(event) {
+    addButtonEvent('left-3d', 'mouseleave', function() {
       leftHover = false;
     });
-    addButtonEvent('right-3d', 'mouseover', function(event) {
+    addButtonEvent('right-3d', 'mouseover', function() {
       rightHover = true;
     });
-    addButtonEvent('right-3d', 'mouseleave', function(event) {
+    addButtonEvent('right-3d', 'mouseleave', function() {
       rightHover = false;
     });
 
@@ -497,5 +522,5 @@ angular.module('parserApp.display3dService', [])
     animate: animate,
     autoScrollToggle: autoScrollToggle
   };
-});
+}]);
   

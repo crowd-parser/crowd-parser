@@ -5,8 +5,6 @@ angular.module('parserApp.display3dService', [])
 .factory('Display3d', function ($document) {
 
   // TODO
-  // - set pan limits
-  // - do something about layer titles overlapping when flattening layers
   // - make text go away when zoomed out past a certain distance
   // - show more info when zoomed in closer than a certain distance?
   // - buttons next to each layer name - remove, solo, move fwd, move back
@@ -37,23 +35,26 @@ angular.module('parserApp.display3dService', [])
   var xSpacing = 320;
   var xStart = -800;
 
+  var getCameraDistanceFrom = function(x,y,z) {
+    var cameraDistance = new THREE.Vector3();
+    var zTarget = new THREE.Vector3(x,y,z);
+    cameraDistance.subVectors(camera.position, zTarget);
+    return cameraDistance.length();
+  };
+
   var getDisplayWidthAtPoint = function(x,y,z) {
     x = x || 0;
     y = y || 0;
     z = z || 0;
-    var cameraDistanceFromZPlane = new THREE.Vector3();
-    var zTarget = new THREE.Vector3(x,y,z);
-    cameraDistanceFromZPlane.subVectors(camera.position, zTarget);
-    var heightAtZPlane = 2 * cameraDistanceFromZPlane.length() * Math.tan(THREE.Math.degToRad(camera.fov)/2);
+    var cameraDistanceFromZPlane = getCameraDistanceFrom(x,y,z);
+    var heightAtZPlane = 2 * cameraDistanceFromZPlane * Math.tan(THREE.Math.degToRad(camera.fov)/2);
     var widthAtZPlane = camera.aspect * heightAtZPlane;
     return widthAtZPlane;
   };
 
   var adjustRibbonWidth = function() {
     layers.forEach(function(layer) {
-      var cameraDistanceFromTarget = new THREE.Vector3();
       var farthestYOnRibbon;
-      cameraDistanceFromTarget.subVectors(camera.position, controls.target);
       // probably would be more precise to find out angle of camera vector relative
       // to ribbon but this should work in most cases
       if (camera.position.y >= 0) {
@@ -73,6 +74,58 @@ angular.module('parserApp.display3dService', [])
     neverAutoScroll = !neverAutoScroll;
   };
 
+  var currentBGColor = function (elData) {
+    if (!layersSeparated && elData.baseBGColor === 'rgba(225,225,225,0.8)') {
+      return 'rgba(225,225,225,0)';
+    } else {
+      return elData.baseBGColor;
+    }
+  };
+
+  var updateTweetLOD = function () {
+    for (var layerIndex = 0; layerIndex < layers.length; layerIndex++) {
+      for (var t = 0; t < layers[layerIndex].tweets.length; t++) {
+        var tweet = layers[layerIndex].tweets[t];
+        var tweetDistance = getCameraDistanceFrom( tweet.obj.position.x, tweet.obj.position.y, tweet.obj.position.z );
+        if (tweetDistance > 3000 && tweet.el.className !== 'tweet-3d-lod-low') {
+          // switch to lower LOD
+          var x = tweet.obj.position.x;
+          var y = tweet.obj.position.y;
+          var z = tweet.obj.position.z;
+          scene.remove(tweet.obj);
+
+          var elLo = makeLoResElement(tweet.elData);
+          elLo.style.backgroundColor = currentBGColor(tweet.elData);
+
+          var objectLo = new THREE.CSS3DObject( elLo );
+          objectLo.position.x = x;
+          objectLo.position.y = y;
+          objectLo.position.z = z;
+          scene.add( objectLo );
+          tweet.obj = objectLo;
+          tweet.el = elLo;
+        } else if (tweetDistance <= 3000 && tweet.el.className !== 'tweet-3d') {
+          // switch to higher LOD
+          var x = tweet.obj.position.x;
+          var y = tweet.obj.position.y;
+          var z = tweet.obj.position.z;
+          scene.remove(tweet.obj);
+
+          var elHi = makeTweetElement(tweet.elData);
+          elHi.style.backgroundColor = currentBGColor(tweet.elData);
+
+          var objectHi = new THREE.CSS3DObject( elHi );
+          objectHi.position.x = x;
+          objectHi.position.y = y;
+          objectHi.position.z = z;
+          scene.add( objectHi );
+          tweet.obj = objectHi;
+          tweet.el = elHi;
+        }
+      }
+    }
+  };
+
   var animate = function() {
     requestAnimationFrame( animate );
     tick++;
@@ -81,6 +134,7 @@ angular.module('parserApp.display3dService', [])
     if (!camera.position.equals(prevCameraPosition)) {
       // if so, adjust ribbon width so you don't see the left/right ends of the ribbon
       adjustRibbonWidth();
+      updateTweetLOD();
     }
 
     prevCameraPosition.copy(camera.position);
@@ -133,12 +187,44 @@ angular.module('parserApp.display3dService', [])
     renderer.render( scene, camera );
   };
 
+  var makeTweetElement = function (elData) {
+
+      var tweet = document.createElement( 'div' );
+      tweet.className = 'tweet-3d';
+      tweet.style.backgroundColor = elData.baseBGColor;
+
+      var username = document.createElement( 'div' );
+      username.className = 'username';
+      username.textContent = elData.username;
+      tweet.appendChild( username );
+
+      var tweetText = document.createElement( 'div' );
+      tweetText.className = 'tweetText';
+      tweetText.textContent = elData.text;
+      tweet.appendChild( tweetText );
+
+      var score = document.createElement( 'div' );
+      score.className = 'score';
+      score.textContent = elData.score;
+      tweet.appendChild( score );
+
+      return tweet;
+
+  };
+
+  var makeLoResElement = function (elData) {
+    var elLo = document.createElement( 'div' );
+    elLo.className = ( 'tweet-3d-lod-low' );
+
+    return elLo;
+  };
+
   var addTweet = function(rawTweet, index) {
 
     layers.forEach(function(layerObj) {
 
-      var tweet = document.createElement( 'div' );
-      tweet.className = 'tweet-3d';
+      var elData = {};
+      
       var normalizedScore = rawTweet[layerObj.resultsName].score;
       var bgRGBA;
       if (normalizedScore < -5) {
@@ -156,31 +242,32 @@ angular.module('parserApp.display3dService', [])
       if (normalizedScore === 0) {
         bgRGBA = '225,225,225,0.8';
       }
-      var baseBGColor = 'rgba(' + bgRGBA + ')';
-      tweet.style.backgroundColor = baseBGColor;
+      elData.baseBGColor = 'rgba(' + bgRGBA + ')';
+      elData.username = rawTweet.username;
+      elData.text = rawTweet.text;
+      elData.score = layerObj.title + ' score: ' + rawTweet[layerObj.resultsName].score;
 
-      var username = document.createElement( 'div' );
-      username.className = 'username';
-      username.textContent = rawTweet.username;
-      tweet.appendChild( username );
+      var x = xStart + Math.floor(index / rows) * xSpacing;
+      var y = yStart - (index % rows) * ySpacing;
+      var z = layerObj.z;
+      var tweet;
 
-      var tweetText = document.createElement( 'div' );
-      tweetText.className = 'tweetText';
-      tweetText.textContent = rawTweet.text;
-      tweet.appendChild( tweetText );
-
-      var score = document.createElement( 'div' );
-      score.className = 'score';
-      score.textContent = layerObj.title + ' score: ' + rawTweet[layerObj.resultsName].score;
-      tweet.appendChild( score );
+      var tweetDistance = getCameraDistanceFrom( x, y, z );
+      if (tweetDistance > 3000) {
+        tweet = makeLoResElement(elData);
+        tweet.style.backgroundColor = currentBGColor(elData);
+      } else {
+        tweet = makeTweetElement(elData);
+        tweet.style.backgroundColor = currentBGColor(elData);
+      }
 
       var object = new THREE.CSS3DObject( tweet );
-      object.position.x = xStart + Math.floor(index / rows) * xSpacing;
-      object.position.y = yStart - (index % rows) * ySpacing;
-      object.position.z = layerObj.z;
+      object.position.x = x;
+      object.position.y = y;
+      object.position.z = z;
       scene.add( object );
 
-      layerObj.tweets.push({obj: object, el: tweet, baseBGColor: baseBGColor});
+      layerObj.tweets.push({obj: object, el: tweet, elData: elData});
 
     });
 
@@ -213,17 +300,6 @@ angular.module('parserApp.display3dService', [])
     layerObj.ribbonObj = ribbonObject;
     layerObj.ribbonEl = ribbon;
 
-
-    // for (var i = 0; i < 24; i++) {
-    //   var x=i;
-
-    //   if (x > 23) {
-    //     x = x % 23;
-    //   }
-
-    //   addTweet(tweetData[x], layerObj, i);
-
-    // }
     layers.push(layerObj);
   };
 
@@ -255,8 +331,13 @@ angular.module('parserApp.display3dService', [])
       rows = 1;
       ySpacing = 180;
       layerSpacing = 125;
-      ribbonHeight = 250;
+    } else if (context === 'macro') {
+      cameraZ = 5000;
+      cameraY = 0;
+      rows = 15;
     }
+    
+    ribbonHeight = rows * ySpacing + 200;
 
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, document.getElementById(containerID).clientWidth / height, 0.1, 1000 );
@@ -275,8 +356,13 @@ angular.module('parserApp.display3dService', [])
 
     controls = new THREE.TrackballControls( camera, renderer.domElement );
     controls.rotateSpeed = 1;
-    controls.maxDistance = 4000;
+    controls.maxDistance = 10000;
     controls.addEventListener( 'change', render );
+    if (context === 'macro') {
+      controls.maxDistance = 40000;
+      ribbonHeight = 100;
+      xStart = 0 - (getDisplayWidthAtPoint(0,0,0) / 4);
+    }
 
     makeTweetLayer('baseLayerResults', 'word', frontLayerZ);
     makeTweetLayer('emoticonLayerResults', 'emoji', frontLayerZ - layerSpacing);
@@ -291,7 +377,7 @@ angular.module('parserApp.display3dService', [])
               .easing( TWEEN.Easing.Exponential.InOut )
               .start();
 
-            if (tweet.baseBGColor === 'rgba(225,225,225,0.8)') {
+            if (tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
               new TWEEN.Tween( {val: 0} )
                 .to ( {val: 0.8}, 1000 )
                 .easing( TWEEN.Easing.Exponential.InOut )
@@ -338,7 +424,7 @@ angular.module('parserApp.display3dService', [])
               .easing( TWEEN.Easing.Exponential.InOut )
               .start();
 
-            if (tweet.baseBGColor === 'rgba(225,225,225,0.8)') {
+            if (tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
               new TWEEN.Tween( {val: 0.8} )
                 .to ( {val: 0}, 1000 )
                 .easing( TWEEN.Easing.Exponential.InOut )

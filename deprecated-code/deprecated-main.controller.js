@@ -1,3 +1,6 @@
+  // Initializes the 3D streaming view/state
+  $state.transitionTo('main.components');
+
   $scope.startingView = true;
 
   var countToGet = countToGet;
@@ -134,7 +137,7 @@
         $scope.tweetsArray = data;
       });
     });
-    
+
     socket.on('twitter rest search', function(data) {
       $scope.$apply(function() {
         $scope.tweetsArray = data.statuses;

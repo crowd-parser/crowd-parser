@@ -8,9 +8,6 @@ angular.module('parserApp')
   // Makes the header rotate in 3D
   Header.init();
 
-  // Initializes the 3D streaming view/state
-  $state.transitionTo('main.components');
-
   // "socket" is used for socket.io events
   var socket = Twitter.socket;
 

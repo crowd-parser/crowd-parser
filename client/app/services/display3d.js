@@ -306,8 +306,9 @@ angular.module('parserApp.display3dService', [])
     });
 
   };
-var material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true, wireframeLinewidth: 1, side: THREE.DoubleSide } );
-
+var material = new THREE.MeshBasicMaterial( { color: 'rgb(0,132,180)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
+material.transparent = true;
+material.opacity = 0.5;
   var makeTweetLayer = function(layerResultsProp, layerTitle, z) {
     var layerObj = {};
     layerObj.tweets = [];
@@ -333,6 +334,7 @@ var material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true, 
     ribbonText.className = 'layer-title';
     ribbonText.textContent = layerTitle + ' layer';
     ribbonText.style.opacity = 1;
+    ribbonText.style.fontSize = (30*rows) + 'px';
     ribbon.appendChild( ribbonText );
     layerObj.titleEl = ribbonText;
 
@@ -492,7 +494,7 @@ var material = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true, 
     controls.addEventListener( 'change', render );
     if (context === 'macro') {
       controls.maxDistance = 40000;
-      ribbonHeight = 100;
+      //ribbonHeight = 100;
       xStart = 0 - (displayHelpers.getDisplayWidthAtPoint(camera,0,0,0) / 4);
     }
 

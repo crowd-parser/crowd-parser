@@ -1,9 +1,15 @@
-'use strict';
+// 'use strict';
 
 describe('Controller: MainCtrl', function () {
 
   // load the controller's module
   beforeEach(module('parserApp'));
+
+  beforeEach( inject( function ( _$state_ ) {
+          state = _$state_;
+          spyOn( state, 'go' );
+          spyOn( state, 'transitionTo' );
+      } ) );
 
   var MainCtrl,
       scope,
@@ -22,8 +28,8 @@ describe('Controller: MainCtrl', function () {
   }));
 
   it('should attach a list of things to the scope', function () {
-    // $httpBackend.flush();
-    // expect(scope.awesomeThings.length).toBe(4);
-    expect(4).toBe(4);
+    $httpBackend.flush();
+    expect(scope.awesomeThings.length).toBe(4);
+    // expect(4).toBe(4);
   });
 });

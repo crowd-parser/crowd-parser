@@ -12,20 +12,20 @@ angular.module('parserApp')
   var socket = Twitter.socket;
 
   // Get top 10 trending topics on page load
-  socket.emit('twitter rest trending');
+  // socket.emit('twitter rest trending');
 
   // Receives and displays trending topics on initialization
   $scope.trendingArray = [];
-  socket.on('twitter rest trending', function(data) {
+  // socket.on('twitter rest trending', function(data) {
 
-    // Display the array of trending topics (clickable)
-    $scope.$apply(function() {
-      $scope.trendingArray = data[0].trends;
-    });
+  //   // Display the array of trending topics (clickable)
+  //   $scope.$apply(function() {
+  //     $scope.trendingArray = data[0].trends;
+  //   });
 
-    // Get REST search results for the randomly chosen trending topic
-    Twitter.getTwitterRestSearch($scope.displayedQuery);
-  });
+  //   // Get REST search results for the randomly chosen trending topic
+  //   Twitter.getTwitterRestSearch($scope.displayedQuery);
+  // });
 
   // ========== GET REQUESTS FOR TWITTER DATA =========== //
 

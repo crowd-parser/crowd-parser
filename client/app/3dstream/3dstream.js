@@ -12,7 +12,7 @@ angular.module('parserApp')
     if ($state.current.name === 'main.components') {
       Display3d.init('mini');
     } else {
-      Display3d.init();
+      Display3d.init('macro');
     }
 
     Display3d.animate();
@@ -50,6 +50,10 @@ angular.module('parserApp')
     };
 
     var addFakeTweet = function () {
+      if ($scope.tweetCount >= 400) {
+        console.log('?');
+        $scope.stopTweets();
+      }
       if (runFakeTweets === true) {
         var fakeTweet = {};
         fakeTweet.baseLayerResults = { score: fakeScore() };
@@ -75,7 +79,7 @@ angular.module('parserApp')
       // stop any existing stream
       socket.emit('twitter stop continuous stream');
       runFakeTweets = true;
-      intervalID = setInterval(addFakeTweet, 500);
+      intervalID = setInterval(addFakeTweet, 5);
     };
 
     $scope.fullScreen = function () {
@@ -84,6 +88,13 @@ angular.module('parserApp')
       $scope.stopTweets();
       $location.path('/3dstream');
     };
+
+    $scope.macroScale = function () {
+      $scope.tweetData = [];
+      $scope.tweetCount = 0;
+      $scope.stopTweets();
+      $location.path('/3dstream');
+    }
 
     $scope.start3DKeywordStream = function () {
       // stop any existing stream
@@ -113,4 +124,6 @@ angular.module('parserApp')
         clearInterval(intervalID);
       }
     };
+
+    $scope.streamFakeTweets();
   });

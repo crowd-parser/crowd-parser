@@ -169,28 +169,28 @@ angular.module('parserApp.display3dService', [])
             .start();
         }
       });
-      new TWEEN.Tween( layers[i].ribbonObj.position )
+      new TWEEN.Tween( layers[i].ribbonMesh.position )
         .to( {z: frontLayerZ - layerSpacing*i - 1}, 1000 )
         .easing( TWEEN.Easing.Exponential.InOut )
         .start();
-      if (i > 0) {
-        new TWEEN.Tween( layers[i].titleEl.style )
-          .to( {opacity: 1}, 500 )
-          .easing( TWEEN.Easing.Exponential.InOut )
-          .start();
-      }
+      // if (i > 0) {
+      //   new TWEEN.Tween( layers[i].titleEl.style )
+      //     .to( {opacity: 1}, 500 )
+      //     .easing( TWEEN.Easing.Exponential.InOut )
+      //     .start();
+      // }
       layers[i].z = frontLayerZ - layerSpacing*i - 1;
       if (i === 0) {
-        var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
-          .to( {opacity: 0}, 500)
-          .easing( TWEEN.Easing.Quadratic.InOut )
-          .onComplete(function () {
-            layers[0].titleEl.textContent = layers[0].title + ' layer';
-          });
-        var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
-          .to( {opacity: 1}, 500)
-          .easing( TWEEN.Easing.Quadratic.InOut );
-        fadeOut.chain(fadeIn).start();
+        // var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
+        //   .to( {opacity: 0}, 500)
+        //   .easing( TWEEN.Easing.Quadratic.InOut )
+        //   .onComplete(function () {
+        //     layers[0].titleEl.textContent = layers[0].title + ' layer';
+        //   });
+        // var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
+        //   .to( {opacity: 1}, 500)
+        //   .easing( TWEEN.Easing.Quadratic.InOut );
+        // fadeOut.chain(fadeIn).start();
       }
     }
   };
@@ -218,30 +218,30 @@ angular.module('parserApp.display3dService', [])
             .start();
         }
       });
-      new TWEEN.Tween( layers[i].ribbonObj.position )
+      new TWEEN.Tween( layers[i].ribbonMesh.position )
         .to( {z: frontLayerZ - 2*i - 1}, 1000 )
         .easing( TWEEN.Easing.Exponential.InOut )
         .start();
       if (i > 0) {
-        new TWEEN.Tween( layers[i].titleEl.style )
-          .to( {opacity: 0}, 500)
-          .easing( TWEEN.Easing.Exponential.InOut )
-          .start();
+        // new TWEEN.Tween( layers[i].titleEl.style )
+        //   .to( {opacity: 0}, 500)
+        //   .easing( TWEEN.Easing.Exponential.InOut )
+        //   .start();
       }
       layers[i].z = frontLayerZ - 2*i;
       if (i === 0) {
-        var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
-          .to( {opacity: 0}, 500)
-          .easing( TWEEN.Easing.Quadratic.InOut )
-          .onComplete(function () {
-            layers[0].titleEl.textContent = layers.map(function (item) {
-              return item.title;
-            }).join(' + ') + ' layers';
-          });
-        var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
-          .to( {opacity: 1}, 500)
-          .easing( TWEEN.Easing.Quadratic.InOut );
-        fadeOut.chain(fadeIn).start();
+        // var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
+        //   .to( {opacity: 0}, 500)
+        //   .easing( TWEEN.Easing.Quadratic.InOut )
+        //   .onComplete(function () {
+        //     layers[0].titleEl.textContent = layers.map(function (item) {
+        //       return item.title;
+        //     }).join(' + ') + ' layers';
+        //   });
+        // var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
+        //   .to( {opacity: 1}, 500)
+        //   .easing( TWEEN.Easing.Quadratic.InOut );
+        // fadeOut.chain(fadeIn).start();
       }
     }
   };
@@ -310,11 +310,11 @@ angular.module('parserApp.display3dService', [])
         farthestYOnRibbon = ribbonHeight;
       }
       var newRibbonWidth = displayHelpers.getDisplayWidthAtPoint(camera, 0, farthestYOnRibbon, layer.z) + 10;
-      layer.ribbonEl.style.width = newRibbonWidth + 'px';
-      layer.ribbonEl.style.height = ribbonHeight + 'px';
+      // layer.ribbonEl.style.width = newRibbonWidth + 'px';
+      // layer.ribbonEl.style.height = ribbonHeight + 'px';
       layer.ribbonMesh.scale.x = newRibbonWidth;
-      var titleWidth = layer.ribbonEl.children[0].clientWidth;
-      layer.ribbonEl.children[0].style.left = (newRibbonWidth/2 - displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x,ribbonHeight/2,0)/2 + titleWidth) + 'px';
+      // var titleWidth = layer.ribbonEl.children[0].clientWidth;
+      // layer.ribbonEl.children[0].style.left = (newRibbonWidth/2 - displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x,ribbonHeight/2,0)/2 + titleWidth) + 'px';
     });
   };
 
@@ -387,26 +387,28 @@ ribbonMaterial.opacity = 0.5;
     sceneGL.add( ribbonMesh );
     layerObj.ribbonMesh = ribbonMesh;
 
-    var ribbon = document.createElement('div');
-    ribbon.style.height = ribbonHeight + 'px';
-    ribbon.className = 'ribbon-3d';
+    // var ribbon = document.createElement('div');
+    // ribbon.style.height = ribbonHeight + 'px';
+    // ribbon.className = 'ribbon-3d';
 
-    var ribbonText = document.createElement( 'div' );
-    ribbonText.className = 'layer-title';
-    ribbonText.textContent = layerTitle + ' layer';
-    ribbonText.style.opacity = 1;
-    ribbonText.style.fontSize = (30*rows) + 'px';
-    ribbon.appendChild( ribbonText );
-    layerObj.titleEl = ribbonText;
+    // Figure out how to put layer titles back later
 
-    var ribbonObject = new THREE.CSS3DObject( ribbon );
-    ribbonObject.position.x = 0;
-    ribbonObject.position.y = 0;
-    ribbonObject.position.z = z-1;
+    // var ribbonText = document.createElement( 'div' );
+    // ribbonText.className = 'layer-title';
+    // ribbonText.textContent = layerTitle + ' layer';
+    // ribbonText.style.opacity = 1;
+    // ribbonText.style.fontSize = (30*rows) + 'px';
+    // ribbon.appendChild( ribbonText );
+    // layerObj.titleEl = ribbonText;
 
-    sceneCSS.add( ribbonObject );
-    layerObj.ribbonObj = ribbonObject;
-    layerObj.ribbonEl = ribbon;
+    // var ribbonObject = new THREE.CSS3DObject( ribbon );
+    // ribbonObject.position.x = 0;
+    // ribbonObject.position.y = 0;
+    // ribbonObject.position.z = z-1;
+
+    //sceneCSS.add( ribbonObject );
+    // layerObj.ribbonObj = ribbonObject;
+    //layerObj.ribbonEl = ribbon;
 
     layers.push(layerObj);
   };
@@ -470,7 +472,7 @@ ribbonMaterial.opacity = 0.5;
       camera.position.x -= scrollSpeed;
       controls.target.x -= scrollSpeed;
       for (var i = 0; i < layers.length; i++) {
-        layers[i].ribbonObj.position.x -= scrollSpeed;
+        layers[i].ribbonMesh.position.x -= scrollSpeed;
       }
     }
     if (rightHover || (rightAutoScroll && !neverAutoScroll)) {
@@ -480,7 +482,7 @@ ribbonMaterial.opacity = 0.5;
       camera.position.x += scrollSpeed;
       controls.target.x += scrollSpeed;
       for (var i = 0; i < layers.length; i++) {
-        layers[i].ribbonObj.position.x += scrollSpeed;
+        layers[i].ribbonMesh.position.x += scrollSpeed;
       }
     }
     TWEEN.update();

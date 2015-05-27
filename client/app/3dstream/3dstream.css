@@ -184,14 +184,16 @@ canvas {  }
 
 .button-3d {
   color: rgba(127,220,255,0.75);
-  background: transparent;
+  background: rgba(0,40,50,0.75);
   outline: 1px solid rgba(0,200,255,0.75);
   border: 0px;
   padding: 5px 10px;
   cursor: pointer;
 }
 .button-3d:hover {
-  background-color: rgba(0,190,255,0.5);
+  background-color: rgba(0,120,160,0.75);
+  color: rgba(180,220,255,1);
+  outline: 1px solid rgba(180,220,255,1);
 }
 .button-3d:active {
   color: #000000;

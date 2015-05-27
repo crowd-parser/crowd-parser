@@ -73,12 +73,13 @@ module.exports = function(io, T) {
     var streamDownload;
 
     socket.on('start download', function(rate) {
-
+console.log('START DOWNLOAD')
       streamDownload = T.stream('statuses/sample');
       var count = 0;
       var rate = rate || 4;
 
       streamDownload.on('tweet', function(tweet) {
+        console.log('GOT TWEET');
         if (tweet.lang === 'en') {
           count++;
           if (count === 1 || count % rate === 0) {
@@ -86,14 +87,14 @@ module.exports = function(io, T) {
               console.log("WAITING FOR DB");
               return;
           }
-            db.addTweet(tweet, function(err, rows, fields) {
-              if (err) {
-                console.log(err);
-              } else {
-                io.emit('tweet added', tweet.id);
-                console.log('tweet added!', tweet.id);
-              }
-            })
+            // db.addTweet(tweet, function(err, rows, fields) {
+            //   if (err) {
+            //     console.log(err);
+            //   } else {
+            //     io.emit('tweet added', tweet.id);
+            //     console.log('tweet added!', tweet.id);
+            //   }
+            // })
           }
         }
       });

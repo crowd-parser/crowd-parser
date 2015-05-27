@@ -243,6 +243,28 @@ describe('CALLING DATABASE FUNCTIONS', function() {
   });
 });
 
+describe('CALLING TWEET FUNCTIONS', function() {
+
+  it('should create a tweets table based on a tweet object', function(done) {
+
+    db.changeToDatabase('randomcreateddatabase');
+
+    db.genericDropTable('testtweetstabletest', function(err, response) {
+      
+      db.genericCreateTable('testtweetstabletest', db.testTweet1, function(err, response) {
+
+        db.genericDescribeTable('randomcreatedtable', function(err, rows, fields) {
+          console.log(rows);
+          // expect(rows[0].Field).to.equal('id');
+          // expect(rows[1].Field).to.equal('testProp1');
+          // expect(rows[2].Field).to.equal('testProp2');
+          done();
+        })
+      });
+    });
+  });
+});
+
 describe('CALLING TABLE FUNCTIONS', function() {
 
   it('should create a table with a schema based on the passed in object', function(done) {

@@ -93,6 +93,23 @@ router.post('/selectTable', function(req, res, next) {
 });
 
 
+router.post('/addNewKeyword', function(req, res, next) {
+  var keyword = req.body.keyword;
+  db.addNewKeyword(keyword, function(err, rows) {
+    if(err){
+      console.log(err);
+      res.send(false);
+      return;
+    }
+      res.send(true);
+  });
+});
+
+
+
+
+
+
 
 
 module.exports = router;

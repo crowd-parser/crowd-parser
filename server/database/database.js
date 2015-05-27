@@ -294,17 +294,19 @@ exports.returnTablesWithColumns = function(finalCB){
 
 
   this.db.query("SHOW TABLES", function(err, rows){
+
     var tableNames = [];
     for(var i = 0; i < rows.length; i++){
       for(var key in rows[i]){
         tableNames.push(rows[i][key]);
       }
     }
+
     var funcs = [];
     for(var i = 0; i < tableNames.length; i++){
-      var name = tableNames[i];
-      funcs.push(function(cb){
+      funcs.push(function(name, cb){
         exports.genericGetTableColumnNames(name, function(err, rows){
+          console.log("TCN:", rows);
           var cbArr = [];
           for(var i = 0; i < rows.length; i++){
             cbArr.push(rows[i]["COLUMN_NAME"]);
@@ -314,7 +316,7 @@ exports.returnTablesWithColumns = function(finalCB){
           cb(cbArr);
         });
 
-      });
+      }.bind(this,tableNames[i]));
     }
     exports.asyncMap(funcs, finalCB );
   });
@@ -554,13 +556,13 @@ exports.doAddingMessage = function(count, moduloVal){
 exports.genericDropTable = function(tableName, callback){
   var that = this;
   this.db.query("SELECT DATABASE()", function(err, rows, fields){
-    console.log("DATABASE: ", rows);
+
     if(tableName === "tweets" && rows[0][1] === 'production'){
       console.log("ERROR: ATTEMPTED TO DROP TWEETS TABLE ON PRODUCTION, NOT ALLOWED");
       callback();
       return;
     }
-    console.log("I KNOW CB: ", callback);
+
     exports.db.query("DROP TABLE IF EXISTS " + tableName, callback);
   });
 
@@ -569,7 +571,7 @@ exports.genericDropTable = function(tableName, callback){
 exports.getCurrentDatabaseName = function(cb){
   this.db.query("SELECT DATABASE()", function(err, rows, fields){
     if(err)console.log(err);
-    console.log("DB NAME", rows);
+
     cb(rows[0][1]);
   });
 }
@@ -611,8 +613,7 @@ exports.tellMeWhenDatabaseIsLive = function(callback){
 //================ TESTING ======================
 exports.genericDescribeTable = function(name, callback){
   this.db.query("DESCRIBE " + name, function(err, rows, fields){
-
-    callback(err, rows, fields);
+    callback(err,rows);
   });
 };
 
@@ -708,7 +709,7 @@ exports.addAdmin = function(admin, callback){
   console.log(admin);
   this.db.query('USE production');
   this.db.query("INSERT INTO admin VALUES('" + admin.username + "', '" + admin.password + "', null);", function(err, rows) {
-    console.log(err, rows);
+
   });
 };
 

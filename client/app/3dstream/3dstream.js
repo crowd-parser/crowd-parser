@@ -50,8 +50,7 @@ angular.module('parserApp')
     };
 
     var addFakeTweet = function () {
-      if ($scope.tweetCount >= 400) {
-        console.log('?');
+      if ($scope.tweetCount >= 600) {
         $scope.stopTweets();
       }
       if (runFakeTweets === true) {

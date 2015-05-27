@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('parserApp')
-  .controller('MainCtrl', function ($http, $scope, $state, Header, Twitter) {
+  .controller('MainCtrl', function ($http, $scope, $state, $location, Header, Twitter) {
 
     Twitter.getTweetsForKeyword('Obama', function(data) {
       console.log(data);
@@ -56,6 +56,10 @@ angular.module('parserApp')
 
     // Perform a new REST search for the trending topic clicked on
     socket.emit('twitter rest search', query, 'mixed', 100);
+  };
+
+  $scope.goToDisplay = function () {
+    $location.path('/3dstream');
   };
 
   // ========== LISTENER THAT RECEIVES TWITTER DATA WITH SENTIMENT ANALYSIS RESULTS ============ //

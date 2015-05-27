@@ -6,6 +6,7 @@ angular.module('parserApp.display3dService', [])
 .factory('displayHelpers', ['$window', function($window){
 
   var THREE = $window.THREE;
+  var TWEEN = $window.TWEEN;
 
   var makeLoResElement = function (layersSeparated, elData) {
     var elLo = document.createElement( 'div' );
@@ -15,8 +16,31 @@ angular.module('parserApp.display3dService', [])
     return elLo;
   };
 
-  var makeLoResMesh = function (layersSeparated, elData) {
+  var tweetMaterialNeutral = new THREE.MeshBasicMaterial( { color: 'rgb(225,225,225)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
+  tweetMaterialNeutral.transparent = true;
+  tweetMaterialNeutral.opacity = 0.5;
 
+  var tweetMaterialPos = new THREE.MeshBasicMaterial( { color: 'rgb(0,180,225)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
+  tweetMaterialPos.transparent = true;
+  tweetMaterialPos.opacity = 0.5;
+
+  var tweetMaterialNeg = new THREE.MeshBasicMaterial( { color: 'rgb(225,0,0)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
+  tweetMaterialNeg.transparent = true;
+  tweetMaterialNeg.opacity = 0.5;
+
+  var makeLoResMesh = function (layersSeparated, elData) {
+    var loGeo = new THREE.PlaneBufferGeometry(140, 140);
+    var loMesh;
+    var score = +elData.score.split(': ')[1]
+    if (score > 0) {
+      loMesh = new THREE.Mesh(loGeo, tweetMaterialPos);
+    } else if (score < 0) {
+      loMesh = new THREE.Mesh(loGeo, tweetMaterialNeg);
+    } else {
+      loMesh = new THREE.Mesh(loGeo, tweetMaterialNeutral);
+    }
+    //elData.baseBGColorRGB;
+    return loMesh;
   };
 
   var getCameraDistanceFrom = function(camera,x,y,z) {
@@ -91,22 +115,41 @@ angular.module('parserApp.display3dService', [])
     return bgRGBA;
   };
 
-  var swapLOD = function (sceneCSS, tweet, el) {
+  var swapLOD = function (sceneCSS, sceneGL, tweet, layersSeparated, swapTo) {
+
+    var el, object;
+
     var x = tweet.obj.position.x;
     var y = tweet.obj.position.y;
     var z = tweet.obj.position.z;
-    sceneCSS.remove(tweet.obj);
 
-    var object = new THREE.CSS3DObject( el );
-    object.position.x = x;
-    object.position.y = y;
-    object.position.z = z;
-    sceneCSS.add( object );
+    if (swapTo === 'hi') {
+      el = makeTweetElement(layersSeparated, tweet.elData);
+      sceneGL.remove(tweet.obj);
+      object = new THREE.CSS3DObject( el );
+      object.position.x = x;
+      object.position.y = y;
+      object.position.z = z;
+      sceneCSS.add( object );
+    }
+
+    if (swapTo === 'lo') {
+      sceneCSS.remove(tweet.obj);
+      object = makeLoResMesh(layersSeparated, tweet.elData);
+      object.position.x = x;
+      object.position.y = y;
+      object.position.z = z;
+      sceneGL.add( object );
+    }
+
     tweet.obj = object;
     tweet.el = el;
   };
 
   var separateLayers = function (layers, frontLayerZ, layerSpacing) {
+    new TWEEN.Tween( tweetMaterialNeutral )
+      .to ({opacity: 0.5}, 1000)
+      .start();
     for (var i = 0; i < layers.length; i++) {
       layers[i].tweets.forEach(function(tweet) {
         new TWEEN.Tween( tweet.obj.position )
@@ -114,12 +157,14 @@ angular.module('parserApp.display3dService', [])
           .easing( TWEEN.Easing.Exponential.InOut )
           .start();
 
-        if (tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
+        if (tweet.el && tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
           new TWEEN.Tween( {val: 0} )
             .to ( {val: 0.8}, 1000 )
             .easing( TWEEN.Easing.Exponential.InOut )
             .onUpdate( function () {
-              tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
+              if (tweet.el) {
+                tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
+              }
             })
             .start();
         }
@@ -151,6 +196,9 @@ angular.module('parserApp.display3dService', [])
   };
 
   var flattenLayers = function (layers, frontLayerZ, layerSpacing) {
+    new TWEEN.Tween( tweetMaterialNeutral )
+      .to ({opacity: 0}, 1000)
+      .start();
     for (var i = 0; i < layers.length; i++) {
       layers[i].tweets.forEach(function(tweet) {
         new TWEEN.Tween( tweet.obj.position )
@@ -158,12 +206,14 @@ angular.module('parserApp.display3dService', [])
           .easing( TWEEN.Easing.Exponential.InOut )
           .start();
 
-        if (tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
+        if (tweet.el && tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
           new TWEEN.Tween( {val: 0.8} )
             .to ( {val: 0}, 1000 )
             .easing( TWEEN.Easing.Exponential.InOut )
             .onUpdate( function () {
-              tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
+              if (tweet.el) {
+                tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
+              }
             })
             .start();
         }
@@ -198,6 +248,7 @@ angular.module('parserApp.display3dService', [])
 
   return {
     makeLoResElement: makeLoResElement,
+    makeLoResMesh: makeLoResMesh,
     getCameraDistanceFrom: getCameraDistanceFrom,
     getDisplayWidthAtPoint: getDisplayWidthAtPoint,
     currentBGColor: currentBGColor,
@@ -283,6 +334,7 @@ angular.module('parserApp.display3dService', [])
       var bgRGBA = displayHelpers.calculateColorFromScore(rawTweet[layerObj.resultsName].score);
 
       elData.baseBGColor = 'rgba(' + bgRGBA + ')';
+      elData.baseBGColorRGB = 'rgb(' + bgRGBA.split(',').slice(0,3).join(',') + ')';
       elData.username = rawTweet.username;
       elData.text = rawTweet.text;
       elData.score = layerObj.title + ' score: ' + rawTweet[layerObj.resultsName].score;
@@ -291,19 +343,24 @@ angular.module('parserApp.display3dService', [])
       var y = yStart - (index % rows) * ySpacing;
       var z = layerObj.z;
       var tweet;
+      var object;
 
       var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, x, y, z );
       if (tweetDistance > 3000) {
-        tweet = displayHelpers.makeLoResElement(layersSeparated, elData);
+        object = displayHelpers.makeLoResMesh(layersSeparated, elData);
+        object.position.x = x;
+        object.position.y = y;
+        object.position.z = z;
+        sceneGL.add( object );
       } else {
         tweet = displayHelpers.makeTweetElement(layersSeparated, elData);
-      }
 
-      var object = new THREE.CSS3DObject( tweet );
-      object.position.x = x;
-      object.position.y = y;
-      object.position.z = z;
-      sceneCSS.add( object );
+        object = new THREE.CSS3DObject( tweet );
+        object.position.x = x;
+        object.position.y = y;
+        object.position.z = z;
+        sceneCSS.add( object );
+      }
 
       layerObj.tweets.push({obj: object, el: tweet, elData: elData});
 
@@ -355,7 +412,7 @@ ribbonMaterial.opacity = 0.5;
   };
 
   var render = function() {
-    //rendererCSS.render( sceneCSS, camera );
+    rendererCSS.render( sceneCSS, camera );
     rendererGL.render( sceneGL, camera );
   };
 
@@ -364,16 +421,15 @@ ribbonMaterial.opacity = 0.5;
       for (var t = 0; t < layers[layerIndex].tweets.length; t++) {
         var tweet = layers[layerIndex].tweets[t];
         var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, tweet.obj.position.x, tweet.obj.position.y, tweet.obj.position.z );
-        if (tweetDistance > 3000 && tweet.el.className !== 'tweet-3d-lod-low') {
 
-          var elLo = displayHelpers.makeLoResElement(layersSeparated, tweet.elData);
+        if (tweetDistance > 1000 && tweet.el) {
+
           // switch to lower LOD
-          displayHelpers.swapLOD(sceneCSS, tweet, elLo);
-        } else if (tweetDistance <= 3000 && tweet.el.className !== 'tweet-3d') {
+          displayHelpers.swapLOD(sceneCSS, sceneGL, tweet, layersSeparated, 'lo');
+        } else if (tweetDistance <= 1000 && !tweet.el) {
 
-          var elHi = displayHelpers.makeTweetElement(layersSeparated, tweet.elData);
           // switch to higher LOD
-          displayHelpers.swapLOD(sceneCSS, tweet, elHi);
+          displayHelpers.swapLOD(sceneCSS, sceneGL, tweet, layersSeparated, 'hi');
         }
       }
     }
@@ -386,18 +442,13 @@ ribbonMaterial.opacity = 0.5;
     // check if camera has moved
     //if (!camera.position.equals(prevCameraPosition)) {
     // check if camera has moved more than a certain amount
-    if (Math.abs(camera.position.length - prevCameraPosition.length) > 5) {
+    if (!camera.position.equals(prevCameraPosition)) {
       // if so, adjust ribbon width so you don't see the left/right ends of the ribbon
       adjustRibbonWidth();
       updateTweetLOD();
     }
 
     prevCameraPosition.copy(camera.position);
-
-    // code for doing something every 30 ticks
-    if (tick >= 30) {
-      tick = 0;
-    }
 
     // auto scroll if tweets are falling off the right
     if (!leftHover && !rightHover) {
@@ -434,7 +485,14 @@ ribbonMaterial.opacity = 0.5;
     }
     TWEEN.update();
     controls.update();
-    render();
+
+    // throttle
+    // code for doing something every x ticks
+    var freq = 30;
+    if (tick >= 60/freq) {
+      tick = 0;
+      render();
+    }
   };
 
   var init = function(context) {
@@ -461,7 +519,7 @@ ribbonMaterial.opacity = 0.5;
     } else if (context === 'macro') {
       cameraZ = 5000;
       cameraY = 0;
-      rows = 15;
+      rows = 30;
     }
     
     ribbonHeight = rows * ySpacing + 200;
@@ -476,23 +534,27 @@ ribbonMaterial.opacity = 0.5;
     yStart = ((rows-1)*ySpacing)/2;
 
     rendererCSS = new THREE.CSS3DRenderer();
-    rendererCSS.setSize( document.getElementById(containerID).clientWidth, height);
-    window.onresize = function () {
-      rendererCSS.setSize( document.getElementById(containerID).clientWidth, height);
-    };
     rendererCSS.domElement.style.position = 'absolute';
     rendererCSS.domElement.style.top = 0;
 
     rendererGL = new THREE.WebGLRenderer();
     rendererGL.setClearColor( 0x000000 );
     rendererGL.setPixelRatio( window.devicePixelRatio );
-    rendererGL.setSize( document.getElementById(containerID).clientWidth, height );
-    window.onresize = function () {
-      rendererCSS.setSize( document.getElementById(containerID).clientWidth, height);
-    };
 
     document.getElementById( containerID ).appendChild( rendererGL.domElement );
     document.getElementById( containerID ).appendChild( rendererCSS.domElement );
+
+    rendererCSS.setSize( document.getElementById(containerID).clientWidth, document.getElementById(containerID).clientHeight );
+    rendererGL.setSize( document.getElementById(containerID).clientWidth, document.getElementById(containerID).clientHeight - 1 );
+    // rendererGL.domElement.style.width = document.getElementById(containerID).clientWidth + 'px';
+    // rendererGL.domElement.style.height = (document.getElementById(containerID).clientHeight - 1) + 'px';
+
+    window.onresize = function () {
+      rendererCSS.setSize( document.getElementById(containerID).clientWidth, document.getElementById(containerID).clientHeight );
+      rendererGL.setSize( document.getElementById(containerID).clientWidth, document.getElementById(containerID).clientHeight - 1 );
+      // rendererGL.domElement.style.width = document.getElementById(containerID).clientWidth + 'px';
+      // rendererGL.domElement.style.height = (document.getElementById(containerID).clientHeight - 1) + 'px';
+    };
 
     controls = new THREE.TrackballControls( camera, rendererCSS.domElement );
     controls.rotateSpeed = 1;
@@ -541,7 +603,7 @@ ribbonMaterial.opacity = 0.5;
 
     prevCameraPosition = new THREE.Vector3();
     prevCameraPosition.copy(camera.position);
-    render();
+    
     adjustRibbonWidth();
     return camera;
   };

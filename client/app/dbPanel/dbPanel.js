@@ -121,7 +121,9 @@ angular.module('parserApp')
     };
 
     $scope.createDatabase = function(name) {
+
       name = name || $scope.createDatabaseInput;
+      console.log("create database client req: ", name);
       $http.post('/auth/adminlogin/createDatabase', {name: name}).success(function(data) {
         console.log("DONE: ", data);
       });

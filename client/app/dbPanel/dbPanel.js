@@ -83,7 +83,17 @@ angular.module('parserApp')
     };
 
     $scope.addNewKeyword = function() {
-      addNewLayer
+       var keyword = $scope.newKeywordInput;
+       $http.post('/auth/adminlogin/addNewKeyword', {keyword: keyword}).success(function(data) {
+        if(data){
+          console.log("KEYWORD ADDED: ", data);
+          //added
+          //reenable keyword button
+        }else{
+          //error
+          console.log("ADD KEYWORD FAIL");
+        }
+      });
     };
 
     $scope.redoKeyword = function() {

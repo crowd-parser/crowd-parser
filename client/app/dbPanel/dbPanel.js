@@ -9,12 +9,6 @@ angular.module('parserApp')
 
     $scope.currDB = null;
 
-    // $http.get('/auth/adminlogin/getDatabaseName').success(function(data) {
-    //   $scope.currentDatabase = data;
-    // });
-
-
-
     $scope.getTables = function(){
         $http.get('/auth/adminlogin/getTables').success(function(data) {
         $scope.dbtables = data;
@@ -25,7 +19,7 @@ angular.module('parserApp')
       $scope.showTableSize(name);
       $scope.selectedTableName = name;
        $http.post('/auth/adminlogin/selectTable', {name: name}).success(function(data) {
-        console.log("DATA: ", data);
+
         $scope.selectedTable = data;
       });
     };
@@ -46,10 +40,18 @@ angular.module('parserApp')
     $scope.showAllKeywords = function() {
       $http.get('/auth/adminlogin/showAllKeywords')
         .success(function(data) {
-          console.log(data);
+
           $scope.keywordsList = data;
         });
     };
+    $scope.showAllLayers = function() {
+      $http.get('/auth/adminlogin/showAllLayers')
+        .success(function(data) {
+
+          $scope.layersList = data;
+        });
+    };
+
 
     $scope.startDownload = function() {
 
@@ -70,51 +72,94 @@ angular.module('parserApp')
       });
     });
 
-    $scope.addNewLayer = function() {
-
-    };
-
-    $scope.redoLayer = function() {
-
-    };
-
-    $scope.deleteLayer = function() {
-
-    };
-
-    $scope.addNewKeyword = function() {
-       var keyword = $scope.newKeywordInput;
-       $http.post('/auth/adminlogin/addNewKeyword', {keyword: keyword}).success(function(data) {
-        if(data){
-          console.log("KEYWORD ADDED: ", data);
-          //added
-          //reenable keyword button
-        }else{
-          //error
-          console.log("ADD KEYWORD FAIL");
-        }
+    $scope.addNewLayer = function(name) {
+      name = name || $scope.newLayerInput;
+      $http.post('/auth/adminlogin/addNewLayer', {name: name}).success(function(data) {
+        $scope.showAllKeywords();
+        $scope.getTables();
       });
     };
 
-    $scope.redoKeyword = function() {
-
+    $scope.redoLayer = function(name) {
+      name = name || $scope.redoLayerInput;
+      $http.post('/auth/adminlogin/redoLayer', {name: name}).success(function(data) {
+        console.log("DONE: ", data);
+      });
     };
 
-    $scope.deleteKeyword = function() {
-
+    $scope.deleteLayer = function(name) {
+      name = name || $scope.deleteLayerInput;
+      $http.post('/auth/adminlogin/deleteLayer', {name: name}).success(function(data) {
+        console.log("DONE: ", data);
+      });
     };
 
-    $scope.createDatabase = function() {
-
+    $scope.addNewKeyword = function(name) {
+       name = name || $scope.newKeywordInput;
+       $http.post('/auth/adminlogin/addNewKeyword', {name: name}).success(function(data) {
+        $scope.showAllKeywords();
+        $scope.getTables();
+      });
     };
 
-    $scope.changeToDatabase = function() {
-      var name = $scope.changeToDatabaseInput;
+    $scope.redoKeyword = function(name) {
+      name = name || $scope.redoKeywordInput;
+      $http.post('/auth/adminlogin/redoKeyword', {name: name}).success(function(data) {
+        $scope.showAllKeywords();
+        $scope.getTables();
+      });
+    };
+
+    $scope.deleteKeyword = function(name) {
+      name = name || $scope.deleteKeywordInput;
+      $http.post('/auth/adminlogin/deleteKeyword', {name: name}).success(function(data) {
+        console.log("DONE with delete: ", data);
+        $scope.showAllKeywords();
+        $scope.getTables();
+
+      });
+    };
+
+    $scope.createDatabase = function(name) {
+      name = name || $scope.createDatabaseInput;
+      $http.post('/auth/adminlogin/createDatabase', {name: name}).success(function(data) {
+        console.log("DONE: ", data);
+      });
+    };
+
+    $scope.deleteDatabase = function(name){
+      //this is also prevented on the server
+      //but might as well do it here
+      name = name || $scope.deleteDatabaseInput;
+      if(name === 'production'){
+        return;
+      }
+      $http.post('/auth/adminlogin/deleteDatabase', {name: name}).success(function(data) {
+        console.log("DONE: ", data);
+      });
+    }
+
+    $scope.changeToDatabase = function(name) {
+      name = name || $scope.changeToDatabaseInput;
        $http.post('/auth/adminlogin/changeToDatabase', {name: name}).success(function(data) {
         console.log("CHANGE TO: ", data);
         $scope.currDB = data; //needs to become something
       });
     };
+
+    $scope.ADDALLTHETWEETS = function(){
+       $http.post('/auth/adminlogin/ADDALLTHETWEETS', {}).success(function(data) {
+
+      });
+    };
+
+     $scope.ADDTHEFIVETESTTWEETS = function(){
+       $http.post('/auth/adminlogin/ADDTHEFIVETESTTWEETS', {}).success(function(data) {
+
+      });
+    }
+
+
 
     $scope.logout = function() {
       localStorage.removeItem('com.crowdparser');

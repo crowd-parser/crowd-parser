@@ -39,10 +39,21 @@
 }
 
 body {
-
+    margin: 0;
+    padding: 0;
   background: #FCFFF5;
   width: 100%;
   font: 300 16px/22px "Lato", "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+#adminPanelHolder{
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: #bbbbbb;
+    color: white;
+    font-size: .9em;
+    font-weight: bold;
 }
 
 #topSpacer{
@@ -54,10 +65,12 @@ body {
 
 #admin_header{
     text-align: right;
-    vertical-align: middle;
     width: 100%;
     height: 40px;
-    background-color: gray;
+    background-color: black;
+    color: white;
+    font-weight: bold;
+    font-size: 1.1em;
     display:inline-block;
     position: fixed;
     top:0;
@@ -66,41 +79,35 @@ body {
 
 #admin_keywords_display{
     display: inline-block;
-    background-color: blue;
     width: 50%;
     height: 300px;
+    background-color: #666666;
+    color: white;
+    font-weight: bold;
 
 }
 #admin_layers_display{
     display: inline-block;
-    background-color: orange;
     width: 50%;
     height: 300px;
 
 }
 #admin_tables_display{
     display: inline-block;
-    background-color: green;
     width: 50%;
     height: 300px;
 
 }
-#admin_stream_display{
-    display: inline-block;
-    background-color: red;
-    width: 50%;
-    height: 300px;
 
-}
 #admin_selectedTable_display{
     display: inline-block;
-    background-color: red;
+
     width: 50%;
     height: 300px;
 }
 #admin_database_controls{
     display: inline-block;
-    background-color: purple;
+
     width: 100%;
     height: auto;
     vertical-align: top;
@@ -110,6 +117,7 @@ body {
     width: 33.333333%;
 }
 .box{
+    border-radius: 4px;
     padding: 4px;
     vertical-align: top;
     overflow: scroll;
@@ -132,7 +140,6 @@ html .extendX button{
 
 #admin_layers_controls{
      display: inline-block;
-    background-color: purple;
     width: 100%;
     height: auto;
     vertical-align: top;
@@ -144,7 +151,6 @@ html .extendX button{
 
 #admin_keywords_controls{
      display: inline-block;
-    background-color: purple;
     width: 100%;
     height: auto;
     vertical-align: top;
@@ -162,6 +168,44 @@ html .headerSection{
 }
 
 html .download-status{
+
+}
+
+.delete{
+    padding: 0 1em 0 1em;
+    margin: 0 2px 0 2px;
+    background-color: orange;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.redo{
+    padding: 0 1em 0 1em;
+    margin: 0 2px 0 2px;
+    background-color: orange;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#admin_tests_display{
+    display: inline-block;
+
+    width: 33%;
+    background-color: #777777;
+    color:white;
+    height: 200px;
+    vertical-align: bottom;
+    text-align: center;
+}
+
+#admin_stream_display{
+    display: inline-block;
+
+    width: 33%;
+    background-color: #333333;
+    color:white;
+    height: 200px;
 
 }
 

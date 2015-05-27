@@ -68,6 +68,16 @@ router.get('/showAllKeywords', function(req, res, next) {
   });
 });
 
+router.get('/showAllLayers', function(req, res, next) {
+  db.db.query('SELECT * FROM layers;', function(err, rows) {
+    console.log(err, rows);
+
+    res.send(rows);
+  });
+});
+
+
+
 router.post('/changeToDatabase', function(req, res, next) {
   var name = req.body.name;
   db.changeToDatabase(name, function(err, name) {
@@ -94,8 +104,8 @@ router.post('/selectTable', function(req, res, next) {
 
 
 router.post('/addNewKeyword', function(req, res, next) {
-  var keyword = req.body.keyword;
-  db.addNewKeyword(keyword, function(err, rows) {
+  var name = req.body.name;
+  db.addNewKeyword(name, function(err, rows) {
     if(err){
       console.log(err);
       res.send(false);
@@ -104,6 +114,127 @@ router.post('/addNewKeyword', function(req, res, next) {
       res.send(true);
   });
 });
+
+router.post('/redoKeyword', function(req, res, next) {
+  var name = req.body.name;
+  db.redoKeyword(name, function(err, rows) {
+    if(err){
+      console.log(err);
+      res.send(false);
+      return;
+    }
+      res.send(true);
+  });
+});
+
+router.post('/deleteKeyword', function(req, res, next) {
+  var name = req.body.name;
+  db.deleteKeyword(name, function(err, rows) {
+    if(err){
+      console.log(err);
+      res.send(false);
+      return;
+    }
+      res.send(true);
+  });
+});
+
+router.post('/addNewLayer', function(req, res, next) {
+  var keyword = req.body.keyword;
+  db.addNewLayer(keyword, function(err, rows) {
+    if(err){
+      console.log(err);
+      res.send(false);
+      return;
+    }
+      res.send(true);
+  });
+});
+
+router.post('/redoLayer', function(req, res, next) {
+  var name = req.body.name;
+  db.redoLayer(name, function(err, rows) {
+    if(err){
+      console.log(err);
+      res.send(false);
+      return;
+    }
+      res.send(true);
+  });
+});
+
+router.post('/deleteLayer', function(req, res, next) {
+  var name = req.body.name;
+  db.deleteLayer(name, function(err, rows) {
+    if(err){
+      console.log(err);
+      res.send(false);
+      return;
+    }
+      res.send(true);
+  });
+});
+
+router.post('/createDatabase', function(req, res, next) {
+  var keyword = req.body.keyword;
+  db.createDatabase(keyword, function(err, rows) {
+    if(err){
+      console.log(err);
+      res.send(false);
+      return;
+    }
+      res.send(true);
+  });
+});
+
+router.post('/changeToDatabase', function(req, res, next) {
+  var name = req.body.name;
+  db.changeToDatabase(name, function(err, rows) {
+    if(err){
+      console.log(err);
+      res.send(false);
+      return;
+    }
+      res.send(true);
+  });
+});
+
+router.post('/deleteDatabase', function(req, res, next) {
+  var name = req.body.name;
+  db.deleteDatabase(name, function(err, rows) {
+    if(err){
+      console.log(err);
+      res.send(false);
+      return;
+    }
+      res.send(true);
+  });
+});
+
+router.post('/ADDALLTHETWEETS', function(req, res, next) {
+  db.ADDALLTHETWEETS(function(err, rows) {
+    if(err){
+      console.log(err);
+      res.send(false);
+      return;
+    }
+      res.send(true);
+  });
+});
+
+router.post('/ADDTHEFIVETESTTWEETS', function(req, res, next) {
+  db.ADDTHEFIVETESTTWEETS(function(err, rows) {
+    if(err){
+      console.log(err);
+      res.send(false);
+      return;
+    }
+      res.send(true);
+  });
+});
+
+
+
 
 
 

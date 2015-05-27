@@ -1,4 +1,5 @@
 //TODO
+//bulk add is broken
 //investigate connection open and closing for performance
 //runtime keyword search
 //store layer results
@@ -47,16 +48,8 @@ exports.db.connect(function(err){
 /*============= DEBUG and MACRO SETTINGS =================*/
 //ONLY SET THIS IF YOU PLAN TO CHANGE SCHEMA, OTHERWISE LEAVE AS IS
 var TALK_TO_DEV_DATABASE = true;
-  var NUKE_ALL_TABLES_ON_START = true; //false will prevent further debug stuff
-  var THIS_IS_REALLY_SURE_YOU_WANT_TO_NUKE_EVERYTHING = true;
-    var FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS = []; //manually add test tweets here
-    var ADD_THESE_KEYWORDS = ["Awesome", "you", "starting"]; //manually add test keywords here
 
-    var ADD_ALL_19_MEGS_OF_TEST_TWEETS = false;
-      var ALL_THE_TEST_TWEETS = {};
-      if(ADD_ALL_19_MEGS_OF_TEST_TWEETS){
-        ALL_THE_TEST_TWEETS = require('./tweets_test.js');
-      }
+var ALL_THE_TEST_TWEETS = require('./tweets_test.js');
 
   if(TALK_TO_DEV_DATABASE){
     exports.databaseToTalkTo = 'dev';
@@ -179,7 +172,7 @@ exports.getLayerNames = function(cb){
   if(this.cache.layerList){
     cb(this.cache.layerList)
   }else{
-    this.db.query("SELECT layerName FROM layerNames", function(err, rows){
+    this.db.query("SELECT layerName FROM layers", function(err, rows){
       expots.cache.layerList = rows;
       cb(rows);
     });
@@ -188,12 +181,12 @@ exports.getLayerNames = function(cb){
 
 exports.addNewLayer = function(layerName, finalCB){
   var that = this;
-  this.genericCreateTable("layerNames",{layerName: layerName}, function(){
+  this.genericCreateTable("layers",{layerName: layerName}, function(){
 
     that.getAllTweets(function(err, rows, fields){
       layerName = "layer_" + layerName;
       that.temp.cLT = {layerName: layerName, rows: rows, finalCB: finalCB};
-      that.genericAddToTable("layerNames", {layerName: layerName});
+      that.genericAddToTable("layers", {layerName: layerName});
       that.genericCreateTable(that.temp.cLT.layerName,{result: 1}, function(){
         that.addForeignKey(that.temp.cLT.layerName, "tweet_id", "tweets", "id", function(){
           that.setColumnToUnique("tweets","tweet_id", function(){
@@ -218,7 +211,8 @@ exports.redoLayer = function(layerName, finalCB){
 };
 
 exports.deleteLayer = function(layerName, cb){
-  this.genericDropTable(layerName, cb);
+  this.db.query("DELETE FROM layers WHERE layerName = ?", [layerName], function(){});
+  this.genericDropTable("layer_"+layerName, cb);
 };
 
 
@@ -262,14 +256,15 @@ exports.addNewKeyword = function(keyword, callbackForTweets){
 };
 
 exports.redoKeyword = function(keyword, callbackForTweets){
-  var taht = this;
-  this.genericDropTable(keyword, function(){
+  var that = this;
+  this.genericDropTable("tweets_containing_"+keyword, function(){
     that.addNewKeyword(keyword, callbackForTweets);
   });
 };
 
 exports.deleteKeyword = function(keyword, callback){
-  this.genericDropTable(keyword, callback);
+  this.db.query("DELETE FROM keywords WHERE keyword = ?", [keyword], function(){});
+  this.genericDropTable("tweets_containing_"+keyword, callback);
 }
 
 exports.getKeywordNames = function(cb){
@@ -527,9 +522,15 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
       }
     }else{
       insertStr += "?";
+      console.log(insertStr);
       callbackAtEnd = callbackAtEnd || callbackPerAdd;
-      that.db.query(insertStr,listOfObjects, callbackAtEnd);
-      //do bulk add
+
+      that.db.query(insertStr,listOfObjects, function(err){
+        //SYNTAX IS WRONG HERE
+        if(err)console.log("BULK ERR: ",err);
+        callbackAtEnd();
+       });
+
     }
   };
 };
@@ -618,20 +619,43 @@ exports.genericDescribeTable = function(name, callback){
 };
 
 exports.ADDALLTHETWEETS = function(callback){
-  if(ADD_ALL_19_MEGS_OF_TEST_TWEETS !== true) return;
-  var indieCall = function(err){
-    if(err){
-      console.log(err);
+  this.getCurrentDatabaseName(function(name){
+    if(name === 'production'){
+      return;
     }else{
-    }
-  };
+      var ALL_THE_TEST_TWEETS = require('./tweets_test.js');
 
-  var finalCall = function(){
-    console.log("A BILLION TWEETS ADDED");
-    callback();
-  };
-  console.log("HERE");
-  this.genericAddToTable('tweets', ALL_THE_TEST_TWEETS , indieCall, finalCall);
+      var finalCall = function(){
+        console.log("A BILLION TWEETS ADDED");
+        callback();
+      };
+
+       exports.genericAddToTable('tweets', ALL_THE_TEST_TWEETS , null, finalCall, true);
+     }
+  });
+
+};
+
+exports.ADDTHEFIVETESTTWEETS = function(callback){
+  this.getCurrentDatabaseName(function(name){
+    if(name === 'production'){
+      return;
+    }else{
+      var ALL_THE_TEST_TWEETS = require('./tweets_test.js');
+
+      var indieCall = function(){
+        console.log("SINGLE TWEET ADDED");
+      };
+
+      var finalCall = function(){
+        console.log("FIVE TWEETS ADDED");
+        callback();
+      };
+
+       exports.genericAddToTable('tweets', [exports.testTweet1,exports.testTweet2,exports.testTweet3,exports.testTweet4,exports.testTweet5] , indieCall, finalCall, false);
+     }
+  });
+
 };
 
 exports.testTweet1 = {"created_at":"Wed May 20 23:13:04 +0000 2015","id":601163762242981900,"id_str":"601163762242981888","text":"@LanaeBeau_TY 😥😥😥 suck sad happy frowing","source":"<a href=\"http://twitter.com/download/android\" rel=\"nofollow\">Twitter for Android</a>","truncated":false,"in_reply_to_status_id":601160439414857700,"in_reply_to_status_id_str":"601160439414857728","in_reply_to_user_id":277764780,"in_reply_to_user_id_str":"277764780","in_reply_to_screen_name":"LanaeBeau_TY","user":{"id":3252488177,"id_str":"3252488177","name":"●○●○♡","screen_name":"2411Clark","location":"","url":null,"description":"I'm dope just follow .","protected":false,"verified":false,"followers_count":7,"friends_count":29,"listed_count":0,"favourites_count":11,"statuses_count":40,"created_at":"Wed May 13 19:04:37 +0000 2015","utc_offset":null,"time_zone":null,"geo_enabled":false,"lang":"en","contributors_enabled":false,"is_translator":false,"profile_background_color":"C0DEED","profile_background_image_url":"http://abs.twimg.com/images/themes/theme1/bg.png","profile_background_image_url_https":"https://abs.twimg.com/images/themes/theme1/bg.png","profile_background_tile":false,"profile_link_color":"0084B4","profile_sidebar_border_color":"C0DEED","profile_sidebar_fill_color":"DDEEF6","profile_text_color":"333333","profile_use_background_image":true,"profile_image_url":"http://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_image_url_https":"https://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_banner_url":"https://pbs.twimg.com/profile_banners/3252488177/1431961882","default_profile":true,"default_profile_image":false,"following":null,"follow_request_sent":null,"notifications":null},"geo":null,"coordinates":null,"place":null,"contributors":null,"retweet_count":0,"favorite_count":0,"entities":{"hashtags":[],"trends":[],"urls":[],"user_mentions":[{"screen_name":"LanaeBeau_TY","name":"tyisha.","id":277764780,"id_str":"277764780","indices":[0,13]}],"symbols":[]},"favorited":false,"retweeted":false,"possibly_sensitive":false,"filter_level":"low","lang":"en","timestamp_ms":"1432163584658"};
@@ -643,7 +667,7 @@ exports.testTweet5 = {"created_at":"Wed May 20 23:16:04 +0000 2015","id":6011637
 
 //this is called in app.js after the database module is exported
 //it processes the debug commands at the top of the file, we'll remove it in production
-exports.trigger = function(db,callback){
+exports.trigger = function(){
   if(this.triggerHasRun) return;
 
   var that = this;
@@ -654,7 +678,6 @@ exports.trigger = function(db,callback){
     return;
   }else{
     console.log("==========DB exists===========");
-    //callback();
   }
 
   this.triggerHasRun = true;
@@ -669,39 +692,12 @@ exports.trigger = function(db,callback){
       this.notifiersForLive = null;
     }
 
-    //that.genericDropTable('tweets_containing_awesome', that.errCB);
-
-    // if(!NUKE_ALL_TABLES_ON_START || !THIS_IS_REALLY_SURE_YOU_WANT_TO_NUKE_EVERYTHING) return;
-
-    // that.genericDropDatabase(this.databaseToTalkTo, function(err){
-    //   console.log("drop dev");
-    //   that.createDatabase(that.databaseToTalkTo,function(err){
-    //     console.log("create dev");
-    //     that.changeToDatabase(that.databaseToTalkTo, function(err){
-
-    //       that.genericCreateTable('tweets', that.testTweet1, function(err){
-    //         that.setColumnToUnique('tweets', 'id_str', function(){
-    //           var addTheseTweets;
-    //           if(FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS.length > 0){
-    //             addTheseTweets = FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS;
-    //           }else{
-    //             addTheseTweets = [that.testTweet1, that.testTweet2, that.testTweet3, that.testTweet4, that.testTweet5];
-    //           }
-    //           //there are two functions being passed in here, a callback per add, and a callback for the end of adds
-    //         });
-    //       });
-    //     });
-    //   });
-    // });
  });
 };
 
 //===========================================
 
-// exports.db.query('USE production');
-// exports.db.query("INSERT INTO admin VALUES('aaa', 'bbb', null);", function(err, rows) {
-//   console.log(err, rows);
-// });
+
 
 /*================== ADMIN PANEL ====================*/
 

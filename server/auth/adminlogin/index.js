@@ -10,9 +10,9 @@ var secret = require('./adminloginsecret');
 
 router.post('/', function(req, res, next) {
 
-  db.db.query('USE production');
+  //db.db.query('USE production');
   db.db.query("SELECT * FROM admin WHERE username='" + req.body.username + "';", function(err, rows) {
-    
+
     if (rows.length !== 0) {
       bcrypt.compare(req.body.password, rows[0].password, function(err, match) {
         if (match) {
@@ -30,20 +30,22 @@ router.post('/', function(req, res, next) {
 });
 
 router.get('/getTables', function(req, res, next) {
-  
-  db.db.query('USE production');
-  db.db.query('SHOW TABLES;', function(err, response) {
-    try {
-      response.forEach(function(table) {
-        table.table = table["Tables_in_production"];
-      })
-      res.send(response);
-    } catch(e) {
-      console.log(e);
-      res.send(response);
-    }
+
+  db.returnTablesWithColumns(function(tables) {
+
+      // response.forEach(function(table) {
+      //   table.table = table[1];
+      // })
+      console.log("show tables:", tables);
+      res.send(tables);
   });
 
+});
+
+router.get('/getDatabaseName', function(req, res, next) {
+    db.getCurrentDatabaseName(function(name){
+      res.send(name);
+    });
 });
 
 router.post('/showTableSize', function(req, res, next) {
@@ -64,6 +66,33 @@ router.get('/showAllKeywords', function(req, res, next) {
 
     res.send(rows);
   });
-})
+});
+
+router.post('/changeToDatabase', function(req, res, next) {
+  var name = req.body.name;
+  db.changeToDatabase(name, function(err, name) {
+    if(err){
+      console.log(err);
+      res.send(null);
+      return;
+    }
+      res.send(name);
+  });
+});
+
+router.post('/selectTable', function(req, res, next) {
+  var name = req.body.name;
+  db.genericDescribeTable(name, function(err, rows) {
+    if(err){
+      console.log(err);
+      res.send(null);
+      return;
+    }
+      res.send(rows);
+  });
+});
+
+
+
 
 module.exports = router;

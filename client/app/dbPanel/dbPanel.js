@@ -7,14 +7,39 @@ angular.module('parserApp')
 
     var socket = Twitter.socket;
 
-    $http.get('/auth/adminlogin/getTables').success(function(data) {
-      $scope.dbtables = data;
-    });
+    $scope.currDB = null;
+
+    // $http.get('/auth/adminlogin/getDatabaseName').success(function(data) {
+    //   $scope.currentDatabase = data;
+    // });
+
+
+
+    $scope.getTables = function(){
+        $http.get('/auth/adminlogin/getTables').success(function(data) {
+        $scope.dbtables = data;
+      });
+      };
+
+    $scope.selectTable = function(name){
+      $scope.showTableSize(name);
+      $scope.selectedTableName = name;
+       $http.post('/auth/adminlogin/selectTable', {name: name}).success(function(data) {
+        console.log("DATA: ", data);
+        $scope.selectedTable = data;
+      });
+    };
 
     $scope.showTableSize = function(tableName) {
       $http.post('/auth/adminlogin/showTableSize', {tableName: tableName}).success(function(data) {
         $scope.tableBeingViewed = tableName;
-        $scope.tableSize = data;
+        $scope.tableSize = data[0]["COUNT(*)"];
+      });
+    };
+
+    $scope.getCurrentDatabaseName = function(){
+        $http.get('/auth/adminlogin/getDatabaseName').success(function(data) {
+        $scope.currDB = data;
       });
     };
 
@@ -58,7 +83,7 @@ angular.module('parserApp')
     };
 
     $scope.addNewKeyword = function() {
-
+      addNewLayer
     };
 
     $scope.redoKeyword = function() {
@@ -74,11 +99,16 @@ angular.module('parserApp')
     };
 
     $scope.changeToDatabase = function() {
-
+      var name = $scope.changeToDatabaseInput;
+       $http.post('/auth/adminlogin/changeToDatabase', {name: name}).success(function(data) {
+        console.log("CHANGE TO: ", data);
+        $scope.currDB = data; //needs to become something
+      });
     };
 
     $scope.logout = function() {
       localStorage.removeItem('com.crowdparser');
       $state.transitionTo('main');
     };
+
   });

@@ -94,7 +94,7 @@ exports.filterTweetObjectsForLayer  = function(rows, layerName,callback){
 
 };
 
-exports.executeFullChainForIncomingTweets = function(tweets){
+exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
   //store tweets in database - need IDs from dB
 
@@ -134,9 +134,14 @@ exports.executeFullChainForIncomingTweets = function(tweets){
 
         var finishLayers = function(){
           //user async map *** BACK HERE
+          var funcList = [];
           for(var i = 0; that.cache.layerList.length; i++){
-            filterTweetObjectsForLayer(rows, that.cache.layerList[i]);
+            funcList.push(filterTweetObjectsForLayer.bind(exports.rows,that.cache.layerList[i]));
           }
+
+          exports.asyncMap(funcList, function(results){
+            callback(results);
+          });
 
           //when async map is done, send tweets back to server
             //to send to client
@@ -285,6 +290,38 @@ exports.getKeywordNames = function(cb){
 
 //============== GENERICS ==================
 
+exports.returnTablesWithColumns = function(finalCB){
+
+
+  this.db.query("SHOW TABLES", function(err, rows){
+    var tableNames = [];
+    for(var i = 0; i < rows.length; i++){
+      for(var key in rows[i]){
+        tableNames.push(rows[i][key]);
+      }
+    }
+    var funcs = [];
+    for(var i = 0; i < tableNames.length; i++){
+      var name = tableNames[i];
+      funcs.push(function(cb){
+        exports.genericGetTableColumnNames(name, function(err, rows){
+          var cbArr = [];
+          for(var i = 0; i < rows.length; i++){
+            cbArr.push(rows[i]["COLUMN_NAME"]);
+          }
+          cbArr.unshift(name);
+
+          cb(cbArr);
+        });
+
+      });
+    }
+    exports.asyncMap(funcs, finalCB );
+  });
+
+
+};
+
 exports.genericGetAll = function(tableName, callback){
   this.db.query('SELECT * FROM ' + tableName, callback);
 };
@@ -413,7 +450,7 @@ exports.asyncMap = function(funcs, finalCB){
   };
 
   for(var i = 0; i < funcs.length; i++){
-    funcs[i](cb);
+    funcs[i](cb.bind(null,i));
   }
 };
 
@@ -515,18 +552,44 @@ exports.doAddingMessage = function(count, moduloVal){
 };
 
 exports.genericDropTable = function(tableName, callback){
-  this.db.query("DROP TABLE IF EXISTS " + tableName, callback);
+  var that = this;
+  this.db.query("SELECT DATABASE()", function(err, rows, fields){
+    console.log("DATABASE: ", rows);
+    if(tableName === "tweets" && rows[0][1] === 'production'){
+      console.log("ERROR: ATTEMPTED TO DROP TWEETS TABLE ON PRODUCTION, NOT ALLOWED");
+      callback();
+      return;
+    }
+    console.log("I KNOW CB: ", callback);
+    exports.db.query("DROP TABLE IF EXISTS " + tableName, callback);
+  });
+
 };
+
+exports.getCurrentDatabaseName = function(cb){
+  this.db.query("SELECT DATABASE()", function(err, rows, fields){
+    if(err)console.log(err);
+    console.log("DB NAME", rows);
+    cb(rows[0][1]);
+  });
+}
 
 exports.createDatabase = function(name, callback){
   this.db.query("CREATE DATABASE IF NOT EXISTS " + name, callback);
 };
 
 exports.changeToDatabase = function(name, callback){
-  this.db.query("USE " + name, callback);
+  this.db.query("USE " + name, function(err, rows, fields){
+    callback(err, name);
+  });
 };
 
 exports.genericDropDatabase = exports.deleteDatabase = function(name, callback){
+  if(name === 'production'){
+    console.log("DROPPING PRODUCTION DATABASE VIA CODE IS NOT ALLOWED");
+    callback();
+    return;
+  }
   this.db.query("DROP DATABASE IF EXISTS " + name, callback);
 };
 
@@ -546,9 +609,10 @@ exports.tellMeWhenDatabaseIsLive = function(callback){
 
 
 //================ TESTING ======================
-exports.genericDescribeTable = function(name){
+exports.genericDescribeTable = function(name, callback){
   this.db.query("DESCRIBE " + name, function(err, rows, fields){
     console.log(rows);
+    callback(err,rows);
   });
 };
 
@@ -594,61 +658,41 @@ exports.trigger = function(db,callback){
 
   this.triggerHasRun = true;
 
-  that.changeToDatabase(that.databaseToTalkTo, that.errCB);
+  that.changeToDatabase(that.databaseToTalkTo, function(err){
+    if(err)console.log(err);
 
-
-  if(this.notifiersForLive){
-     for(var i = 0; i < this.notifiersForLive.length; i++){
-      this.notifiersForLive[i]();
+    if(this.notifiersForLive){
+       for(var i = 0; i < this.notifiersForLive.length; i++){
+        this.notifiersForLive[i]();
+      }
+      this.notifiersForLive = null;
     }
-    this.notifiersForLive = null;
-  }
 
+    //that.genericDropTable('tweets_containing_awesome', that.errCB);
 
+    // if(!NUKE_ALL_TABLES_ON_START || !THIS_IS_REALLY_SURE_YOU_WANT_TO_NUKE_EVERYTHING) return;
 
-  //TODO UNDO THIS
-  // that.getAllTweets(function(err, rows, fields){
-  //   console.log("NUMBER OF CURRENT TWEETS: ", rows.length);
+    // that.genericDropDatabase(this.databaseToTalkTo, function(err){
+    //   console.log("drop dev");
+    //   that.createDatabase(that.databaseToTalkTo,function(err){
+    //     console.log("create dev");
+    //     that.changeToDatabase(that.databaseToTalkTo, function(err){
 
-  //   that.addKeyword("potus", function(tweets){
-  //     console.log(tweets.length);
-  //   //  //that.createLayerTableBase();
-  //   });
-
-  // });
-
-  if(!NUKE_ALL_TABLES_ON_START || !THIS_IS_REALLY_SURE_YOU_WANT_TO_NUKE_EVERYTHING) return;
-
-  // that.genericDropDatabase(this.databaseToTalkTo, function(err){
-
-  //   that.createDatabase(that.databaseToTalkTo,function(err){
-
-  //     that.changeToDatabase(that.databaseToTalkTo, function(err){
-
-  //       that.genericCreateTable('tweets', that.testTweet1, function(err){
-  //         that.setColumnToUnique('tweets', 'id_str', function(){
-  //           var addTheseTweets;
-  //           if(FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS.length > 0){
-  //             addTheseTweets = FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS;
-  //           }else{
-  //             addTheseTweets = [that.testTweet1, that.testTweet2, that.testTweet3, that.testTweet4, that.testTweet5];
-  //           }
-  //           //there are two functions being passed in here, a callback per add, and a callback for the end of adds
-
-  //           that.genericAddToTable('tweets', addTheseTweets, that.errCB, function(msg){
-  //             that.getAllTweets(function(err, rows, fields){
-  //               that.ADDALLTHETWEETS(function(){
-  //                   for(var i = 0; i < ADD_THESE_KEYWORDS.length; i++){
-  //                     that.addKeyword(ADD_THESE_KEYWORDS[i]);
-  //                   }
-  //               });
-  //             });
-  //           });
-  //         });
-  //       });
-  //     });
-  //   });
-  // });
+    //       that.genericCreateTable('tweets', that.testTweet1, function(err){
+    //         that.setColumnToUnique('tweets', 'id_str', function(){
+    //           var addTheseTweets;
+    //           if(FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS.length > 0){
+    //             addTheseTweets = FILL_TWEETS_TABLE_WITH_THIS_ARRAY_OF_TWEETS;
+    //           }else{
+    //             addTheseTweets = [that.testTweet1, that.testTweet2, that.testTweet3, that.testTweet4, that.testTweet5];
+    //           }
+    //           //there are two functions being passed in here, a callback per add, and a callback for the end of adds
+    //         });
+    //       });
+    //     });
+    //   });
+    // });
+ });
 };
 
 //===========================================

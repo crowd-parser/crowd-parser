@@ -1,148 +1,106 @@
-<div class="container">
 
-  <button class="btn btn-danger" ng-click="logout()">Logout</button>
+<div id="admin_header">
+  <div class="headerSection">DOWNLOADED: {{tweetAdded}}</div><div class="headerSection">Current Database: {{currDB}}</div><div class="headerSection"><button class="btn btn-danger" ng-click="logout()">Logout</button></div>
+</div>
+<div id="topSpacer"></div>
 
-  <div>{{tableBeingViewed}}</div>
-  <div>{{tableSize}}</div>
+<div id="admin_database_controls" class="box">
 
-  <h3>List of keywords</h3>
-  <div ng-repeat="keyword in keywordsList">
-    <div>{{keyword.id}} | {{keyword.keyword}} | {{keyword.tableName}}</div>
+        <div class="admin_database_section">
+          <form ng-submit="addNewDatabase()">
+            <input  class="form-control" ng-model="newDatabaseInput" placeholder="Database Name">
+            <button class="btn btn-success">New Database</button>
+          </form>
+        </div><div class="admin_database_section">
+        <form ng-submit="changeToDatabase()">
+          <input  class="form-control" ng-model="changeToDatabaseInput" placeholder="Database Name">
+          <button class="btn btn-success">Select Database</button>
+        </form>
+      </div><div class="admin_database_section">
+      <form ng-submit="deleteDatabase()">
+        <input  class="form-control" ng-model="deleteDatabaseInput" placeholder="Database Name">
+        <button class="btn btn-danger">Delete Database</button>
+      </form>
+      </div>
+</div>
+
+<div ng-show="currDB">
+      <div id="admin_keywords_display" class="box">
+             <button class="btn btn-info" ng-click="showAllKeywords()">Show all keywords</button>
+            <div ng-repeat="keyword in keywordsList">
+              <div>{{keyword.id}} | {{keyword.keyword}} | {{keyword.tableName}}</div>
+            </div>
+      </div><div id="admin_layers_display" class="box">
+          <button class="btn btn-info" ng-click="showAllLayers()">Show all layers</button>
+          <div ng-repeat="layer in layerList">
+            <div>{{layer.id}} | {{layer.name}} | {{keyword.tableName}}</div>
+          </div>
+     </div><div id="admin_tables_display" class="box">
+         <div class="adminSubSection"><button class="btn btn-info" ng-click="getTables()">Show all tables</button></div>
+        <div ng-repeat="table in dbtables" class="extendX">
+          <button class="btn btn-info"  ng-click="selectTable(table[0])">{{table}}</button>
+        </div>
+    </div><div id="admin_selectedTable_display" class="box">
+        <div>Selected Table: {{selectedTableName}}:Size:{{tableSize}}</div>
+        <div ng-repeat="row in selectedTable | limitTo:100">
+          <div class="extendX">{{row}}</div>
+        </div>
+    </div>
+
+
+
+<div id="admin_layers_controls" class="box">
+
+     <div class="admin_layers_section"> <form ng-submit="addNewLayer()">
+      <input type="text" class="form-control" ng-model="newLayerInput" placeholder="Layer Name">
+      <button class="btn btn-success">Add Layer</button>
+    </form>
+    </div><div class="admin_layers_section"> <form ng-submit="redoLayer()">
+    <input type="text" class="form-control" ng-model="redoLayerInput" placeholder="Layer Name">
+
+    <button class="btn btn-success">Redo Layer</button>
+    </form>
+    </div><div class="admin_layers_section"> <form ng-submit="deleteLayer()">
+    <input type="text" class="form-control" ng-model="deleteLayerInput" placeholder="Layer Name">
+
+    <button class="btn btn-danger">Delete Layer</button>
+    </form>
+    </div>
+
   </div>
 
-  <h3>List of Layers</h3>
+  <div id="admin_keywords_controls" class="box">
+   <div class="admin_keywords_section">
+    <form ng-submit="addNewKeyword()">
+      <input type="number" class="form-control" ng-model="newKeywordInput" placeholder="Keyword Name">
+      <button class="btn btn-success">Add Keyword</button>
+    </form>
+  </div><div class="admin_keywords_section">
+  <form ng-submit="redoKeyword()">
+    <input type="number" class="form-control" ng-model="redoKeywordInput" placeholder="Keyword Name">
+    <button class="btn btn-success">Redo Keyword</button>
+  </form>
+  </div><div class="admin_keywords_section">
+  <form ng-submit="deleteKeyword()">
+    <input type="number" class="form-control" ng-model="deleteKeywordInput" placeholder="Keyword Name">
 
-  <h3>List of tables</h3>
-  <div ng-repeat="table in dbtables">
-    {{table["Tables_in_production"]}} | <span ng-click="showTableSize(table.table)">Show size</span>
+    <button class="btn btn-danger">Delete Keyword</button>
+  </form>
+  </div>
   </div>
 
-  <button class="btn btn-info" ng-click="showAllKeywords()">Show all keywords</button>
-    
-  <div class="admin-dashboard" style="background: #FFF; padding: 20px">
+  <div id="admin_stream_display" class="box">
 
     <form ng-submit="startDownload()">
-      <h1>Start tweet stream, download into database</h1>
+      <span>Stream Tweets Into DB</span>
       <div class="form-group">
         <label for="stream-download-rate">Stream download rate</label>
         <input type="number" class="form-control" ng-model="streamDownloadRate">
       </div>
       <button class="btn btn-success">Start!</button>
     </form>
-    
-    <br>
     <button class="btn btn-danger" ng-click="stopDownload()">Stop!</button>
-
-    <hr>
-
-    <h1>Layers</h1>
-
-    <form ng-submit="addNewLayer()">
-      <h4>Add new layer to database</h4>
-      <div class="form-group">
-        <label for="add-new-layer">New keyword</label>
-        <input type="text" class="form-control" ng-model="newLayerInput">
-      </div>
-      <button class="btn btn-success">Add Layer</button>
-    </form>
-
-    <hr>
-
-    <form ng-submit="redoLayer()">
-      <h4>Redo Layer</h4>
-      <div class="form-group">
-        <label for="redo-layer">Layer to be redone</label>
-        <input type="text" class="form-control" ng-model="redoLayerInput">
-      </div>
-      <button class="btn btn-success">Redo Layer</button>
-    </form>
-
-    <hr>
-
-
-    <form ng-submit="deleteLayer()">
-      <h4>Delete layer from database</h4>
-      <div class="form-group">
-        <label for="add-new-layer">Delete this layer</label>
-        <input type="text" class="form-control" ng-model="deleteLayerInput">
-      </div>
-      <button class="btn btn-danger">Delete Layer</button>
-    </form>
-
-    <hr>
-
-    <h1>Keywords</h1>
-
-    <form ng-submit="addNewKeyword()">
-      <h4>Add new keyword to database</h4>
-      <div class="form-group">
-        <label for="add-new-keyword">New keyword</label>
-        <input type="number" class="form-control" ng-model="newKeywordInput">
-      </div>
-      <button class="btn btn-success">Add Keyword</button>
-    </form>
-
-    <hr>
-
-    <form ng-submit="redoKeyword()">
-      <h4>Redo keyword</h4>
-      <div class="form-group">
-        <label for="redo-keyword">Redo keyword</label>
-        <input type="number" class="form-control" ng-model="redoKeywordInput">
-      </div>
-      <button class="btn btn-success">Redo Keyword</button>
-    </form>
-
-    <hr>
-
-    <form ng-submit="deleteKeyword()">
-      <h4>Delete keyword from database</h4>
-      <div class="form-group">
-        <label for="add-new-keyword">Delete this keyword</label>
-        <input type="number" class="form-control" ng-model="deleteKeywordInput">
-      </div>
-      <button class="btn btn-danger">Delete Keyword</button>
-    </form>
   </div>
+</div>
 
-  <hr>
-
-    <h1>Database</h1>
-
-    <form ng-submit="addNewDatabase()">
-      <h4>Add new database</h4>
-      <div class="form-group">
-        <label for="add-new-database">New database name</label>
-        <input type="number" class="form-control" ng-model="newDatabaseInput">
-      </div>
-      <button class="btn btn-success">Add Database</button>
-    </form>
-
-    <hr>
-
-    <form ng-submit="changeToDatabase()">
-      <h4>Change to database</h4>
-      <div class="form-group">
-        <label for="change-to-database">Change to database</label>
-        <input type="number" class="form-control" ng-model="changeToDatabaseInput">
-      </div>
-      <button class="btn btn-success">Change to Database</button>
-    </form>
-
-    <hr>
-
-    <form ng-submit="deleteDatabase()">
-      <h4>Delete database</h4>
-      <div class="form-group">
-        <label for="delete-database">Delete database</label>
-        <input type="number" class="form-control" ng-model="deleteDatabaseInput">
-      </div>
-      <button class="btn btn-danger">Delete Database</button>
-    </form>
-  </div>
-
-
-  <div class="download-status" style="background: #FFF; padding: 10px; text-align: center; margin-top: 15px">
-    {{tweetAdded}}
-  </div>
 </div>

@@ -140,8 +140,8 @@ router.post('/deleteKeyword', function(req, res, next) {
 });
 
 router.post('/addNewLayer', function(req, res, next) {
-  var keyword = req.body.keyword;
-  db.addNewLayer(keyword, function(err, rows) {
+  var name = req.body.name;
+  db.addNewLayer(name, function(err, rows) {
     if(err){
       console.log(err);
       res.send(false);
@@ -176,8 +176,8 @@ router.post('/deleteLayer', function(req, res, next) {
 });
 
 router.post('/createDatabase', function(req, res, next) {
-  var keyword = req.body.keyword;
-  db.createDatabase(keyword, function(err, rows) {
+  var name = req.body.name;
+  db.createDatabase(name, function(err, rows) {
     if(err){
       console.log(err);
       res.send(false);
@@ -212,6 +212,9 @@ router.post('/deleteDatabase', function(req, res, next) {
 });
 
 router.post('/ADDALLTHETWEETS', function(req, res, next) {
+  res.setTimeout(0, function(){
+    console.log("hit timeout");
+  });
   db.ADDALLTHETWEETS(function(err, rows) {
     if(err){
       console.log(err);
@@ -223,6 +226,9 @@ router.post('/ADDALLTHETWEETS', function(req, res, next) {
 });
 
 router.post('/ADDTHEFIVETESTTWEETS', function(req, res, next) {
+  res.setTimeout(0, function(){
+    console.log("hit timeout");
+  });
   db.ADDTHEFIVETESTTWEETS(function(err, rows) {
     if(err){
       console.log(err);

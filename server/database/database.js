@@ -1,4 +1,5 @@
 //TODO
+//set unique for keyword and layer tables
 //bulk add is broken
 //investigate connection open and closing for performance
 //runtime keyword search
@@ -454,11 +455,11 @@ exports.asyncMap = function(funcs, finalCB){
 //=============== ADD STUFF ====================
 exports.cache = exports.cache || {};
 
-exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, callbackAtEnd, doBulkAdd){
+exports.genericAddToTable = function(tableName, listOfObjectsOrig, callbackPerAdd, callbackAtEnd, doBulkAdd){
 
   var that = this;
   callbackPerAdd = callbackPerAdd || this.errCB;
-  listOfObjects = that.rearchitectArrWithDeepObjects(listOfObjects);
+  listOfObjects = that.rearchitectArrWithDeepObjects(listOfObjectsOrig);
   //this is all so we can push any objects at the db, regardless of table setup
 
   this.genericGetTableColumnNames(tableName, function(err, rows, fields){
@@ -487,7 +488,7 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
 
     that.doAddingMessage(count);
 
-    if(doBulkAdd !== true){
+    if(doBulkAdd !== true || listOfObjects.length > 1){ //hacking this to always use q by 1 for now
       insertStr = insertStr += '(';
       for (var i = 0; i < listOfObjects.length; i++) {
         queryStr = "";
@@ -525,7 +526,12 @@ exports.genericAddToTable = function(tableName, listOfObjects, callbackPerAdd, c
       console.log(insertStr);
       callbackAtEnd = callbackAtEnd || callbackPerAdd;
 
-      that.db.query(insertStr,listOfObjects, function(err){
+      var allObjectsAsArrays = [];
+      for(var i = 0; i < listOfObjects.length; i++){
+        allObjectsAsArrays.push(Object.keys(listOfObjects[i]));
+      }
+
+      that.db.query(insertStr,allObjectsAsArrays, function(err){
         //SYNTAX IS WRONG HERE
         if(err)console.log("BULK ERR: ",err);
         callbackAtEnd();

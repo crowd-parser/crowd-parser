@@ -1,12 +1,9 @@
-body {
-  margin: 0;
-  font-family: Helvetica, Arial, sans-serif;
-}
 
 canvas {  }
 
 .3d-display {
   background-color: #000;
+  position: static;
 }
 .mini-3d-display {
   position: relative;

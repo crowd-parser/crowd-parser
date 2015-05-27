@@ -10,7 +10,9 @@ angular.module('parserApp')
     $scope.currDB = null;
 
     $scope.getTables = function(){
+      console.log("client says getTables");
         $http.get('/auth/adminlogin/getTables').success(function(data) {
+          console.log("tables", data);
         $scope.dbtables = data;
       });
       };
@@ -19,7 +21,6 @@ angular.module('parserApp')
       $scope.showTableSize(name);
       $scope.selectedTableName = name;
        $http.post('/auth/adminlogin/selectTable', {name: name}).success(function(data) {
-
         $scope.selectedTable = data;
       });
     };
@@ -53,11 +54,9 @@ angular.module('parserApp')
     };
 
 
-    $scope.startDownload = function() {
+    $scope.startDownload = function(rate) {
 
-      var rate = $scope.streamDownloadRate;
-      $scope.streamDownloadRate = '';
-
+      rate = rate || $scope.streamDownloadRate;
       socket.emit('start download', rate);
 
     };
@@ -126,6 +125,7 @@ angular.module('parserApp')
       console.log("create database client req: ", name);
       $http.post('/auth/adminlogin/createDatabase', {name: name}).success(function(data) {
         console.log("DONE: ", data);
+
       });
     };
 

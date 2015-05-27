@@ -30,12 +30,9 @@ router.post('/', function(req, res, next) {
 });
 
 router.get('/getTables', function(req, res, next) {
-
+  console.log("server hears, get tables");
   db.returnTablesWithColumns(function(tables) {
-
-      // response.forEach(function(table) {
-      //   table.table = table[1];
-      // })
+    console.log(tables);
       console.log("show tables:", tables);
       res.send(tables);
   });
@@ -43,13 +40,14 @@ router.get('/getTables', function(req, res, next) {
 });
 
 router.get('/getDatabaseName', function(req, res, next) {
+
     db.getCurrentDatabaseName(function(name){
       res.send(name);
     });
 });
 
 router.post('/showTableSize', function(req, res, next) {
-  db.db.query('SELECT COUNT(*) FROM ' + req.body.tableName, function(err, response) {
+  db.db.query('SELECT COUNT(*) FROM ' + req.body.name, function(err, response) {
     if (err) {
       console.log(err);
       res.send('error!');
@@ -212,9 +210,9 @@ router.post('/deleteDatabase', function(req, res, next) {
 });
 
 router.post('/ADDALLTHETWEETS', function(req, res, next) {
-  res.setTimeout(0, function(){
-    console.log("hit timeout");
-  });
+  // res.setTimeout(0, function(){
+  //   console.log("hit timeout");
+  // });
   db.ADDALLTHETWEETS(function(err, rows) {
     if(err){
       console.log(err);
@@ -226,9 +224,9 @@ router.post('/ADDALLTHETWEETS', function(req, res, next) {
 });
 
 router.post('/ADDTHEFIVETESTTWEETS', function(req, res, next) {
-  res.setTimeout(0, function(){
-    console.log("hit timeout");
-  });
+  // res.setTimeout(0, function(){
+  //   console.log("hit timeout");
+  // });
   db.ADDTHEFIVETESTTWEETS(function(err, rows) {
     if(err){
       console.log(err);

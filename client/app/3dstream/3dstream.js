@@ -7,7 +7,7 @@ angular.module('parserApp')
     $scope.tweetCount = 0;
     $scope.autoScroll = 'ON';
     $scope.numTweetsToGet = 400;
-    $scope.receivingTweets = false;
+    $scope.receivingTweets = 'OFF';
     var runFakeTweets = false;
     var intervalID;
 
@@ -130,11 +130,16 @@ angular.module('parserApp')
       $scope.tweetData = [];
       $scope.tweetCount = 0;
 
-      $scope.receivingTweets = true;
+      if ($scope.receivingTweets === 'OFF') {
+        $scope.receivingTweets = 'ON';
+      } else {
+        $scope.receivingTweets = 'OFF';
+      }
 
       // receive
       socket.on('tweet added', function (tweetFromDB) {
-        if ($scope.receivingTweets) {
+        if ($scope.receivingTweets === 'ON') {
+          console.log('received tweet');
           console.log(tweetFromDB);
           //$scope.tweetData.push(tweetFromDB.tweet);
           var tweetFormatted = {};
@@ -172,7 +177,7 @@ angular.module('parserApp')
 
     $scope.stopTweets = function () {
       socket.emit('twitter stop continuous stream');
-      $scope.receivingTweets = false;
+      $scope.receivingTweets = 'OFF';
       runFakeTweets = false;
       if (intervalID) {
         clearInterval(intervalID);

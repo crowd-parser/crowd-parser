@@ -67,8 +67,14 @@ exports.searchForTweetsWithKeyword = function(keyword, callback){
   this.genericGetItemsWithTextColumnContaining(null, "tweets", "text", keyword, callback);
 };
 
-exports.filterALLTweetsFromIdByKeyword = function(id, keyword){
-  this.db.query("INSERT INTO tweets_containing_" + keyword + " (tweet_id) SELECT id FROM tweets WHERE id >= " + id + " AND text LIKE '%" + keyword + "%'", callback);
+exports.filterALLTweetsByKeyword = function(keyword, callback){
+  callback = callback || exports.errCB;
+  this.db.query("INSERT INTO tweets_containing_" + keyword + " (tweet_id) SELECT id FROM tweets WHERE text LIKE '%" + keyword + "%'", callback);
+}
+
+exports.filterALLTweetsFromIdByKeyword = function(id, keyword, callback){
+  callback = callback || exports.errCB;
+  this.db.query("INSERT INTO tweets_containing_" + keyword + " (tweet_id) SELECT id FROM tweets WHERE id > " + id + " AND text LIKE '%" + keyword + "%'", callback);
 };
 
 exports.processSingleTweetIDForKeyword = function(id, keyword, callback){
@@ -275,21 +281,21 @@ exports.addKeywordsTable = function(callback){
   });
 };
 
-exports.addNewKeyword = function(keyword, callbackForTweets){
+exports.addNewKeyword = function(keyword, callback){
   this.cache.keywordList = null;
   this.temp.kObj = {keyword: keyword, tableName: "tweets_containing_" + keyword, lastHighestIndexed: 0};
-  this.temp.kCB = {callbackForTweets: callbackForTweets, tweets:false};
+  this.temp.kCB = {tweets:false};
 
   this.addKeywordsTable(function(err){
 
     exports.genericAddToTable("keywords", [exports.temp.kObj], function(){
       exports.genericCreateTable(exports.temp.kObj['tableName'], { }, function(err){
         exports.addForeignKey(exports.temp.kObj['tableName'], "tweet_id", "tweets", "id", function(err){
-
-          exports.filterALLTweetsFromIdByKeyword(null,null,function(){ //TODO ***
-            if(exports.temp.kCB.callbackForTweets){
-                  exports.temp.kCB.callbackForTweets();
-                }
+          callback();//this is to avoid server timeout
+          exports.filterALLTweetsByKeyword(exports.temp.kObj.keyword,function(err, rows, fields){
+            if(err){
+              console.log(err);
+            }
             });
           });
         });
@@ -712,6 +718,8 @@ exports.genericDescribeTable = function(name, callback){
 
 exports.ADDALLTHETWEETS = function(callback){
 
+  var modForTest = 101;
+
   this.getCurrentDatabaseName(function(name){
     if(name === 'production'){
       console.log("can't use test data on production database");
@@ -721,6 +729,12 @@ exports.ADDALLTHETWEETS = function(callback){
       var ALL_THE_TEST_TWEETS = require('./tweets_test.js');
       var sendCallback = true;
       for(var i = 0; i < ALL_THE_TEST_TWEETS.length; i++){
+            if(i !== 1 && i !== 0){
+              if(i % modForTest !== 0){
+                continue;
+              }
+
+            }
           exports.executeFullChainForIncomingTweets([ALL_THE_TEST_TWEETS[i]],function(err, container, fields) {
              if (err) {
                 console.log(err);
@@ -736,8 +750,8 @@ exports.ADDALLTHETWEETS = function(callback){
                 console.log('Tweet id: ' + container[0].tweet.id + " Layers: " + container[0].layers.length);
               }
            });
+        }
       }
-    }
   });
 };
 

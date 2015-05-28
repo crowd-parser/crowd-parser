@@ -30,8 +30,13 @@ router.post('/', function(req, res, next) {
 });
 
 router.get('/getTables', function(req, res, next) {
-  db.returnTablesWithColumns(function(tables) {
+  db.returnTablesWithColumns(function(err,tables) {
+    if(err){
+      console.log(err);
+      res.send(null);
+    }else{
       res.send(tables);
+    }
   });
 
 });
@@ -79,6 +84,7 @@ router.post('/selectTable', function(req, res, next) {
       res.send(null);
       return;
     }
+    console.log("server back from select table");
       res.send(rows);
   });
 });

@@ -12,7 +12,7 @@ angular.module('parserApp')
     $scope.getTables = function(){
       console.log("client says getTables");
         $http.get('/auth/adminlogin/getTables').success(function(data) {
-          console.log("tables", data);
+          console.log("client tables", data);
         $scope.dbtables = data;
       });
       };
@@ -20,6 +20,7 @@ angular.module('parserApp')
     $scope.selectTable = function(name){
 
        $http.post('/auth/adminlogin/selectTable', {name: name}).success(function(data) {
+        console.log("FINAL TABLE DATA: ", data);
         $scope.selectedTableName = name;
         $scope.selectedTable = data;
         $scope.showTableSize(name);
@@ -145,7 +146,8 @@ angular.module('parserApp')
       name = name || $scope.changeToDatabaseInput;
        $http.post('/auth/adminlogin/changeToDatabase', {name: name}).success(function(data) {
         console.log("CHANGE TO: ", data);
-        $scope.currDB = data; //needs to become something
+        console.log("DATA: ", data);
+        $scope.currDB = name;
       });
     };
 

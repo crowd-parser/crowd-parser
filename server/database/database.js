@@ -106,7 +106,7 @@ exports.processSingleTweetObjForLayer = function(tweetHolder, layerName, callbac
 //IT RETURNS AN OBJECT {tweets: tweets, results: results}
 
 exports.executeFullChainForIncomingTweets = function(tweets, callback){
-
+  console.log("start tweet chain");
   var finalCallback = callback;
   if(!Array.isArray(tweets)){
     tweets = [tweets];
@@ -171,7 +171,7 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
               if(count === 0){
                 exports.asyncMap(funcList, function(finalCallback, container, err, results, fields){
                   //ignore results from callback, containing is holding all data
-                    console.log("should call final here");
+
                     finalCallback(null, container, null);
                  }.bind(exports, finalCallback, container));
               }
@@ -524,7 +524,7 @@ if(!Array.isArray(_listOfObjects)){
   callbackPerAdd = callbackPerAdd || this.errCB;
   listOfObjects = exports.rearchitectArrWithDeepObjects(listOfObjects);
   //this is all so we can push any objects at the db, regardless of table setup
-  console.log("LIST:", listOfObjects);
+
   this.genericGetTableColumnNames(tableName, function(err, rows, fields){
 
     var tableColumns = []; //TODO this should get cached / memoized basically
@@ -717,8 +717,9 @@ exports.ADDALLTHETWEETS = function(callback){
       console.log("can't use test data on production database");
       return;
     }else{
+
       var ALL_THE_TEST_TWEETS = require('./tweets_test.js');
-      console.log("LENGTH", ALL_THE_TEST_TWEETS.length);
+      var sendCallback = true;
       for(var i = 0; i < ALL_THE_TEST_TWEETS.length; i++){
           exports.executeFullChainForIncomingTweets([ALL_THE_TEST_TWEETS[i]],function(err, container, fields) {
              if (err) {
@@ -726,13 +727,13 @@ exports.ADDALLTHETWEETS = function(callback){
                 callback(err, container);
                 return;
               } else {
-                console.log("EMIT tweet");
+
                 exports.io.emit('tweet added', container);
                 if(sendCallback === true){
                   sendCallback = false;
                   callback(err, container);
                 }
-                console.log('Container Object Returned', container[0].tweet.text);
+                console.log('Tweet id: ' + container[0].tweet.id + " Layers: " + container[0].layers.length);
               }
            });
       }
@@ -756,13 +757,13 @@ exports.ADDTHEFIVETESTTWEETS = function(callback){
                 callback(err, container);
                 return;
               } else {
-                console.log("EMIT tweet");
                 exports.io.emit('tweet added', container);
                 if(sendCallback === true){
                   sendCallback = false;
                   callback(err, container);
                 }
-                console.log('Container Object Returned', container[0].tweet.text);
+                console.log('Tweet id: ' + container[0].tweet.id + " Layers: " + container[0].layers.length);
+
               }
            });
       }

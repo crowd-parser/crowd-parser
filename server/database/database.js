@@ -67,8 +67,8 @@ exports.searchForTweetsWithKeyword = function(keyword, callback){
   this.genericGetItemsWithTextColumnContaining(null, "tweets", "text", keyword, callback);
 };
 
-exports.filterTweetsFromIdByKeyword = function(id, keyword){
-  this.db.query("INSERT INTO tweets_containing_" + keyword + " (tweet_id) SELECT id FROM tweets WHERE id > " + id);
+exports.filterALLTweetsFromIdByKeyword = function(id, keyword){
+  this.db.query("INSERT INTO tweets_containing_" + keyword + " (tweet_id) SELECT id FROM tweets WHERE id >= " + id + " AND text LIKE '%" + keyword + "%'", callback);
 };
 
 exports.processSingleTweetIDForKeyword = function(id, keyword, callback){
@@ -286,30 +286,22 @@ exports.addNewKeyword = function(keyword, callbackForTweets){
       exports.genericCreateTable(exports.temp.kObj['tableName'], { }, function(err){
         exports.addForeignKey(exports.temp.kObj['tableName'], "tweet_id", "tweets", "id", function(err){
 
-          exports.setColumnToUnique(exports.temp.kObj['tableName'], "tweet_id", function(){
-            exports.searchForTweetsWithKeyword(exports.temp.kObj.keyword, function(err, rows, fields){
-              exports.temp.kCB.tweets = rows;
-              var finalSet = [];
-              var obj;
-              for(var i = 0; i < rows.length; i++){
-                obj = {};
-                obj['tweet_id'] = rows[i].id;
-                finalSet.push(obj);
-              }
-              exports.genericAddToTable(exports.temp.kObj['tableName'], finalSet, function(){
-
-                  if(exports.temp.kCB.callbackForTweets){
-                    exports.temp.kCB.callbackForTweets(exports.temp.kCB.tweets);
-                  }
-
-              });
+          exports.filterALLTweetsFromIdByKeyword(null,null,function(){ //TODO ***
+            if(exports.temp.kCB.callbackForTweets){
+                  exports.temp.kCB.callbackForTweets();
+                }
             });
           });
         });
       });
     });
-  });
 };
+
+exports.updateKeyword = function(keyword, callback){
+  callback();
+
+
+}
 
 exports.redoKeyword = function(keyword, callbackForTweets){
 
@@ -360,16 +352,14 @@ exports.returnTablesWithColumns = function(finalCB){
     for(var i = 0; i < tableNames.length; i++){
       funcs.push(function(name, cb){
         exports.genericGetTableColumnNames(name, function(err, rows){
-          if(name === "tweets"){
-            console.log("TWEET COLUMN NAMES: ", rows);
-          }
+
           var cbArr = [];
           for(var i = 0; i < rows.length; i++){
             cbArr.push(rows[i]["COLUMN_NAME"]);
           }
           cbArr.unshift(name);
 
-          cb(cbArr);
+          cb(err,cbArr);
         });
 
       }.bind(this,tableNames[i]));
@@ -508,7 +498,7 @@ exports.asyncMap = function(funcs, finalCB){
   }
 
   var cb = function(index, err, results, fields){
-    finalResults[index] = results[0];
+    finalResults[index] = results;
     count--;
     if(count === 0){
       finalCB(null, finalResults,null);
@@ -720,9 +710,8 @@ exports.tellMeWhenDatabaseIsLive = function(callback){
 
 //================ TESTING ======================
 exports.genericDescribeTable = function(name, callback){
-  this.db.query("DESCRIBE " + name, function(err, rows, fields){
-    callback(err,rows);
-  });
+  console.log("GDT");
+  this.db.query("DESCRIBE " + name, callback);
 };
 
 exports.ADDALLTHETWEETS = function(callback){
@@ -733,6 +722,7 @@ exports.ADDALLTHETWEETS = function(callback){
       return;
     }else{
       var ALL_THE_TEST_TWEETS = require('./tweets_test.js');
+      console.log("LENGTH", ALL_THE_TEST_TWEETS.length);
       for(var i = 0; i < ALL_THE_TEST_TWEETS.length; i++){
           exports.executeFullChainForIncomingTweets([ALL_THE_TEST_TWEETS[i]],function(err, container, fields) {
              if (err) {

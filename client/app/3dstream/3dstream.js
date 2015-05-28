@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('parserApp')
-  .controller('3dStreamCtrl', function ($scope, $state, $location, Twitter, Display3d) {
+  .controller('3dStreamCtrl', function ($scope, $state, $location, Twitter, Display3d, Modal) {
     var socket = Twitter.socket;
     $scope.tweetData = [];
     $scope.tweetCount = 0;
@@ -10,10 +10,12 @@ angular.module('parserApp')
     var runFakeTweets = false;
     var intervalID;
 
+    $scope.editTweet = Modal.confirm.editTweet(function(x) { console.log(x); });
+
     if ($state.current.name === 'main.components') {
       Display3d.init('mini');
     } else {
-      Display3d.init('macro');
+      Display3d.init('macro', $scope);
     }
 
     Display3d.animate();
@@ -106,8 +108,11 @@ angular.module('parserApp')
         var oldestID = tweets[tweets.length-1].id;
         $scope.tweetData = $scope.tweetData.concat(tweets);
         tweets.forEach(function (tweet) {
-          Display3d.addTweet(tweet, $scope.tweetCount);
+          Display3d.addTweet(tweet, $scope.tweetCount, $scope);
           $scope.tweetCount++;
+          // tweet.addEventListener( 'click', function ( event ) {
+          //   console.log(event);
+          // }, false);
         });
         if ($scope.tweetData.length < $scope.numTweetsToGet) {
           socket.emit('twitter rest search', $scope.keywordStream, 'recent', 100, oldestID);
@@ -146,5 +151,5 @@ angular.module('parserApp')
       }
     };
 
-    //$scope.streamFakeTweets();
+
   });

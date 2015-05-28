@@ -68,7 +68,7 @@ angular.module('parserApp.display3dService', [])
     }
   };
 
-  var makeTweetElement = function (layersSeparated, elData) {
+  var makeTweetElement = function (layersSeparated, elData, scope) {
 
       var tweet = document.createElement( 'div' );
       tweet.className = 'tweet-3d';
@@ -98,6 +98,12 @@ angular.module('parserApp.display3dService', [])
 
       tweet.style.backgroundColor = currentBGColor(layersSeparated, elData);
 
+      if (scope) {
+        tweet.addEventListener( 'click', function ( event ) {
+          scope.editTweet(elData);
+        }, false);
+      }
+
       return tweet;
 
   };
@@ -122,7 +128,7 @@ angular.module('parserApp.display3dService', [])
     return bgRGBA;
   };
 
-  var swapLOD = function (sceneCSS, sceneGL, tweet, layersSeparated, swapTo) {
+  var swapLOD = function (sceneCSS, sceneGL, tweet, layersSeparated, swapTo, scope) {
 
     var el, object;
 
@@ -131,7 +137,7 @@ angular.module('parserApp.display3dService', [])
     var z = tweet.obj.position.z;
 
     if (swapTo === 'hi') {
-      el = makeTweetElement(layersSeparated, tweet.elData);
+      el = makeTweetElement(layersSeparated, tweet.elData, scope);
       sceneGL.remove(tweet.obj);
       object = new THREE.CSS3DObject( el );
       object.position.x = x;
@@ -283,6 +289,7 @@ angular.module('parserApp.display3dService', [])
   var layersSeparated;
   var layers;
   var ribbonHeight;
+  var scope;
 
   var frontLayerZ = 300;
   var layerSpacing = 300;
@@ -370,7 +377,7 @@ angular.module('parserApp.display3dService', [])
         object.position.z = z;
         sceneGL.add( object );
       } else {
-        tweet = displayHelpers.makeTweetElement(layersSeparated, elData);
+        tweet = displayHelpers.makeTweetElement(layersSeparated, elData, scope);
 
         object = new THREE.CSS3DObject( tweet );
         object.position.x = x;
@@ -446,11 +453,11 @@ angular.module('parserApp.display3dService', [])
         if (tweetDistance > 1000 && tweet.el) {
 
           // switch to lower LOD
-          displayHelpers.swapLOD(sceneCSS, sceneGL, tweet, layersSeparated, 'lo');
+          displayHelpers.swapLOD(sceneCSS, sceneGL, tweet, layersSeparated, 'lo', scope);
         } else if (tweetDistance <= 1000 && !tweet.el) {
 
           // switch to higher LOD
-          displayHelpers.swapLOD(sceneCSS, sceneGL, tweet, layersSeparated, 'hi');
+          displayHelpers.swapLOD(sceneCSS, sceneGL, tweet, layersSeparated, 'hi', scope);
         }
       }
     }
@@ -517,7 +524,8 @@ angular.module('parserApp.display3dService', [])
     }
   };
 
-  var init = function(context) {
+  var init = function(context, passedScope) {
+    scope = passedScope;
     console.log(context);
 
     var height = window.innerHeight;

@@ -203,7 +203,7 @@ router.post('/ADDALLTHETWEETS', function(req, res, next) {
   //   console.log("hit timeout");
   // });
 //this test only fires the callback on the first tweet
-  db.ADDTHEFIVETESTTWEETS(function(err, container) {
+  db.ADDALLTHETWEETS(function(err, container) {
     if(err){
       console.log(err);
       res.send(false);

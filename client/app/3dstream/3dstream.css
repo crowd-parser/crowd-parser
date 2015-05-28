@@ -74,7 +74,7 @@ canvas {  }
   position: absolute;
   top: 10px;
   left: 50px;
-  width: 800px;
+  width: 100%;
   margin: auto;
 }
 

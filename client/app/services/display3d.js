@@ -290,7 +290,8 @@ angular.module('parserApp.display3dService', [])
   // left and right mouse hover buttons
   var leftHover = false;
   var rightHover = false;
-  var scrollSpeed = 15;
+  var baseScrollSpeed = 25;
+  var scrollSpeed = baseScrollSpeed;
   var neverAutoScroll = false;
   var rightAutoScroll = false;
   var tick = 0;
@@ -317,11 +318,10 @@ angular.module('parserApp.display3dService', [])
         farthestYOnRibbon = ribbonHeight;
       }
       var newRibbonWidth = displayHelpers.getDisplayWidthAtPoint(camera, 0, farthestYOnRibbon, layer.z) + 10;
-      // layer.ribbonEl.style.width = newRibbonWidth + 'px';
-      // layer.ribbonEl.style.height = ribbonHeight + 'px';
       layer.ribbonMesh.scale.x = newRibbonWidth;
+      layer.ribbonMesh.position.x = controls.target.x;
       var titleWidth = layer.titleEl.clientWidth;
-      layer.titleObj.position.x = -(displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, 0)/2) + titleWidth*3/4;
+      layer.titleObj.position.x = controls.target.x-(displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, 0)/2) + titleWidth*3/4;
     });
   };
 
@@ -487,22 +487,23 @@ angular.module('parserApp.display3dService', [])
     }
 
     if (leftHover) {
-      scrollSpeed = 15;
+      scrollSpeed = baseScrollSpeed;
       camera.position.x -= scrollSpeed;
       controls.target.x -= scrollSpeed;
-      for (var i = 0; i < layers.length; i++) {
-        layers[i].ribbonMesh.position.x -= scrollSpeed;
-      }
+      // for (var i = 0; i < layers.length; i++) {
+      //   layers[i].ribbonMesh.position.x -= scrollSpeed;
+      // }
     }
     if (rightHover || (rightAutoScroll && !neverAutoScroll)) {
       if (rightHover) {
-        scrollSpeed = 15;
+        scrollSpeed = baseScrollSpeed;
       }
       camera.position.x += scrollSpeed;
       controls.target.x += scrollSpeed;
-      for (var i = 0; i < layers.length; i++) {
-        layers[i].ribbonMesh.position.x += scrollSpeed;
-      }
+      // for (var i = 0; i < layers.length; i++) {
+      //   layers[i].ribbonMesh.position.x += scrollSpeed;
+      //   layers[i].titleObj.position.x -= scrollSpeed;
+      // }
     }
     TWEEN.update();
     controls.update();
@@ -609,16 +610,28 @@ angular.module('parserApp.display3dService', [])
     //   keepAddingTweets = false;
     // });
 
-    addButtonEvent('left-3d', 'mouseover', function() {
+    // addButtonEvent('left-3d', 'mouseover', function() {
+    //   leftHover = true;
+    // });
+    addButtonEvent('left-3d', 'mousedown', function() {
       leftHover = true;
     });
-    addButtonEvent('left-3d', 'mouseleave', function() {
+    // addButtonEvent('left-3d', 'mouseleave', function() {
+    //   leftHover = false;
+    // });
+    addButtonEvent('left-3d', 'mouseup', function() {
       leftHover = false;
     });
-    addButtonEvent('right-3d', 'mouseover', function() {
+    // addButtonEvent('right-3d', 'mouseover', function() {
+    //   rightHover = true;
+    // });
+    addButtonEvent('right-3d', 'mousedown', function() {
       rightHover = true;
     });
-    addButtonEvent('right-3d', 'mouseleave', function() {
+    // addButtonEvent('right-3d', 'mouseleave', function() {
+    //   rightHover = false;
+    // });
+    addButtonEvent('right-3d', 'mouseup', function() {
       rightHover = false;
     });
 

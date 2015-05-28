@@ -1,3 +1,4 @@
+'use strict';
 /**
  * @author Eberhard Graether / http://egraether.com/
  * @author Mark Lundin 	/ http://mark-lundin.com
@@ -5,7 +6,10 @@
  * @author Luca Antiga 	/ http://lantiga.github.io
  */
 
+var THREE = window.THREE;
+
 THREE.TrackballControls = function ( object, domElement ) {
+
 
 	var _this = this;
   // mouse button pushed - 0 left, 1 middle, 2 right
@@ -276,9 +280,9 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 				mouseChange.multiplyScalar( _eye.length() * _this.panSpeed );
 
-				//pan.copy( _eye ).cross( _this.object.up ).setLength( mouseChange.x );
-				//pan.add( objectUp.copy( _this.object.up ).setLength( mouseChange.y ) );
-        pan.copy( objectUp.copy(_this.object.up).setLength(mouseChange.y));
+				pan.copy( _eye ).cross( _this.object.up ).setLength( mouseChange.x );
+				pan.add( objectUp.copy( _this.object.up ).setLength( mouseChange.y ) );
+        //pan.copy( objectUp.copy(_this.object.up).setLength(mouseChange.y));
 
 				_this.object.position.add( pan );
 				_this.target.add( pan );
@@ -391,7 +395,7 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 		} else if ( event.keyCode === _this.keys[ STATE.ROTATE ] && !_this.noRotate ) {
 
-			_state = STATE.ROTATE;
+			_state = STATE.PAN;
 
 		} else if ( event.keyCode === _this.keys[ STATE.ZOOM ] && !_this.noZoom ) {
 
@@ -428,19 +432,19 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 		}
 
-		if ( _state === STATE.ROTATE && !_this.noRotate ) {
+		/*if ( _state === STATE.ROTATE && !_this.noRotate ) {
 
       // current vector of mouse loc relative to center
-			_moveCurr.copy( getMouseOnCircle( event.pageX, event.pageY ) );
-			_movePrev.copy(_moveCurr);
+			// _moveCurr.copy( getMouseOnCircle( event.pageX, event.pageY ) );
+			// _movePrev.copy(_moveCurr);
 
-		} else if ( _state === STATE.ZOOM && !_this.noZoom ) {
+		} else */ if ( _state === STATE.ZOOM && !_this.noZoom ) {
 
       // current vector of mouse loc relative to top left of domElement
 			_zoomStart.copy( getMouseOnScreen( event.pageX, event.pageY ) );
 			_zoomEnd.copy(_zoomStart);
 
-		} else if ( _state === STATE.PAN && !_this.noPan ) {
+		} else if ( (_state === STATE.PAN || _state === STATE.ROTATE) && !_this.noPan ) {
 
       // current vector of mouse loc relative to top left of domElement
 			_panStart.copy( getMouseOnScreen( event.pageX, event.pageY ) );
@@ -462,18 +466,18 @@ THREE.TrackballControls = function ( object, domElement ) {
 		event.preventDefault();
 		event.stopPropagation();
 
-		if ( _state === STATE.ROTATE && !_this.noRotate ) {
+		/*if ( _state === STATE.ROTATE && !_this.noRotate ) {
       // store previous vector of mouse position relative to center
-			_movePrev.copy(_moveCurr);
+			//_movePrev.copy(_moveCurr);
       // get new vector of mouse position relative to center
-			_moveCurr.copy( getMouseOnCircle( event.pageX, event.pageY ) );
+			//_moveCurr.copy( getMouseOnCircle( event.pageX, event.pageY ) );
 
-		} else if ( _state === STATE.ZOOM && !_this.noZoom ) {
+		} else */ if ( _state === STATE.ZOOM && !_this.noZoom ) {
       // get mouse loc at end of zoom
       // for zooming by holding down middle mouse button and moving cursor
 			_zoomEnd.copy( getMouseOnScreen( event.pageX, event.pageY ) );
 
-		} else if ( _state === STATE.PAN && !_this.noPan ) {
+		} else if ( (_state === STATE.PAN || _state === STATE.ROTATE) && !_this.noPan ) {
       // get mouse loc at end of pan
 			_panEnd.copy( getMouseOnScreen( event.pageX, event.pageY ) );
 

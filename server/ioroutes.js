@@ -24,7 +24,7 @@ module.exports = function(io, T) {
 
     // Gets tweets for a search query
     // This is used for the sentiment display section
-    socket.on('twitter rest search', function(query, result_type, count) {
+    socket.on('twitter rest search', function(query, result_type, count, max_id) {
 
       var params = {
         q: query,
@@ -34,12 +34,21 @@ module.exports = function(io, T) {
         result_type: result_type
       };
 
-      T.get('search/tweets', params, function(err, data) {
+      if (max_id) {
+        params.max_id = max_id;
+      }
 
-        // Add layer analyses to each tweet
-        var allLayersResults = allLayersAnalysis.tweetsArray(data.statuses);
-                  
-        io.emit('all layers', allLayersResults);
+      T.get('search/tweets', params, function(err, data) {
+        if (err) {
+          console.log(err);
+          io.emit('all layers', err);
+        } else {
+
+          // Add layer analyses to each tweet
+          var allLayersResults = allLayersAnalysis.tweetsArray(data.statuses);
+                    
+          io.emit('all layers', allLayersResults);
+        }
       });
     });
 

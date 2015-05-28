@@ -20,7 +20,7 @@ angular.module('parserApp.display3dService', [])
   tweetMaterialNeutral.transparent = true;
   tweetMaterialNeutral.opacity = 0.5;
 
-  var tweetMaterialPos = new THREE.MeshBasicMaterial( { color: 'rgb(0,180,225)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
+  var tweetMaterialPos = new THREE.MeshBasicMaterial( { color: 'rgb(0,20,190)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
   tweetMaterialPos.transparent = true;
   tweetMaterialPos.opacity = 0.5;
 
@@ -75,19 +75,26 @@ angular.module('parserApp.display3dService', [])
       tweet.style.backgroundColor = elData.baseBGColor;
 
       var username = document.createElement( 'div' );
-      username.className = 'username';
       username.textContent = elData.username;
       tweet.appendChild( username );
 
       var tweetText = document.createElement( 'div' );
-      tweetText.className = 'tweetText';
-      tweetText.textContent = elData.text;
+      tweetText.innerHTML = elData.text;
       tweet.appendChild( tweetText );
 
       var score = document.createElement( 'div' );
-      score.className = 'score';
       score.textContent = elData.score;
       tweet.appendChild( score );
+
+      if (+elData.score.split(': ')[1] === 0) {
+        tweetText.className = 'tweetText';
+        score.className = 'score';
+        username.className = 'username';
+      } else {
+        tweetText.className = 'colorTweetText';
+        score.className = 'colorScore';
+        username.className = 'colorUsername';
+      }
 
       tweet.style.backgroundColor = currentBGColor(layersSeparated, elData);
 
@@ -107,7 +114,7 @@ angular.module('parserApp.display3dService', [])
       bgRGBA = '225,0,0,' + (0.25 - score/10);
     }
     if (score > 0) {
-      bgRGBA = '0,180,225,' + (0.25 + score/10);
+      bgRGBA = '0,20,190,' + (0.25 + score/10);
     }
     if (score === 0) {
       bgRGBA = '225,225,225,0.8';
@@ -169,13 +176,13 @@ angular.module('parserApp.display3dService', [])
             .start();
         }
       });
-      new TWEEN.Tween( layers[i].ribbonObj.position )
+      new TWEEN.Tween( layers[i].ribbonMesh.position )
         .to( {z: frontLayerZ - layerSpacing*i - 1}, 1000 )
         .easing( TWEEN.Easing.Exponential.InOut )
         .start();
       if (i > 0) {
         new TWEEN.Tween( layers[i].titleEl.style )
-          .to( {opacity: 1}, 500 )
+          .to( {opacity: 1}, 1300 )
           .easing( TWEEN.Easing.Exponential.InOut )
           .start();
       }
@@ -218,7 +225,7 @@ angular.module('parserApp.display3dService', [])
             .start();
         }
       });
-      new TWEEN.Tween( layers[i].ribbonObj.position )
+      new TWEEN.Tween( layers[i].ribbonMesh.position )
         .to( {z: frontLayerZ - 2*i - 1}, 1000 )
         .easing( TWEEN.Easing.Exponential.InOut )
         .start();
@@ -277,7 +284,7 @@ angular.module('parserApp.display3dService', [])
   var layers;
   var ribbonHeight;
 
-  var frontLayerZ = 0;
+  var frontLayerZ = 300;
   var layerSpacing = 300;
 
   // left and right mouse hover buttons
@@ -310,11 +317,11 @@ angular.module('parserApp.display3dService', [])
         farthestYOnRibbon = ribbonHeight;
       }
       var newRibbonWidth = displayHelpers.getDisplayWidthAtPoint(camera, 0, farthestYOnRibbon, layer.z) + 10;
-      layer.ribbonEl.style.width = newRibbonWidth + 'px';
-      layer.ribbonEl.style.height = ribbonHeight + 'px';
+      // layer.ribbonEl.style.width = newRibbonWidth + 'px';
+      // layer.ribbonEl.style.height = ribbonHeight + 'px';
       layer.ribbonMesh.scale.x = newRibbonWidth;
-      var titleWidth = layer.ribbonEl.children[0].clientWidth;
-      layer.ribbonEl.children[0].style.left = (newRibbonWidth/2 - displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x,ribbonHeight/2,0)/2 + titleWidth) + 'px';
+      var titleWidth = layer.titleEl.clientWidth;
+      layer.titleObj.position.x = -(displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, 0)/2) + titleWidth*3/4;
     });
   };
 
@@ -333,10 +340,20 @@ angular.module('parserApp.display3dService', [])
       
       var bgRGBA = displayHelpers.calculateColorFromScore(rawTweet[layerObj.resultsName].score);
 
+      var text = rawTweet.text;
+      if (layerObj.resultsName === 'baseLayerResults') {
+        rawTweet.baseLayerResults.positiveWords.forEach( function (posWord) {
+          text = text.replace(posWord[0], '<span class="positive-word">' + posWord[0] + '</span>');
+        });
+        rawTweet.baseLayerResults.negativeWords.forEach( function (negWord) {
+          text = text.replace(negWord[0], '<span class="negative-word">' + negWord[0] + '</span>');
+        });
+      }
+
       elData.baseBGColor = 'rgba(' + bgRGBA + ')';
       elData.baseBGColorRGB = 'rgb(' + bgRGBA.split(',').slice(0,3).join(',') + ')';
       elData.username = rawTweet.username;
-      elData.text = rawTweet.text;
+      elData.text = text;
       elData.score = layerObj.title + ' score: ' + rawTweet[layerObj.resultsName].score;
 
       var x = xStart + Math.floor(index / rows) * xSpacing;
@@ -367,9 +384,10 @@ angular.module('parserApp.display3dService', [])
     });
 
   };
-var ribbonMaterial = new THREE.MeshBasicMaterial( { color: 'rgb(0,132,180)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
-ribbonMaterial.transparent = true;
-ribbonMaterial.opacity = 0.5;
+  var ribbonMaterial = new THREE.MeshBasicMaterial( { color: 'rgb(0,132,180)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
+  ribbonMaterial.transparent = true;
+  ribbonMaterial.opacity = 0.5;
+
   var makeTweetLayer = function(layerResultsProp, layerTitle, z) {
     var layerObj = {};
     layerObj.tweets = [];
@@ -387,26 +405,29 @@ ribbonMaterial.opacity = 0.5;
     sceneGL.add( ribbonMesh );
     layerObj.ribbonMesh = ribbonMesh;
 
-    var ribbon = document.createElement('div');
-    ribbon.style.height = ribbonHeight + 'px';
-    ribbon.className = 'ribbon-3d';
+    // var ribbon = document.createElement('div');
+    // ribbon.style.height = ribbonHeight + 'px';
+    // ribbon.className = 'ribbon-3d';
+
+    // Figure out how to put layer titles back later
 
     var ribbonText = document.createElement( 'div' );
     ribbonText.className = 'layer-title';
     ribbonText.textContent = layerTitle + ' layer';
     ribbonText.style.opacity = 1;
-    ribbonText.style.fontSize = (30*rows) + 'px';
-    ribbon.appendChild( ribbonText );
+    ribbonText.style.fontSize = (15*rows) + 'px';
+    ribbonText.style.width = (150*rows) + 'px';
+
     layerObj.titleEl = ribbonText;
 
-    var ribbonObject = new THREE.CSS3DObject( ribbon );
-    ribbonObject.position.x = 0;
-    ribbonObject.position.y = 0;
-    ribbonObject.position.z = z-1;
+    var ribbonTitleObject = new THREE.CSS3DObject( ribbonText );
+    ribbonTitleObject.position.x = 0;
+    ribbonTitleObject.position.y = (rows*(ySpacing+12))/2;
+    ribbonTitleObject.position.z = z-1;
 
-    sceneCSS.add( ribbonObject );
-    layerObj.ribbonObj = ribbonObject;
-    layerObj.ribbonEl = ribbon;
+    sceneCSS.add( ribbonTitleObject );
+    layerObj.titleObj = ribbonTitleObject;
+    //layerObj.ribbonEl = ribbon;
 
     layers.push(layerObj);
   };
@@ -470,7 +491,7 @@ ribbonMaterial.opacity = 0.5;
       camera.position.x -= scrollSpeed;
       controls.target.x -= scrollSpeed;
       for (var i = 0; i < layers.length; i++) {
-        layers[i].ribbonObj.position.x -= scrollSpeed;
+        layers[i].ribbonMesh.position.x -= scrollSpeed;
       }
     }
     if (rightHover || (rightAutoScroll && !neverAutoScroll)) {
@@ -480,7 +501,7 @@ ribbonMaterial.opacity = 0.5;
       camera.position.x += scrollSpeed;
       controls.target.x += scrollSpeed;
       for (var i = 0; i < layers.length; i++) {
-        layers[i].ribbonObj.position.x += scrollSpeed;
+        layers[i].ribbonMesh.position.x += scrollSpeed;
       }
     }
     TWEEN.update();
@@ -519,10 +540,10 @@ ribbonMaterial.opacity = 0.5;
     } else if (context === 'macro') {
       cameraZ = 5000;
       cameraY = 0;
-      rows = 30;
+      rows = 25;
     }
     
-    ribbonHeight = rows * ySpacing + 200;
+    ribbonHeight = rows * (ySpacing + 15);
 
     sceneCSS = new THREE.Scene();
     sceneGL = new THREE.Scene();
@@ -604,6 +625,7 @@ ribbonMaterial.opacity = 0.5;
     prevCameraPosition = new THREE.Vector3();
     prevCameraPosition.copy(camera.position);
     
+    render();
     adjustRibbonWidth();
     return camera;
   };

@@ -7,6 +7,7 @@ angular.module('parserApp')
     $scope.tweetCount = 0;
     $scope.autoScroll = 'ON';
     $scope.numTweetsToGet = 400;
+    $scope.receivingTweets = false;
     var runFakeTweets = false;
     var intervalID;
 
@@ -99,6 +100,9 @@ angular.module('parserApp')
     };
 
     $scope.getRestTweets = function () {
+      $scope.tweetData = [];
+      $scope.tweetCount = 0;
+
       if (!$scope.keywordStream) {
         return;
       }
@@ -118,6 +122,29 @@ angular.module('parserApp')
           socket.emit('twitter rest search', $scope.keywordStream, 'recent', 100, oldestID);
         } else {
           console.log($scope.tweetData.length);
+        }
+      });
+    };
+
+    $scope.startLiveStream = function () {
+      $scope.tweetData = [];
+      $scope.tweetCount = 0;
+
+      $scope.receivingTweets = true;
+
+      // receive
+      socket.on('tweet added', function (tweetFromDB) {
+        if ($scope.receivingTweets) {
+          console.log(tweetFromDB);
+          //$scope.tweetData.push(tweetFromDB.tweet);
+          var tweetFormatted = {};
+          tweetFormatted.text = tweetFromDB.tweet.text;
+          tweetFormatted.username = tweetFromDB.tweet.username;
+          tweetFormatted.baseLayerResults = {};
+          tweetFormatted.emoticonLayerResults = {};
+
+          //Display3d.addTweet(tweetFormatted, $scope.tweetCount);
+          //$scope.tweetCount++;
         }
       });
     };
@@ -145,6 +172,7 @@ angular.module('parserApp')
 
     $scope.stopTweets = function () {
       socket.emit('twitter stop continuous stream');
+      $scope.receivingTweets = false;
       runFakeTweets = false;
       if (intervalID) {
         clearInterval(intervalID);

@@ -30,26 +30,21 @@ router.post('/', function(req, res, next) {
 });
 
 router.get('/getTables', function(req, res, next) {
-
   db.returnTablesWithColumns(function(tables) {
-
-      // response.forEach(function(table) {
-      //   table.table = table[1];
-      // })
-      console.log("show tables:", tables);
       res.send(tables);
   });
 
 });
 
 router.get('/getDatabaseName', function(req, res, next) {
+
     db.getCurrentDatabaseName(function(name){
       res.send(name);
     });
 });
 
 router.post('/showTableSize', function(req, res, next) {
-  db.db.query('SELECT COUNT(*) FROM ' + req.body.tableName, function(err, response) {
+  db.db.query('SELECT COUNT(*) FROM ' + req.body.name, function(err, response) {
     if (err) {
       console.log(err);
       res.send('error!');
@@ -73,20 +68,6 @@ router.get('/showAllLayers', function(req, res, next) {
     console.log(err, rows);
 
     res.send(rows);
-  });
-});
-
-
-
-router.post('/changeToDatabase', function(req, res, next) {
-  var name = req.body.name;
-  db.changeToDatabase(name, function(err, name) {
-    if(err){
-      console.log(err);
-      res.send(null);
-      return;
-    }
-      res.send(name);
   });
 });
 
@@ -212,41 +193,36 @@ router.post('/deleteDatabase', function(req, res, next) {
 });
 
 router.post('/ADDALLTHETWEETS', function(req, res, next) {
-  res.setTimeout(0, function(){
-    console.log("hit timeout");
-  });
-  db.ADDALLTHETWEETS(function(err, rows) {
+  // res.setTimeout(0, function(){
+  //   console.log("hit timeout");
+  // });
+//this test only fires the callback on the first tweet
+  db.ADDTHEFIVETESTTWEETS(function(err, container) {
     if(err){
       console.log(err);
       res.send(false);
       return;
     }
-      res.send(true);
+      //container is {tweet: obj, layers:[obj,obj]}
+      res.send(container);
   });
 });
 
 router.post('/ADDTHEFIVETESTTWEETS', function(req, res, next) {
-  res.setTimeout(0, function(){
-    console.log("hit timeout");
-  });
-  db.ADDTHEFIVETESTTWEETS(function(err, rows) {
+  // res.setTimeout(0, function(){
+  //   console.log("hit timeout");
+  // });
+//this test only fires the callback on the first tweet
+  db.ADDTHEFIVETESTTWEETS(function(err, container) {
     if(err){
       console.log(err);
       res.send(false);
       return;
     }
-      res.send(true);
+      //container is {tweet: obj, layers:[obj,obj]}
+      res.send(container);
   });
 });
-
-
-
-
-
-
-
-
-
 
 
 module.exports = router;

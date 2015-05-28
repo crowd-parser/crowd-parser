@@ -22,6 +22,8 @@ module.exports = function(io, T) {
       });
     });
 
+    db.io = io;
+
     // Gets tweets for a search query
     // This is used for the sentiment display section
     socket.on('twitter rest search', function(query, result_type, count, max_id) {
@@ -46,9 +48,10 @@ module.exports = function(io, T) {
 
           // Add layer analyses to each tweet
           var allLayersResults = allLayersAnalysis.tweetsArray(data.statuses);
-                    
+
           io.emit('all layers', allLayersResults);
         }
+
       });
     });
 
@@ -77,12 +80,11 @@ module.exports = function(io, T) {
     });
 
     // ===== THIS IS USED TO DOWNLOAD TWEETS TO THE DATABASE ====== //
-    // Not relevant to production
 
     var streamDownload;
 
     socket.on('start download', function(rate) {
-console.log('START DOWNLOAD')
+      console.log('START DOWNLOAD')
       streamDownload = T.stream('statuses/sample');
       var count = 0;
       var rate = rate || 4;
@@ -96,14 +98,14 @@ console.log('START DOWNLOAD')
               console.log("WAITING FOR DB");
               return;
           }
-            // db.addTweet(tweet, function(err, rows, fields) {
-            //   if (err) {
-            //     console.log(err);
-            //   } else {
-            //     io.emit('tweet added', tweet.id);
-            //     console.log('tweet added!', tweet.id);
-            //   }
-            // })
+            db.executeFullChainForIncomingTweets(tweet, function(err, tweet, fields) {
+              if (err) {
+                console.log(err);
+              } else {
+                this.io.emit('tweet added', tweet);
+                console.log('tweet added!', tweet.id_str);
+              }
+            });
           }
         }
       });

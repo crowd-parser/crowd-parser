@@ -95,7 +95,7 @@
         <span>Stream Tweets Into DB</span>
         <div class="form-group">
           <label for="stream-download-rate">Stream download rate</label>
-          <input type="number" class="form-control" ng-model="streamDownloadRate">
+          <input type="number" class="form-control" ng-model="streamDownloadRate" placeholder="3">
         </div>
         <button class="btn btn-success">Start!</button>
       </form>
@@ -106,6 +106,14 @@
         <button class="btn btn-warning" ng-click="ADDALLTHETWEETS()">ADD 5000 TEST TWEETS</button>
         <button class="btn btn-default" ng-click="ADDTHEFIVETESTTWEETS()">ADD THE 5 TEST TWEETS</button>
       </div>
+
+
+        <div id="admin_tests2_display" class="box">
+        <button class="btn btn-warning" ng-click="showDatabases()">List Databases</button>
+
+      </div>
+
+
 
 
   </div>

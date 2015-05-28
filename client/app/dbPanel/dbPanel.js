@@ -10,23 +10,25 @@ angular.module('parserApp')
     $scope.currDB = null;
 
     $scope.getTables = function(){
+      console.log("client says getTables");
         $http.get('/auth/adminlogin/getTables').success(function(data) {
+          console.log("tables", data);
         $scope.dbtables = data;
       });
       };
 
     $scope.selectTable = function(name){
-      $scope.showTableSize(name);
-      $scope.selectedTableName = name;
-       $http.post('/auth/adminlogin/selectTable', {name: name}).success(function(data) {
 
+       $http.post('/auth/adminlogin/selectTable', {name: name}).success(function(data) {
+        $scope.selectedTableName = name;
         $scope.selectedTable = data;
+        $scope.showTableSize(name);
       });
     };
 
-    $scope.showTableSize = function(tableName) {
-      $http.post('/auth/adminlogin/showTableSize', {tableName: tableName}).success(function(data) {
-        $scope.tableBeingViewed = tableName;
+    $scope.showTableSize = function(name) {
+      $http.post('/auth/adminlogin/showTableSize', {name: name}).success(function(data) {
+
         $scope.tableSize = data[0]["COUNT(*)"];
       });
     };
@@ -53,11 +55,9 @@ angular.module('parserApp')
     };
 
 
-    $scope.startDownload = function() {
+    $scope.startDownload = function(rate) {
 
-      var rate = $scope.streamDownloadRate;
-      $scope.streamDownloadRate = '';
-
+      rate = rate || $scope.streamDownloadRate;
       socket.emit('start download', rate);
 
     };
@@ -67,9 +67,8 @@ angular.module('parserApp')
     };
 
     socket.on('tweet added', function(data) {
-      $scope.$apply(function() {
-        $scope.tweetAdded = 'Tweet added! --> ID: ' + data;
-      });
+      console.log("client notified of tweet added");
+      $scope.tweetAdded = 'Tweet added! --> ID: ' + data[0].id;
     });
 
     $scope.addNewLayer = function(name) {
@@ -126,6 +125,7 @@ angular.module('parserApp')
       console.log("create database client req: ", name);
       $http.post('/auth/adminlogin/createDatabase', {name: name}).success(function(data) {
         console.log("DONE: ", data);
+
       });
     };
 

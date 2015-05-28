@@ -13,18 +13,23 @@ router.post('/', function(req, res, next) {
   //db.db.query('USE production');
   db.db.query("SELECT * FROM admin WHERE username='" + req.body.username + "';", function(err, rows) {
 
-    if (rows.length !== 0) {
-      bcrypt.compare(req.body.password, rows[0].password, function(err, match) {
-        if (match) {
-          var token = jwt.encode(rows[0], secret.secret);
-          res.send({token: token});
-        } else {
-          res.send('Password is incorrect');
-        }
-      });
+    if (err) {
+      console.log(err);
     } else {
-      res.send('Username is incorrect');
+      if (rows.length !== 0) {
+        bcrypt.compare(req.body.password, rows[0].password, function(err, match) {
+          if (match) {
+            var token = jwt.encode(rows[0], secret.secret);
+            res.send({token: token});
+          } else {
+            res.send('Password is incorrect');
+          }
+        });
+      } else {
+        res.send('Username is incorrect');
+      }
     }
+
 
   });
 });

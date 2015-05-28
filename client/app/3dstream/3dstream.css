@@ -150,6 +150,14 @@ canvas {  }
     color: rgba(0,132,180,1);
   }
 
+  .tweet-3d .colorUsername {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 20px;
+    color: rgba(0,190,250,1);
+  }
+
   .tweet-3d .tweetText {
     position: absolute;
     top: 40px;
@@ -157,6 +165,15 @@ canvas {  }
     font-size: 14px;
     text-align: center;
     color: rgba(20,20,20,0.75);
+  }
+
+  .tweet-3d .colorTweetText {
+    position: absolute;
+    top: 40px;
+    width: 100%;
+    font-size: 14px;
+    text-align: center;
+    color: rgba(225,225,225,0.75);
   }
 
 /*    -webkit-filter: drop-shadow(0px 0px 20px rgba(0,255,255,0.95));
@@ -173,6 +190,14 @@ canvas {  }
     font-size: 18px;
     text-align: right;
     color: rgba(0,132,180,1);
+  }
+  .tweet-3d .colorScore {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 18px;
+    text-align: right;
+    color: rgba(0,190,250,1);
   }
 
 .tweet-3d-lod-low {

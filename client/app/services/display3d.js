@@ -20,7 +20,7 @@ angular.module('parserApp.display3dService', [])
   tweetMaterialNeutral.transparent = true;
   tweetMaterialNeutral.opacity = 0.5;
 
-  var tweetMaterialPos = new THREE.MeshBasicMaterial( { color: 'rgb(0,180,225)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
+  var tweetMaterialPos = new THREE.MeshBasicMaterial( { color: 'rgb(0,20,190)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
   tweetMaterialPos.transparent = true;
   tweetMaterialPos.opacity = 0.5;
 
@@ -75,19 +75,26 @@ angular.module('parserApp.display3dService', [])
       tweet.style.backgroundColor = elData.baseBGColor;
 
       var username = document.createElement( 'div' );
-      username.className = 'username';
       username.textContent = elData.username;
       tweet.appendChild( username );
 
       var tweetText = document.createElement( 'div' );
-      tweetText.className = 'tweetText';
       tweetText.innerHTML = elData.text;
       tweet.appendChild( tweetText );
 
       var score = document.createElement( 'div' );
-      score.className = 'score';
       score.textContent = elData.score;
       tweet.appendChild( score );
+
+      if (+elData.score.split(': ')[1] === 0) {
+        tweetText.className = 'tweetText';
+        score.className = 'score';
+        username.className = 'username';
+      } else {
+        tweetText.className = 'colorTweetText';
+        score.className = 'colorScore';
+        username.className = 'colorUsername';
+      }
 
       tweet.style.backgroundColor = currentBGColor(layersSeparated, elData);
 
@@ -107,7 +114,7 @@ angular.module('parserApp.display3dService', [])
       bgRGBA = '225,0,0,' + (0.25 - score/10);
     }
     if (score > 0) {
-      bgRGBA = '0,180,225,' + (0.25 + score/10);
+      bgRGBA = '0,20,190,' + (0.25 + score/10);
     }
     if (score === 0) {
       bgRGBA = '225,225,225,0.8';
@@ -173,24 +180,24 @@ angular.module('parserApp.display3dService', [])
         .to( {z: frontLayerZ - layerSpacing*i - 1}, 1000 )
         .easing( TWEEN.Easing.Exponential.InOut )
         .start();
-      // if (i > 0) {
-      //   new TWEEN.Tween( layers[i].titleEl.style )
-      //     .to( {opacity: 1}, 500 )
-      //     .easing( TWEEN.Easing.Exponential.InOut )
-      //     .start();
-      // }
+      if (i > 0) {
+        new TWEEN.Tween( layers[i].titleEl.style )
+          .to( {opacity: 1}, 1300 )
+          .easing( TWEEN.Easing.Exponential.InOut )
+          .start();
+      }
       layers[i].z = frontLayerZ - layerSpacing*i - 1;
       if (i === 0) {
-        // var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
-        //   .to( {opacity: 0}, 500)
-        //   .easing( TWEEN.Easing.Quadratic.InOut )
-        //   .onComplete(function () {
-        //     layers[0].titleEl.textContent = layers[0].title + ' layer';
-        //   });
-        // var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
-        //   .to( {opacity: 1}, 500)
-        //   .easing( TWEEN.Easing.Quadratic.InOut );
-        // fadeOut.chain(fadeIn).start();
+        var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
+          .to( {opacity: 0}, 500)
+          .easing( TWEEN.Easing.Quadratic.InOut )
+          .onComplete(function () {
+            layers[0].titleEl.textContent = layers[0].title + ' layer';
+          });
+        var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
+          .to( {opacity: 1}, 500)
+          .easing( TWEEN.Easing.Quadratic.InOut );
+        fadeOut.chain(fadeIn).start();
       }
     }
   };
@@ -223,25 +230,25 @@ angular.module('parserApp.display3dService', [])
         .easing( TWEEN.Easing.Exponential.InOut )
         .start();
       if (i > 0) {
-        // new TWEEN.Tween( layers[i].titleEl.style )
-        //   .to( {opacity: 0}, 500)
-        //   .easing( TWEEN.Easing.Exponential.InOut )
-        //   .start();
+        new TWEEN.Tween( layers[i].titleEl.style )
+          .to( {opacity: 0}, 500)
+          .easing( TWEEN.Easing.Exponential.InOut )
+          .start();
       }
       layers[i].z = frontLayerZ - 2*i;
       if (i === 0) {
-        // var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
-        //   .to( {opacity: 0}, 500)
-        //   .easing( TWEEN.Easing.Quadratic.InOut )
-        //   .onComplete(function () {
-        //     layers[0].titleEl.textContent = layers.map(function (item) {
-        //       return item.title;
-        //     }).join(' + ') + ' layers';
-        //   });
-        // var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
-        //   .to( {opacity: 1}, 500)
-        //   .easing( TWEEN.Easing.Quadratic.InOut );
-        // fadeOut.chain(fadeIn).start();
+        var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
+          .to( {opacity: 0}, 500)
+          .easing( TWEEN.Easing.Quadratic.InOut )
+          .onComplete(function () {
+            layers[0].titleEl.textContent = layers.map(function (item) {
+              return item.title;
+            }).join(' + ') + ' layers';
+          });
+        var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
+          .to( {opacity: 1}, 500)
+          .easing( TWEEN.Easing.Quadratic.InOut );
+        fadeOut.chain(fadeIn).start();
       }
     }
   };
@@ -277,7 +284,7 @@ angular.module('parserApp.display3dService', [])
   var layers;
   var ribbonHeight;
 
-  var frontLayerZ = 0;
+  var frontLayerZ = 300;
   var layerSpacing = 300;
 
   // left and right mouse hover buttons
@@ -314,9 +321,7 @@ angular.module('parserApp.display3dService', [])
       // layer.ribbonEl.style.height = ribbonHeight + 'px';
       layer.ribbonMesh.scale.x = newRibbonWidth;
       var titleWidth = layer.titleEl.clientWidth;
-      console.log(titleWidth);
-      layer.titleObj.position.x = -(displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, 0)/2) + titleWidth;
-      console.log(layer.titleObj.position.x);
+      layer.titleObj.position.x = -(displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, 0)/2) + titleWidth*3/4;
     });
   };
 
@@ -339,7 +344,6 @@ angular.module('parserApp.display3dService', [])
       if (layerObj.resultsName === 'baseLayerResults') {
         rawTweet.baseLayerResults.positiveWords.forEach( function (posWord) {
           text = text.replace(posWord[0], '<span class="positive-word">' + posWord[0] + '</span>');
-          console.log(text);
         });
         rawTweet.baseLayerResults.negativeWords.forEach( function (negWord) {
           text = text.replace(negWord[0], '<span class="negative-word">' + negWord[0] + '</span>');
@@ -418,7 +422,7 @@ angular.module('parserApp.display3dService', [])
 
     var ribbonTitleObject = new THREE.CSS3DObject( ribbonText );
     ribbonTitleObject.position.x = 0;
-    ribbonTitleObject.position.y = (rows*ySpacing)/2;
+    ribbonTitleObject.position.y = (rows*(ySpacing+12))/2;
     ribbonTitleObject.position.z = z-1;
 
     sceneCSS.add( ribbonTitleObject );
@@ -536,10 +540,10 @@ angular.module('parserApp.display3dService', [])
     } else if (context === 'macro') {
       cameraZ = 5000;
       cameraY = 0;
-      rows = 30;
+      rows = 25;
     }
     
-    ribbonHeight = rows * ySpacing + 200;
+    ribbonHeight = rows * (ySpacing + 15);
 
     sceneCSS = new THREE.Scene();
     sceneGL = new THREE.Scene();

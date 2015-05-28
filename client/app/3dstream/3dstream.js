@@ -6,6 +6,7 @@ angular.module('parserApp')
     $scope.tweetData = [];
     $scope.tweetCount = 0;
     $scope.autoScroll = 'ON';
+    $scope.numTweetsToGet = 400;
     var runFakeTweets = false;
     var intervalID;
 
@@ -108,7 +109,7 @@ angular.module('parserApp')
           Display3d.addTweet(tweet, $scope.tweetCount);
           $scope.tweetCount++;
         });
-        if ($scope.tweetData.length < 100) {
+        if ($scope.tweetData.length < $scope.numTweetsToGet) {
           socket.emit('twitter rest search', $scope.keywordStream, 'recent', 100, oldestID);
         } else {
           console.log($scope.tweetData.length);

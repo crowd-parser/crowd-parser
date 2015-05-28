@@ -18,16 +18,17 @@ angular.module('parserApp')
       };
 
     $scope.selectTable = function(name){
-      $scope.showTableSize(name);
-      $scope.selectedTableName = name;
+
        $http.post('/auth/adminlogin/selectTable', {name: name}).success(function(data) {
+        $scope.selectedTableName = name;
         $scope.selectedTable = data;
+        $scope.showTableSize(name);
       });
     };
 
-    $scope.showTableSize = function(tableName) {
-      $http.post('/auth/adminlogin/showTableSize', {tableName: tableName}).success(function(data) {
-        $scope.tableBeingViewed = tableName;
+    $scope.showTableSize = function(name) {
+      $http.post('/auth/adminlogin/showTableSize', {name: name}).success(function(data) {
+
         $scope.tableSize = data[0]["COUNT(*)"];
       });
     };
@@ -66,9 +67,8 @@ angular.module('parserApp')
     };
 
     socket.on('tweet added', function(data) {
-      $scope.$apply(function() {
-        $scope.tweetAdded = 'Tweet added! --> ID: ' + data;
-      });
+      console.log("client notified of tweet added");
+      $scope.tweetAdded = 'Tweet added! --> ID: ' + data[0].id;
     });
 
     $scope.addNewLayer = function(name) {

@@ -22,6 +22,8 @@ module.exports = function(io, T) {
       });
     });
 
+    db.io = io;
+
     // Gets tweets for a search query
     // This is used for the sentiment display section
     socket.on('twitter rest search', function(query, result_type, count, max_id) {
@@ -96,14 +98,14 @@ module.exports = function(io, T) {
               console.log("WAITING FOR DB");
               return;
           }
-            db.executeFullChainForIncomingTweets(tweet, function(err, rows, fields) {
+            db.executeFullChainForIncomingTweets(tweet, function(err, tweet, fields) {
               if (err) {
                 console.log(err);
               } else {
-                io.emit('tweet added', rows[0]);
-                console.log('tweet added!', rows[0].id_str);
+                this.io.emit('tweet added', tweet);
+                console.log('tweet added!', tweet.id_str);
               }
-            })
+            });
           }
         }
       });

@@ -30,10 +30,7 @@ router.post('/', function(req, res, next) {
 });
 
 router.get('/getTables', function(req, res, next) {
-  console.log("server hears, get tables");
   db.returnTablesWithColumns(function(tables) {
-    console.log(tables);
-      console.log("show tables:", tables);
       res.send(tables);
   });
 
@@ -71,20 +68,6 @@ router.get('/showAllLayers', function(req, res, next) {
     console.log(err, rows);
 
     res.send(rows);
-  });
-});
-
-
-
-router.post('/changeToDatabase', function(req, res, next) {
-  var name = req.body.name;
-  db.changeToDatabase(name, function(err, name) {
-    if(err){
-      console.log(err);
-      res.send(null);
-      return;
-    }
-      res.send(name);
   });
 });
 
@@ -213,13 +196,15 @@ router.post('/ADDALLTHETWEETS', function(req, res, next) {
   // res.setTimeout(0, function(){
   //   console.log("hit timeout");
   // });
-  db.ADDALLTHETWEETS(function(err, rows) {
+//this test only fires the callback on the first tweet
+  db.ADDTHEFIVETESTTWEETS(function(err, container) {
     if(err){
       console.log(err);
       res.send(false);
       return;
     }
-      res.send(true);
+      //container is {tweet: obj, layers:[obj,obj]}
+      res.send(container);
   });
 });
 
@@ -227,24 +212,17 @@ router.post('/ADDTHEFIVETESTTWEETS', function(req, res, next) {
   // res.setTimeout(0, function(){
   //   console.log("hit timeout");
   // });
-  db.ADDTHEFIVETESTTWEETS(function(err, rows) {
+//this test only fires the callback on the first tweet
+  db.ADDTHEFIVETESTTWEETS(function(err, container) {
     if(err){
       console.log(err);
       res.send(false);
       return;
     }
-      res.send(true);
+      //container is {tweet: obj, layers:[obj,obj]}
+      res.send(container);
   });
 });
-
-
-
-
-
-
-
-
-
 
 
 module.exports = router;

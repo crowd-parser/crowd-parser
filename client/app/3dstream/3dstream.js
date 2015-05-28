@@ -93,7 +93,28 @@ angular.module('parserApp')
       $scope.tweetCount = 0;
       $scope.stopTweets();
       $location.path('/3dstream');
-    }
+    };
+
+    $scope.getRestTweets = function () {
+      if (!$scope.keywordStream) {
+        return;
+      }
+      socket.emit('twitter rest search', $scope.keywordStream, 'recent', 100);
+      socket.on('all layers', function (data) {
+        var tweets = data.tweetsWithAnalyses;
+        var oldestID = tweets[tweets.length-1].id;
+        $scope.tweetData = $scope.tweetData.concat(tweets);
+        tweets.forEach(function (tweet) {
+          Display3d.addTweet(tweet, $scope.tweetCount);
+          $scope.tweetCount++;
+        });
+        if ($scope.tweetData.length < 100) {
+          socket.emit('twitter rest search', $scope.keywordStream, 'recent', 100, oldestID);
+        } else {
+          console.log($scope.tweetData.length);
+        }
+      });
+    };
 
     $scope.start3DKeywordStream = function () {
       // stop any existing stream

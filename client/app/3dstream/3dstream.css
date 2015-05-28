@@ -104,13 +104,12 @@ canvas {  }
 /*  background-color: rgba(0,132,180,0.25);*/
 }
 
-  .ribbon-3d .layer-title {
-    position: absolute;
-    top: 30px;
+.layer-title {
+  position: absolute;
 /*    left: 4000px;*/
-    font-size: 80px;
-    color: rgba(0,132,180,0.75);
-  }
+  font-size: 80px;
+  color: rgba(0,150,210,0.75);
+}
 
 #mini-container-3d .ribbon-3d {
   position: absolute;
@@ -227,4 +226,14 @@ canvas {  }
   background-color: rgba(150,220,255,0.75);
   border: 2px solid rgba(200,230,255,1);
   box-shadow: 0px 0px 20px rgba(0,180,255,0.5);
+}
+
+.negative-word {
+  font-weight: bold;
+  color: rgb(180,0,0);
+}
+
+.positive-word {
+  font-weight: bold;
+  color: rgb(0,180,0);
 }

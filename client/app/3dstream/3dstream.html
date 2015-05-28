@@ -4,9 +4,10 @@
     <form>
       <div class="form-group">
         <label for="keyword-stream">Keyword</label>
-        <input type="text" class="form-control" ng-model="keywordStream" disabled>
+        <input type="text" class="form-control" ng-model="keywordStream">
       </div>
 <!--       <button class="button-3d"  ng-click="start3DKeywordStream()"disabled>Submit</button> -->
+      <button class="button-3d" type="notSubmit" ng-click="getRestTweets()">Get Real Tweets</button>
       <button class="button-3d" type="notSubmit" ng-click="streamFakeTweets()">Stream Fake Tweets</button>
       <button class="button-3d" type="notSubmit" ng-click="autoScrollToggle()">Autoscroll: {{autoScroll}}</button>
     </form>

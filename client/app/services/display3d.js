@@ -81,7 +81,7 @@ angular.module('parserApp.display3dService', [])
 
       var tweetText = document.createElement( 'div' );
       tweetText.className = 'tweetText';
-      tweetText.textContent = elData.text;
+      tweetText.innerHTML = elData.text;
       tweet.appendChild( tweetText );
 
       var score = document.createElement( 'div' );
@@ -313,8 +313,10 @@ angular.module('parserApp.display3dService', [])
       // layer.ribbonEl.style.width = newRibbonWidth + 'px';
       // layer.ribbonEl.style.height = ribbonHeight + 'px';
       layer.ribbonMesh.scale.x = newRibbonWidth;
-      // var titleWidth = layer.ribbonEl.children[0].clientWidth;
-      // layer.ribbonEl.children[0].style.left = (newRibbonWidth/2 - displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x,ribbonHeight/2,0)/2 + titleWidth) + 'px';
+      var titleWidth = layer.titleEl.clientWidth;
+      console.log(titleWidth);
+      layer.titleObj.position.x = -(displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, 0)/2) + titleWidth;
+      console.log(layer.titleObj.position.x);
     });
   };
 
@@ -333,10 +335,21 @@ angular.module('parserApp.display3dService', [])
       
       var bgRGBA = displayHelpers.calculateColorFromScore(rawTweet[layerObj.resultsName].score);
 
+      var text = rawTweet.text;
+      if (layerObj.resultsName === 'baseLayerResults') {
+        rawTweet.baseLayerResults.positiveWords.forEach( function (posWord) {
+          text = text.replace(posWord[0], '<span class="positive-word">' + posWord[0] + '</span>');
+          console.log(text);
+        });
+        rawTweet.baseLayerResults.negativeWords.forEach( function (negWord) {
+          text = text.replace(negWord[0], '<span class="negative-word">' + negWord[0] + '</span>');
+        });
+      }
+
       elData.baseBGColor = 'rgba(' + bgRGBA + ')';
       elData.baseBGColorRGB = 'rgb(' + bgRGBA.split(',').slice(0,3).join(',') + ')';
       elData.username = rawTweet.username;
-      elData.text = rawTweet.text;
+      elData.text = text;
       elData.score = layerObj.title + ' score: ' + rawTweet[layerObj.resultsName].score;
 
       var x = xStart + Math.floor(index / rows) * xSpacing;
@@ -367,9 +380,10 @@ angular.module('parserApp.display3dService', [])
     });
 
   };
-var ribbonMaterial = new THREE.MeshBasicMaterial( { color: 'rgb(0,132,180)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
-ribbonMaterial.transparent = true;
-ribbonMaterial.opacity = 0.5;
+  var ribbonMaterial = new THREE.MeshBasicMaterial( { color: 'rgb(0,132,180)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
+  ribbonMaterial.transparent = true;
+  ribbonMaterial.opacity = 0.5;
+
   var makeTweetLayer = function(layerResultsProp, layerTitle, z) {
     var layerObj = {};
     layerObj.tweets = [];
@@ -393,21 +407,22 @@ ribbonMaterial.opacity = 0.5;
 
     // Figure out how to put layer titles back later
 
-    // var ribbonText = document.createElement( 'div' );
-    // ribbonText.className = 'layer-title';
-    // ribbonText.textContent = layerTitle + ' layer';
-    // ribbonText.style.opacity = 1;
-    // ribbonText.style.fontSize = (30*rows) + 'px';
-    // ribbon.appendChild( ribbonText );
-    // layerObj.titleEl = ribbonText;
+    var ribbonText = document.createElement( 'div' );
+    ribbonText.className = 'layer-title';
+    ribbonText.textContent = layerTitle + ' layer';
+    ribbonText.style.opacity = 1;
+    ribbonText.style.fontSize = (15*rows) + 'px';
+    ribbonText.style.width = (150*rows) + 'px';
 
-    // var ribbonObject = new THREE.CSS3DObject( ribbon );
-    // ribbonObject.position.x = 0;
-    // ribbonObject.position.y = 0;
-    // ribbonObject.position.z = z-1;
+    layerObj.titleEl = ribbonText;
 
-    //sceneCSS.add( ribbonObject );
-    // layerObj.ribbonObj = ribbonObject;
+    var ribbonTitleObject = new THREE.CSS3DObject( ribbonText );
+    ribbonTitleObject.position.x = 0;
+    ribbonTitleObject.position.y = (rows*ySpacing)/2;
+    ribbonTitleObject.position.z = z-1;
+
+    sceneCSS.add( ribbonTitleObject );
+    layerObj.titleObj = ribbonTitleObject;
     //layerObj.ribbonEl = ribbon;
 
     layers.push(layerObj);
@@ -606,6 +621,7 @@ ribbonMaterial.opacity = 0.5;
     prevCameraPosition = new THREE.Vector3();
     prevCameraPosition.copy(camera.position);
     
+    render();
     adjustRibbonWidth();
     return camera;
   };

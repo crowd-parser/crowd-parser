@@ -1,9 +1,11 @@
+'use strict';
+
 angular.module('parserApp.twitterService', [])
 
-.factory('Twitter', function ($http) {
+.factory('Twitter', function ($http, $window) {
 
   // ========== Setup =============== //
-  
+
   var socket = io();
 
   var getTweetsForKeyword = function(keyword, cb) {

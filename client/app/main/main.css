@@ -1,12 +1,73 @@
-header {
-    background: #FFF;
+.main {
+    position: relative;
+    background: url('../../assets/images/tweets-3d.png');
     text-align: center;
-    padding: 40px 0;
+    color: #FFF;
+    height: 100vh;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    padding: 140px 0;
 }
 
-header img {
+.main img {
     width: 85%;
     max-width: 700px;
+}
+
+.about {
+    height: 280px;
+    padding: 80px 0;
+}
+
+.about-container img {
+    width: 150px;
+}
+
+.learn-more {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: #EEEFF7;
+    font-size: 20px;
+}
+
+.learn-more:hover {
+    color: #92CDCF;
+    text-decoration: none;
+}
+
+.intro {
+    color: #EEEFF7;
+    margin-top: 60px;
+}
+
+.we-downloaded {
+    margin-bottom: 30px;
+}
+
+.our-discoveries {
+    font-size: 25px;
+}
+
+.in-3d {
+    color: #FFF;
+    font-size: 100px;
+    font-weight: 100;
+    margin-top: 80px;
+}
+
+.click-to-begin {
+    background: #EEEFF7;
+    font-size: 25px;
+    font-weight: 100;
+    letter-spacing: 1px;
+    margin-top: 75px;
+    padding: 5px 14px;
+    border-radius: 0;
+}
+
+.click-to-begin:hover {
+    background: #000;
+    color: #EEEFF7;
 }
 
 .viewport {
@@ -18,49 +79,4 @@ header img {
   -moz-transform-style: preserve-3d;  
   -o-transform-style: preserve-3d;  
   transform-style: preserve-3d;
-}
-
-.starting-section-container {
-    background: #FCFFF5;
-    text-align: center;
-    padding-top: 20px;
-}
-
-.starting-section-container h3 {
-    color: #193441;
-}
-
-
-.display-band {
-    color: #FFF;
-    min-height: 250px;
-    margin-top: 40px;
-    padding: 22px;
-}
-
-h1 {
-    font-size: 50px;
-    margin-top: 30px;
-    margin-bottom: 40px;
-}
-
-h2 {
-    margin-bottom: 67px;
-}
-
-.in-3d {
-    color: #91AA9D;
-    font-size: 70px;
-    font-weight: 100;
-}
-
-.click-to-begin-band {
-    background: #3E606F;
-    margin-top: 50px;
-    padding: 35px 0;
-}
-
-.click-to-begin {
-    background: #FFF;
-    font-size: 17px;
 }

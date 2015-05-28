@@ -9,7 +9,7 @@ angular.module('parserApp.headerService', [])
     var worldXAngle = 0;
     var worldYAngle = 0;
 
-    $('.viewport').on( 'mousemove', function( e ) {
+    $('body').on( 'mousemove', function( e ) {
       worldYAngle = -( .5 - ( e.clientX / window.innerWidth ) ) * 180;
       worldXAngle = ( .5 - ( e.clientY / window.innerHeight ) ) * 180;
       //worldXAngle = .1 * ( e.clientY - .5 * window.innerHeight );

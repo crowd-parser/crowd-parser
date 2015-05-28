@@ -22,6 +22,7 @@ module.exports = function(io, T) {
       });
     });
 
+    //this adds the io object to the datbase module so it can fire tweet emits on completion.
     db.io = io;
 
     // Gets tweets for a search query
@@ -84,26 +85,29 @@ module.exports = function(io, T) {
     var streamDownload;
 
     socket.on('start download', function(rate) {
-      console.log('START DOWNLOAD')
+      console.log('START DOWNLOAD');
       streamDownload = T.stream('statuses/sample');
       var count = 0;
       var rate = rate || 4;
 
       streamDownload.on('tweet', function(tweet) {
-        console.log('GOT TWEET');
+
         if (tweet.lang === 'en') {
           count++;
+          if(count > 10000000) count = 2;
           if (count === 1 || count % rate === 0) {
             if(!db || !db.isLive){
               console.log("WAITING FOR DB");
               return;
           }
-            db.executeFullChainForIncomingTweets(tweet, function(err, tweet, fields) {
+            db.executeFullChainForIncomingTweets(tweet, function(err, container, fields) {
               if (err) {
                 console.log(err);
+                return;
               } else {
-                this.io.emit('tweet added', tweet);
-                console.log('tweet added!', tweet.id_str);
+                console.log("EMIT tweet");
+                exports.io.emit('tweet added', container);
+                console.log('Container Object Returned', container[0].tweet.text);
               }
             });
           }

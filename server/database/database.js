@@ -524,7 +524,7 @@ if(!Array.isArray(_listOfObjects)){
   callbackPerAdd = callbackPerAdd || this.errCB;
   listOfObjects = exports.rearchitectArrWithDeepObjects(listOfObjects);
   //this is all so we can push any objects at the db, regardless of table setup
-
+  console.log("LIST:", listOfObjects);
   this.genericGetTableColumnNames(tableName, function(err, rows, fields){
 
     var tableColumns = []; //TODO this should get cached / memoized basically
@@ -571,18 +571,15 @@ if(!Array.isArray(_listOfObjects)){
 
         exports.db.query(queryStr, function(err, rows, fields){
           //this returns ids of added object, not the whole object
+          if(err){
+            console.log(err);
+          }
           var theseIds = [];
-
+          if(rows){
             theseIds.push(rows.insertId);
             allIds.push(rows.insertId);
-
-          count--;
-          if(err){
-            callbackPerAdd(err);
-            console.log(err);
-            return;
           }
-
+          count--;
 
           exports.doAddingMessage(count, 25);
           callbackPerAdd(err, theseIds);
@@ -710,7 +707,6 @@ exports.tellMeWhenDatabaseIsLive = function(callback){
 
 //================ TESTING ======================
 exports.genericDescribeTable = function(name, callback){
-  console.log("GDT");
   this.db.query("DESCRIBE " + name, callback);
 };
 

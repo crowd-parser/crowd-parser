@@ -4,6 +4,8 @@
 </div>
 <div class="modal-body">
   <p ng-if="modal.text" ng-bind="modal.text"></p>
+  <div ng-if="modal.username">User: <span class="modal-username">{{modal.username}}</span></div>
+  <div ng-if="modal.score">Score: <span class="modal-username">{{modal.score}}</span></div>
   <div ng-if="modal.html" ng-bind-html="modal.html"></div>
 </div>
 <div class="modal-footer">

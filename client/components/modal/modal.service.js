@@ -71,6 +71,43 @@ angular.module('parserApp')
               del.apply(event, args);
             });
           };
+        },
+
+        editTweet: function(cb) {
+          cb = cb || angular.noop;
+
+          return function() {
+            var args = Array.prototype.slice.call(arguments),
+                tweetData = args.shift(),
+                editModal;
+            console.log(tweetData);
+            editModal = openModal({
+              modal: {
+                dismissable: true,
+                title: 'Help Us Score This Tweet',
+                html: tweetData.text,
+                username: tweetData.username,
+                score: tweetData.score,
+                buttons: [{
+                  classes: 'btn-success',
+                  text: 'OK',
+                  click: function(e) {
+                    editModal.close(e);
+                  }
+                }, {
+                  classes: 'btn-default',
+                  text: 'Cancel',
+                  click: function(e) {
+                    editModal.dismiss(e);
+                  }
+                }]
+              }
+            }, 'modal-primary');
+
+            editModal.result.then(function(event) {
+              cb.apply(event, args);
+            });
+          };
         }
       }
     };

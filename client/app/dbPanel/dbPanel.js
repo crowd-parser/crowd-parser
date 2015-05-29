@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('parserApp')
-  .controller('DBPanelCtrl', function ($http, $scope, $state, Twitter, Auth) {
+  .controller('DBPanelCtrl', function ($timeout, $http, $scope, $state, Twitter, Auth) {
 
     Auth.checkAuth();
 
@@ -9,49 +9,113 @@ angular.module('parserApp')
 
     $scope.currDB = null;
 
+    $scope.refresh = function(){
+      if(!$scope.currDB) return;
+      $scope.getTables();
+      $scope.clearSelectedTable();
+      $scope.showAllKeywords();
+      $scope.showAllLayers();
+    }
+
+    $scope.setLeftStatus = function(fadeTime, str){
+
+      if(str !== undefined){
+        $scope.leftStatus = str;
+      }
+
+      if(fadeTime){
+        $timeout(function(){
+          $scope.leftStatus = "";
+        }, fadeTime);
+      }
+    };
+    $scope.setRightStatus = function(fadeTime, str){
+      if(str !== undefined){
+        $scope.rightStatus = str;
+      }
+
+      if(fadeTime){
+        $timeout(function(){
+          $scope.rightStatus = "";
+        }, fadeTime);
+      }
+    };
+
     $scope.getTables = function(){
+      $scope.dbTables = null;
       console.log("client says getTables");
-        $http.get('/auth/adminlogin/getTables').success(function(data) {
+        $http.get('/auth/adminlogin/getTables')
+        .success(function(data) {
           console.log("client tables", data);
         $scope.dbtables = data;
-      });
+      })
+        .error(function(data){
+
+        });
       };
 
     $scope.selectTable = function(name){
+      $scope.clearSelectedTable();
+       $http.post('/auth/adminlogin/selectTable', {name: name})
+       .success(function(data) {
+        if(!data){
 
-       $http.post('/auth/adminlogin/selectTable', {name: name}).success(function(data) {
+        }
         console.log("FINAL TABLE DATA: ", data);
         $scope.selectedTableName = name;
         $scope.selectedTable = data;
         $scope.showTableSize(name);
-      });
+      })
+       .error(function(data){
+
+        });
     };
+    $scope.clearSelectedTable = function(){
+      $scope.selectedTableName = "";
+        $scope.selectedTable = "";
+        $scope.tableSize = "";
+    }
 
     $scope.showTableSize = function(name) {
-      $http.post('/auth/adminlogin/showTableSize', {name: name}).success(function(data) {
+      $scope.tableSize = "";
+      $http.post('/auth/adminlogin/showTableSize', {name: name})
+      .success(function(data) {
 
         $scope.tableSize = data[0]["COUNT(*)"];
+      })
+      .error(function(data){
+
       });
     };
 
     $scope.getCurrentDatabaseName = function(){
-        $http.get('/auth/adminlogin/getDatabaseName').success(function(data) {
+        $http.get('/auth/adminlogin/getDatabaseName')
+        .success(function(data) {
         $scope.currDB = data;
-      });
+      })
+        .error(function(data){
+
+        });
     };
 
     $scope.showAllKeywords = function() {
+      $scope.keywordsList = null;
       $http.get('/auth/adminlogin/showAllKeywords')
-        .success(function(data) {
-
+      .success(function(data) {
           $scope.keywordsList = data;
+        })
+      .error(function(data){
+
         });
     };
     $scope.showAllLayers = function() {
+      $scope.layersList = null;
       $http.get('/auth/adminlogin/showAllLayers')
         .success(function(data) {
 
           $scope.layersList = data;
+        }).error(function(data){
+
         });
     };
 
@@ -74,91 +138,184 @@ angular.module('parserApp')
 
     $scope.addNewLayer = function(name) {
       name = name || $scope.newLayerInput;
-      $http.post('/auth/adminlogin/addNewLayer', {name: name}).success(function(data) {
+      $http.post('/auth/adminlogin/addNewLayer', {name: name})
+      .success(function(data) {
         $scope.showAllKeywords();
         $scope.getTables();
+      })
+      .error(function(data){
+
       });
     };
 
     $scope.redoLayer = function(name) {
       name = name || $scope.redoLayerInput;
-      $http.post('/auth/adminlogin/redoLayer', {name: name}).success(function(data) {
+      $http.post('/auth/adminlogin/redoLayer', {name: name})
+      .success(function(data) {
         console.log("DONE: ", data);
+      })
+      .error(function(data){
+
       });
     };
 
     $scope.deleteLayer = function(name) {
       name = name || $scope.deleteLayerInput;
-      $http.post('/auth/adminlogin/deleteLayer', {name: name}).success(function(data) {
+      $http.post('/auth/adminlogin/deleteLayer', {name: name})
+      .success(function(data) {
         console.log("DONE: ", data);
+      })
+      .error(function(data){
+
       });
     };
 
     $scope.addNewKeyword = function(name) {
        name = name || $scope.newKeywordInput;
-       $http.post('/auth/adminlogin/addNewKeyword', {name: name}).success(function(data) {
+       $http.post('/auth/adminlogin/addNewKeyword', {name: name})
+       .success(function(data) {
         $scope.showAllKeywords();
         $scope.getTables();
+      })
+       .error(function(data){
+
       });
     };
 
     $scope.redoKeyword = function(name) {
       name = name || $scope.redoKeywordInput;
-      $http.post('/auth/adminlogin/redoKeyword', {name: name}).success(function(data) {
+      $http.post('/auth/adminlogin/redoKeyword', {name: name})
+      .success(function(data) {
         $scope.showAllKeywords();
         $scope.getTables();
+      })
+      .error(function(data){
+
       });
     };
 
     $scope.deleteKeyword = function(name) {
       name = name || $scope.deleteKeywordInput;
-      $http.post('/auth/adminlogin/deleteKeyword', {name: name}).success(function(data) {
+      $http.post('/auth/adminlogin/deleteKeyword', {name: name})
+      .success(function(data) {
         console.log("DONE with delete: ", data);
         $scope.showAllKeywords();
         $scope.getTables();
+
+      })
+      .error(function(data){
 
       });
     };
 
     $scope.createDatabase = function(name) {
 
-      name = name || $scope.createDatabaseInput;
-      console.log("create database client req: ", name);
-      $http.post('/auth/adminlogin/createDatabase', {name: name}).success(function(data) {
-        console.log("DONE: ", data);
+      name = name || $scope.databaseName;
+      $scope.setLeftStatus(null,"CLIENT: CREATE DB: " + name);
+      if(!name){
+        $scope.setRightStatus(3000,"ERROR: provide valid name.");
+        $scope.setLeftStatus(3000);
+        return;
+      }
+      $http.post('/auth/adminlogin/createDatabase', {name: name})
+       .success(function(data) {
 
+         if(!data){
+            $scope.setRightStatus(3000,"ERROR: provide valid name.");
+            $scope.setLeftStatus(3000);
+            return;
+          }
+
+        $scope.setRightStatus(3000,"DB CREATE SUCCESS");
+        $scope.setLeftStatus(3000);
+        $scope.currDB = data;
+        $scope.refresh();
+      })
+       .error(function(data){
+        $scope.setRightStatus(3000,"SERVER ERROR");
       });
     };
 
     $scope.deleteDatabase = function(name){
       //this is also prevented on the server
       //but might as well do it here
-      name = name || $scope.deleteDatabaseInput;
-      if(name === 'production'){
+      name = name || $scope.databaseName;
+      $scope.setLeftStatus(null,"CLIENT: DELETE DB: " + name);
+      if(!name){
+        $scope.setRightStatus(3000,"ERROR: provide valid name.");
+        $scope.setLeftStatus(3000);
         return;
       }
-      $http.post('/auth/adminlogin/deleteDatabase', {name: name}).success(function(data) {
-        console.log("DONE: ", data);
+
+      $http.post('/auth/adminlogin/deleteDatabase', {name: name})
+        .success(function(data) {
+          if(!data){
+            $scope.setRightStatus(3000,"ERROR: provide valid name.");
+            $scope.setLeftStatus(3000);
+            return;
+          }
+        $scope.setRightStatus(3000,"DB DELETE SUCCESS");
+        $scope.setLeftStatus(3000);
+        if($scope.currDB === name){
+          $scope.currDB = null;
+        }
+
+      })
+       .error(function(data){
+
+        $scope.setRightStatus(3000,"ERROR: provide valid name.");
+        $scope.setLeftStatus(3000);
       });
     }
 
     $scope.changeToDatabase = function(name) {
-      name = name || $scope.changeToDatabaseInput;
-       $http.post('/auth/adminlogin/changeToDatabase', {name: name}).success(function(data) {
-        console.log("CHANGE TO: ", data);
-        console.log("DATA: ", data);
-        $scope.currDB = name;
+
+      name = name || $scope.databaseName;
+      if(name === $scope.currDB){
+        $scope.setRightStatus(3000,"ERROR: provide valid name.");
+        $scope.setLeftStatus(3000);
+        return;
+      }
+      $scope.setLeftStatus(null,"CLIENT: CHANGE DB: " + name);
+      if(!name){
+        $scope.setRightStatus(3000,"ERROR: provide valid name.");
+        $scope.setLeftStatus(3000);
+        return;
+      }
+       $http.post('/auth/adminlogin/changeToDatabase', {name: name})
+       .success(function(data) {
+
+        if(!data){
+          $scope.setRightStatus(3000,"ERROR: provide valid name.");
+          $scope.setLeftStatus(3000);
+          return;
+        }
+        $scope.setRightStatus(3000,"DB CHANGE SUCCESS");
+        $scope.setLeftStatus(3000);
+        $scope.currDB = data;
+        $scope.refresh();
+      })
+       .error(function(data){
+
+        $scope.setRightStatus(3000,"SERVER ERROR");
       });
     };
 
     $scope.ADDALLTHETWEETS = function(){
-       $http.post('/auth/adminlogin/ADDALLTHETWEETS', {}).success(function(data) {
+       $http.post('/auth/adminlogin/ADDALLTHETWEETS', {})
+       .success(function(data) {
+
+      })
+       .error(function(data){
 
       });
     };
 
      $scope.ADDTHEFIVETESTTWEETS = function(){
-       $http.post('/auth/adminlogin/ADDTHEFIVETESTTWEETS', {}).success(function(data) {
+       $http.post('/auth/adminlogin/ADDTHEFIVETESTTWEETS', {})
+       .success(function(data) {
+
+      }).error(function(data){
 
       });
     }

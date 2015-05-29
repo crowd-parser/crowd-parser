@@ -1,11 +1,31 @@
 //TODO
-//set unique for keyword and layer tables
-//bulk add is broken
-//investigate connection open and closing for performance
-//runtime keyword search
-//store layer results
-//handle emojis inputted into db
-//keywords with special symbols, like @, currently break as table names, regardless of escaping
+
+
+//test delete database
+
+//test add layer
+//test redo layer
+//test delete layer
+
+//test add keyword
+//test redo keyword
+//test delete keyword
+
+//test refresh table
+//test refresh layers
+//test refresh keywords
+
+//test add 5000 tweets
+
+//test stream on off
+//only allow stream on production eventually
+
+
+//cleanup live production database
+//run keywords on production
+//run layers on production
+//restart stream
+
 
 /*============= DATABASE MODULE WRAPPER for SQL commands =========*/
 
@@ -244,10 +264,6 @@ exports.addNewLayer = function(layerName, finalCB){
         exports.addForeignKey(layerName, "tweet_id", "tweets", "id", function(){
           exports.setColumnToUnique(layerName,"tweet_id", function(){
 
-            //call filter helper function here now if wanted
-            //maybe we just allow table creation and then leave it empty here for now.
-            //exports.filterTweetObjectsForLayer(rows, layerName, finalCB);
-            //that.temp.cLT.finalCB();
             finalCB();
 
           });
@@ -274,8 +290,8 @@ exports.deleteLayer = function(layerName, cb){
 //============= KEYWORDS ==================
 exports.addKeywordsTable = function(callback){
   this.cache.keywordsList = null;
-  this.genericCreateTable("keywords",{tableName: "tweets_containing_keyword", lastHighestIndexed: 0}, function(){
-    exports.setColumnToUnique("keywords","tableName", function(){
+  this.genericCreateTable("keywords",{tableName: "tweets_containing_keyword",keyword:"keyword", lastHighestIndexed: 0}, function(){
+    exports.setColumnToUnique("keywords","keyword", function(){
       callback();
     });
   });
@@ -291,7 +307,7 @@ exports.addNewKeyword = function(keyword, callback){
     exports.genericAddToTable("keywords", [exports.temp.kObj], function(){
       exports.genericCreateTable(exports.temp.kObj['tableName'], { }, function(err){
         exports.addForeignKey(exports.temp.kObj['tableName'], "tweet_id", "tweets", "id", function(err){
-          callback();//this is to avoid server timeout
+          callback();//Avoid long delay on server timeout
           exports.filterALLTweetsByKeyword(exports.temp.kObj.keyword,function(err, rows, fields){
             if(err){
               console.log(err);
@@ -347,6 +363,12 @@ exports.returnTablesWithColumns = function(finalCB){
   this.db.query("SHOW TABLES", function(err, rows){
     console.log("SHOW TABLES: ", rows);
     var tableNames = [];
+    if(err){
+      console.log(err);
+      finalCB();
+      return;
+    }
+
     for(var i = 0; i < rows.length; i++){
       for(var key in rows[i]){
         tableNames.push(rows[i][key]);
@@ -381,9 +403,7 @@ exports.genericGetAll = function(tableName, callback){
 };
 
 exports.genericGetTableColumnNames = function(tableName, callback){
-
     this.db.query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION",[exports.currDB, tableName] , callback);
-
 };
 
 exports.genericGetItemsWithTextColumnContaining = function(lastId, tableName, columnName, string, callback){
@@ -417,13 +437,11 @@ exports.genericCreateTable = function(tableName, exampleObject, callback){
     var type;
 
     exampleObject = this.rearchitectArrWithDeepObjects([exampleObject])[0];
-    //console.log(exampleObject);
+
     for(key in exampleObject){
-        //there have been isues with larger than 32 bit ints here
       if(isNaN(exampleObject[key]) ){
         type = "VARCHAR(200)";
       }else{
-        //console.log("ADDING INTEGER FIELD OF: ", key);
         type = "BIGINT";
       }
       str = str + " " + key + " " + type + ',';
@@ -499,7 +517,7 @@ exports.asyncMap = function(funcs, finalCB){
   var finalResults = [];
 
   if(funcs.length === 0){
-    finalCB(null, ["No Layers"], null);
+    finalCB(null, ["No Data"], null);
     return;
   }
 
@@ -655,14 +673,18 @@ exports.getCurrentDatabaseName = function(cb){
 exports.createDatabase = function(name, callback){
   exports.cache.layerList = null;
   exports.cache.keywordList = null;
-  this.db.query("CREATE DATABASE IF NOT EXISTS " + name, function(){
+  this.db.query("CREATE DATABASE IF NOT EXISTS " + name, function(err){
+    if(err){
+      callback(err, name);
+      return;
+    }
     exports.changeToDatabase(name, function(){
        exports.genericCreateTable('tweets', exports.testTweet1, function(err){
         exports.setColumnToUnique('tweets', 'id_str', function(){
           exports.addKeywordsTable(function(){
             exports.addLayerTable(function(){
 
-                callback(name);
+                callback(null, name);
 
             });
           });
@@ -678,17 +700,19 @@ exports.changeToDatabase = function(name, callback){
   this.db.query("USE " + name, function(err, rows, fields){
     if(!err){
       exports.currDB = name;
+      callback(null, name);
     }else{
       console.log(err);
+      callback(err, null);
     }
-    callback(err, name);
+
   });
 };
 
 exports.genericDropDatabase = exports.deleteDatabase = function(name, callback){
   if(name === 'production'){
     console.log("DROPPING PRODUCTION DATABASE VIA CODE IS NOT ALLOWED");
-    callback();
+    callback(err, name);
     return;
   }
   exports.cache.layerList = null;
@@ -718,7 +742,7 @@ exports.genericDescribeTable = function(name, callback){
 
 exports.ADDALLTHETWEETS = function(callback){
 
-  var modForTest = 101;
+  var modForTest = 75;
 
   this.getCurrentDatabaseName(function(name){
     if(name === 'production'){

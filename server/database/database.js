@@ -48,19 +48,36 @@
 
         executeFullChainForIncomingTweets - <[tweetObjects]> <callback>
 */
-
+var config = require('./database-config.js');
+var mysql = require('mysql');
 //stores connection information from non-shared database configuration file
-exports.db = require('./database-config.js');
+
 
 //establishes connection to persistent database previously configured
-exports.db.connect(function(err){
+var connectionLoop = function(){
+  exports.db = mysql.createConnection(config);
+  exports.db.connect(function(err){
     if(err){
       console.log("==============ERROR connecting mysql ", err.stack);
+      setTimout(connectionLoop, 1000);
     }else{
       console.log("==============CONNECTED as ID ", exports.db.threadId);
       exports.isLive = true;
+
+      exports.db.on('error', function(err) {
+         console.log("MYSQL ERROR CONNECTION", err);
+         if(err.code === 'PROTOCOL_CONNECTION_LOST') {
+           connectionLoop();
+         } else {
+           throw err;
+         }
+       });
     }
-});
+  });
+};
+
+connectionLoop();
+
 
 /*==================================================================*/
 

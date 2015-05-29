@@ -1,10 +1,11 @@
 .main {
-    position: relative;
-    background: url('../../assets/images/tweets-3d.png');
-    background-size: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
     text-align: center;
     color: #FFF;
     padding: 40px 0;
+    z-index: 1;
 }
 
 .main img {
@@ -82,4 +83,40 @@
   -moz-transform-style: preserve-3d;  
   -o-transform-style: preserve-3d;  
   transform-style: preserve-3d;
+}
+
+@media (max-width: 600px) {
+    .main img {
+        width: 100%;
+    }
+    .intro {
+        margin-top: 70px;
+    }
+    .we-downloaded {
+        font-size: 27px;
+        margin-top: 45px;
+    }
+    .our-discoveries {
+        font-size: 21px;
+    }
+    .in-3d {
+        font-size: 50px;
+    }
+    .click-to-begin {
+        font-size: 19px;
+    }
+}
+
+@media (max-width: 300px) {
+    .main img {
+        width: 95%;
+    }
+    .intro {
+        margin-left: 0;
+        margin-right: 0;
+        border-left: 0;
+        border-right: 0;
+        padding-left: 0;
+        padding-right: 0;
+    }
 }

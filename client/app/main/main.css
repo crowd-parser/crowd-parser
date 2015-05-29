@@ -2,6 +2,8 @@
     position: absolute;
     top: 0;
     left: 0;
+    right: 0;
+    margin: 0 auto;
     text-align: center;
     color: #FFF;
     padding: 40px 0;
@@ -10,7 +12,7 @@
 
 .main img {
     width: 85%;
-    max-width: 700px;
+    max-width: 500px;
 }
 
 .about {
@@ -38,33 +40,36 @@
 .intro {
     background: rgba(0,0,0,.4);
     color: #EEEFF7;
-    margin: 4%;
+    height: 380px;
+    margin: 40px 15%;
     padding: 20px;
     border: 10px solid rgba(255,255,255,.7);
 }
 
 .we-downloaded {
-    margin-bottom: 30px;
+    font-size: 20px;
+    margin-top: 5%;
+    margin-bottom: 15px;
 }
 
 .our-discoveries {
-    font-size: 25px;
+    font-size: 18px;
 }
 
 .in-3d {
     color: #FFF;
-    font-size: 100px;
+    font-size: 40px;
     font-weight: 100;
     line-height: 1em;
-    margin-top: 50px;
+    margin-top: 20px;
 }
 
 .click-to-begin {
     background: #EEEFF7;
-    font-size: 25px;
+    font-size: 15px;
     font-weight: 100;
     letter-spacing: 1px;
-    margin-top: 50px;
+    margin-top: 25px;
     padding: 5px 14px;
     border-radius: 0;
 }
@@ -85,7 +90,7 @@
   transform-style: preserve-3d;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 380px) {
     .main img {
         width: 100%;
     }
@@ -94,7 +99,6 @@
     }
     .we-downloaded {
         font-size: 27px;
-        margin-top: 45px;
     }
     .our-discoveries {
         font-size: 21px;
@@ -107,7 +111,10 @@
     }
 }
 
-@media (max-width: 300px) {
+@media (max-width: 380px) {
+    .intro {
+        margin-top: 22px;
+    }
     .main img {
         width: 95%;
     }

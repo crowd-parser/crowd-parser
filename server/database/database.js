@@ -48,7 +48,7 @@ exports.db.connect(function(err){
 
 /*============= DEBUG and MACRO SETTINGS =================*/
 //ONLY SET THIS IF YOU PLAN TO CHANGE SCHEMA, OTHERWISE LEAVE AS IS
-exports.currDB = 'dev';
+exports.currDB = 'production';
 
 /*==================================================================*/
 

@@ -5,6 +5,19 @@ angular.module('parserApp.display3dService', [])
 
 .factory('displayHelpers', ['$window', function($window){
 
+  window.WebFontConfig = {
+    google: { families: [ 'Lato::latin' ] }
+  };
+  (function() {
+    var wf = document.createElement('script');
+    wf.src = ('https:' === document.location.protocol ? 'https' : 'http') +
+      '://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js';
+    wf.type = 'text/javascript';
+    wf.async = 'true';
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(wf, s);
+  })();
+
   var THREE = $window.THREE;
   var TWEEN = $window.TWEEN;
 
@@ -187,31 +200,33 @@ angular.module('parserApp.display3dService', [])
         .easing( TWEEN.Easing.Exponential.InOut )
         .start();
       if (i > 0) {
-        new TWEEN.Tween( layers[i].titleEl.style )
-          .to( {opacity: 1}, 1300 )
+        new TWEEN.Tween( layers[i].titleMaterial )
+          .to( {opacity: 0.5}, 1300 )
           .easing( TWEEN.Easing.Exponential.InOut )
           .start();
       }
       layers[i].z = frontLayerZ - layerSpacing*i - 1;
       if (i === 0) {
-        var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
+
+        var fadeOut = new TWEEN.Tween( layers[i].combinedMaterial )
           .to( {opacity: 0}, 500)
           .easing( TWEEN.Easing.Quadratic.InOut )
           .onComplete(function () {
             layers[0].titleEl.textContent = layers[0].title + ' layer';
           });
-        var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
-          .to( {opacity: 1}, 500)
+        var fadeIn = new TWEEN.Tween( layers[i].titleMaterial )
+          .to( {opacity: 0.5}, 500)
           .easing( TWEEN.Easing.Quadratic.InOut );
         fadeOut.chain(fadeIn).start();
       }
     }
   };
 
-  var flattenLayers = function (layers, frontLayerZ, layerSpacing) {
+  var flattenLayers = function (layers, frontLayerZ, layerSpacing, rows, sceneGL) {
     new TWEEN.Tween( tweetMaterialNeutral )
       .to ({opacity: 0}, 1000)
       .start();
+
     for (var i = 0; i < layers.length; i++) {
       layers[i].tweets.forEach(function(tweet) {
         new TWEEN.Tween( tweet.obj.position )
@@ -236,14 +251,39 @@ angular.module('parserApp.display3dService', [])
         .easing( TWEEN.Easing.Exponential.InOut )
         .start();
       if (i > 0) {
-        new TWEEN.Tween( layers[i].titleEl.style )
+        new TWEEN.Tween( layers[i].titleMaterial )
           .to( {opacity: 0}, 500)
           .easing( TWEEN.Easing.Exponential.InOut )
           .start();
       }
       layers[i].z = frontLayerZ - 2*i;
       if (i === 0) {
-        var fadeOut = new TWEEN.Tween( layers[i].titleEl.style )
+
+        if (layers[i].combinedMesh) {
+          sceneGL.remove(layers[i].combinedMesh);
+          layers[i].combinedMesh.geometry.dispose();
+          layers[i].combinedMaterial.dispose();
+        }
+        var combinedMaterial = new THREE.MeshBasicMaterial( { color: 'rgb(0,150,210)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
+        combinedMaterial.transparent = true;
+        combinedMaterial.opacity = 0;
+        var combinedTextGeom = new THREE.TextGeometry( layers.map(function (item) {
+                  return item.title;
+                }).join(' + ') + ' layers',
+          {
+            size: (12*rows),
+            font: 'gentilis', // Must be lowercase!
+            height: 0
+          });
+        var combinedTextMesh = new THREE.Mesh(combinedTextGeom, combinedMaterial);
+        combinedTextMesh.position.x = layers[i].titleMesh.position.x;
+        combinedTextMesh.position.y = layers[i].titleMesh.position.y;
+        combinedTextMesh.position.z = layers[i].titleMesh.position.z;
+        sceneGL.add(combinedTextMesh);
+        layers[i].combinedMesh = combinedTextMesh;
+        layers[i].combinedMaterial = combinedMaterial;
+
+        var fadeOut = new TWEEN.Tween( layers[i].titleMaterial )
           .to( {opacity: 0}, 500)
           .easing( TWEEN.Easing.Quadratic.InOut )
           .onComplete(function () {
@@ -251,8 +291,8 @@ angular.module('parserApp.display3dService', [])
               return item.title;
             }).join(' + ') + ' layers';
           });
-        var fadeIn = new TWEEN.Tween( layers[i].titleEl.style )
-          .to( {opacity: 1}, 500)
+        var fadeIn = new TWEEN.Tween( combinedMaterial )
+          .to( {opacity: 0.5}, 500)
           .easing( TWEEN.Easing.Quadratic.InOut );
         fadeOut.chain(fadeIn).start();
       }
@@ -327,8 +367,9 @@ angular.module('parserApp.display3dService', [])
       var newRibbonWidth = displayHelpers.getDisplayWidthAtPoint(camera, 0, farthestYOnRibbon, layer.z) + 10;
       layer.ribbonMesh.scale.x = newRibbonWidth;
       layer.ribbonMesh.position.x = controls.target.x;
-      var titleWidth = layer.titleEl.clientWidth;
-      layer.titleObj.position.x = controls.target.x-(displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, 0)/2) + titleWidth*3/4;
+      //var titleWidth = layer.titleEl.clientWidth;
+      layer.titleMesh.position.x = controls.target.x-(displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, 0)/2) + layer.titleMesh.textWidth*3/4;
+      //layer.titleObj.position.x = controls.target.x-(displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, 0)/2) + titleWidth*3/4;
     });
   };
 
@@ -417,6 +458,23 @@ angular.module('parserApp.display3dService', [])
     // ribbon.className = 'ribbon-3d';
 
     // Figure out how to put layer titles back later
+    var layerTitleMaterial = new THREE.MeshBasicMaterial( { color: 'rgb(0,150,210)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
+    layerTitleMaterial.transparent = true;
+    layerTitleMaterial.opacity = 0.5;
+    var textGeom = new THREE.TextGeometry( layerTitle + ' layer', {
+      size: (12*rows),
+      font: 'droid sans', // Must be lowercase!
+      height: 0
+    });
+    var textMesh = new THREE.Mesh( textGeom, layerTitleMaterial );
+    textGeom.computeBoundingBox();
+    textMesh.textWidth = textGeom.boundingBox.max.x - textGeom.boundingBox.min.x;
+    textMesh.position.y = (rows*(ySpacing))/2;
+    textMesh.position.z = z-1;
+
+    sceneGL.add( textMesh );
+    layerObj.titleMesh = textMesh;
+    layerObj.titleMaterial = layerTitleMaterial;
 
     var ribbonText = document.createElement( 'div' );
     ribbonText.className = 'layer-title';
@@ -567,7 +625,7 @@ angular.module('parserApp.display3dService', [])
     rendererCSS.domElement.style.position = 'absolute';
     rendererCSS.domElement.style.top = 0;
 
-    rendererGL = new THREE.WebGLRenderer();
+    rendererGL = new THREE.WebGLRenderer( {antialias: true} );
     rendererGL.setClearColor( 0x000000 );
     rendererGL.setPixelRatio( window.devicePixelRatio );
 
@@ -609,7 +667,7 @@ angular.module('parserApp.display3dService', [])
 
     addButtonEvent('flatten-3d', 'click', function() {
       if (layersSeparated) {
-        displayHelpers.flattenLayers(layers, frontLayerZ, layerSpacing);
+        displayHelpers.flattenLayers(layers, frontLayerZ, layerSpacing, rows, sceneGL);
         layersSeparated = false;
       }
     });

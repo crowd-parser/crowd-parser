@@ -153,14 +153,23 @@ html .extendX button{
 
 #admin_layers_controls{
      display: inline-block;
-    width: 100%;
+    width: 50%;
     height: auto;
     vertical-align: top;
 }
-.admin_layers_section{
-    display:inline-block;
-    width: 33.333333%;
+
+#admin_layers_controls input{
+    display: inline-block;
+    width: 100%;
+
 }
+
+#admin_layers_controls button{
+    display: inline-block;
+    width: 33%;
+
+}
+
 
 #admin_keywords_controls{
      display: inline-block;

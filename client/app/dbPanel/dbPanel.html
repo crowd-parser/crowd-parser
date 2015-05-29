@@ -41,22 +41,12 @@
 
 
   <div id="admin_layers_controls" class="box">
-
-       <div class="admin_layers_section"> <form ng-submit="addNewLayer()">
         <input type="text" class="form-control" ng-model="newLayerInput" placeholder="Layer Name">
-        <button class="btn btn-success">Add Layer</button>
-      </form>
-      </div><div class="admin_layers_section"> <form ng-submit="redoLayer()">
-      <input type="text" class="form-control" ng-model="redoLayerInput" placeholder="Layer Name">
-
-      <button class="btn btn-success">Redo Layer</button>
-      </form>
-      </div><div class="admin_layers_section"> <form ng-submit="deleteLayer()">
+        <button ng-click="addNewLayer()" class="btn btn-success">Add Layer</button>
+      <button ng-click="redoLayer()" class="btn btn-success">Redo Layer</button>
       <input type="text" class="form-control" ng-model="deleteLayerInput" placeholder="Layer Name">
 
-      <button class="btn btn-danger">Delete Layer</button>
-      </form>
-      </div>
+      <button ng-click="deleteLayer()" class="btn btn-danger">Delete Layer</button>
 
     </div>
 

@@ -53,6 +53,11 @@ var mysql = require('mysql');
 //stores connection information from non-shared database configuration file
 
 
+//TODO CHANGE THIS TO PROD WHEN LIVE
+//OR FIGURE OUT HOW TO USE LIVE VESUS DEV DEPLOY
+exports.currDB = 'dev';
+
+
 //establishes connection to persistent database previously configured
 var connectionLoop = function(){
   exports.db = mysql.createConnection(config);
@@ -63,6 +68,21 @@ var connectionLoop = function(){
     }else{
       console.log("==============CONNECTED as ID ", exports.db.threadId);
       exports.isLive = true;
+
+      //this changes to the database
+      exports.changeToDatabase(exports.currDB, function(err){
+         if(err){
+          console.log(err);
+         }
+
+         if(this.notifiersForLive){
+            for(var i = 0; i < this.notifiersForLive.length; i++){
+             this.notifiersForLive[i]();
+           }
+           this.notifiersForLive = null;
+         }
+      });
+
 
       exports.db.on('error', function(err) {
          console.log("MYSQL ERROR CONNECTION", err);
@@ -78,14 +98,6 @@ var connectionLoop = function(){
 
 connectionLoop();
 
-
-/*==================================================================*/
-
-
-
-/*============= DEBUG and MACRO SETTINGS =================*/
-//ONLY SET THIS IF YOU PLAN TO CHANGE SCHEMA, OTHERWISE LEAVE AS IS
-exports.currDB = 'production';
 
 /*==================================================================*/
 
@@ -250,6 +262,7 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
 exports.layer_Base_Function = require('../sentiment/baseWordsLayer/baseWordsLayerAnalysis.js');
 exports.layer_Emoticons_Function = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js');
+exports.layer_Random_Function = function(){return Math.rand()};
 
 exports.getLayerNames = function(cb){
   if(this.cache.layerList){
@@ -690,8 +703,10 @@ exports.getCurrentDatabaseName = function(cb){
 exports.createDatabase = function(name, callback){
   exports.cache.layerList = null;
   exports.cache.keywordList = null;
-  this.db.query("CREATE DATABASE IF NOT EXISTS " + name, function(err){
+  this.db.query("CREATE DATABASE " + name, function(err, rows, fields){
+    console.log("INSIDE CREATE:", arguments);
     if(err){
+      console.log(err);
       callback(err, name);
       return;
     }
@@ -734,7 +749,9 @@ exports.genericDropDatabase = exports.deleteDatabase = function(name, callback){
   }
   exports.cache.layerList = null;
   exports.cache.keywordList = null;
-  this.db.query("DROP DATABASE IF EXISTS " + name, callback);
+  this.db.query("DROP DATABASE " + name, function(err, rows, fields){
+    callback(err, rows, fields);
+  });
 };
 
 exports.tellMeWhenDatabaseIsLive = function(callback){
@@ -836,29 +853,8 @@ exports.testTweet5 = {"created_at":"Wed May 20 23:16:04 +0000 2015","id":6011637
 //this is called in app.js after the database module is exported
 //it processes the debug commands at the top of the file, we'll remove it in production
 exports.trigger = function(){
-  if(this.triggerHasRun) return;
+//moved into connection loop
 
-  if(this.db === undefined || this.isLive !== true){
-    console.log("========waiting for db==========");
-    setTimeout(this.trigger.bind(this), 100);
-    return;
-  }else{
-    console.log("==========DB exists===========");
-  }
-
-  this.triggerHasRun = true;
-
-  exports.changeToDatabase(exports.currDB, function(err){
-    if(err)console.log(err);
-
-    if(this.notifiersForLive){
-       for(var i = 0; i < this.notifiersForLive.length; i++){
-        this.notifiersForLive[i]();
-      }
-      this.notifiersForLive = null;
-    }
-
- });
 };
 
 //===========================================

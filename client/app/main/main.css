@@ -15,6 +15,11 @@
     max-width: 500px;
 }
 
+
+.tweets-cube {
+    /*height: 940px;*/
+}
+
 .about {
     height: 280px;
     padding: 80px 0;

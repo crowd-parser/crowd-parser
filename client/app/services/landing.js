@@ -42,32 +42,32 @@ angular.module('parserApp.headerService', [])
       sceneMain = new THREE.Scene();
       var sides = [
         {
-          url: '../../assets/images/tweets-3d.png',
+          url: '../../assets/images/cloudscube4.jpg',
           position: [ -512, 0, 0 ],
           rotation: [ 0, Math.PI / 2, 0 ]
         },
         {
-          url: '../../assets/images/tweets-3d.png',
+          url: '../../assets/images/cloudscube2.jpg',
           position: [ 512, 0, 0 ],
           rotation: [ 0, -Math.PI / 2, 0 ]
         },
         {
-          url: '../../assets/images/tweets-3d.png',
+          url: '../../assets/images/cloudscube1.jpg',
           position: [ 0,  512, 0 ],
           rotation: [ Math.PI / 2, 0, Math.PI ]
         },
         {
-          url: '../../assets/images/tweets-3d.png',
+          url: '../../assets/images/cloudscube6.jpg',
           position: [ 0, -512, 0 ],
           rotation: [ - Math.PI / 2, 0, Math.PI ]
         },
         {
-          url: '../../assets/images/tweets-3d.png',
+          url: '../../assets/images/cloudscube3.jpg',
           position: [ 0, 0,  512 ],
           rotation: [ 0, Math.PI, 0 ]
         },
         {
-          url: '../../assets/images/tweets-3d.png',
+          url: '../../assets/images/cloudscube5.jpg',
           position: [ 0, 0, -512 ],
           rotation: [ 0, 0, 0 ]
         }
@@ -77,7 +77,7 @@ angular.module('parserApp.headerService', [])
         var side = sides[ i ];
         var element = document.createElement( 'img' );
         element.className = 'tweets-cube';
-        element.width = 1026; // 2 pixels extra to close the gap.
+        element.width = 1024; // 2 pixels extra to close the gap.
         element.src = side.url;
         var object = new THREE.CSS3DObject( element );
         object.position.fromArray( side.position );
@@ -148,7 +148,7 @@ angular.module('parserApp.headerService', [])
       mainAnimationFrame = requestAnimationFrame( animate );
       lon +=  0.2;
       lat = Math.max( - 75, Math.min( 75, lat ) );
-      phi = THREE.Math.degToRad( 64 - lat );
+      phi = THREE.Math.degToRad( 85 - lat );
       theta = THREE.Math.degToRad( lon );
       target.x = Math.sin( phi ) * Math.cos( theta );
       target.y = Math.cos( phi );

@@ -137,9 +137,10 @@ angular.module('parserApp')
     });
 
     $scope.addNewLayer = function(name) {
-      name = name || $scope.newLayerInput;
+      name = name || $scope.layerName;
       $http.post('/auth/adminlogin/addNewLayer', {name: name})
       .success(function(data) {
+        console.log("LAYER ADD COMPLETE");
         $scope.showAllKeywords();
         $scope.getTables();
       })
@@ -149,7 +150,7 @@ angular.module('parserApp')
     };
 
     $scope.redoLayer = function(name) {
-      name = name || $scope.redoLayerInput;
+      name = name || $scope.layerName;
       $http.post('/auth/adminlogin/redoLayer', {name: name})
       .success(function(data) {
         console.log("DONE: ", data);
@@ -160,7 +161,7 @@ angular.module('parserApp')
     };
 
     $scope.deleteLayer = function(name) {
-      name = name || $scope.deleteLayerInput;
+      name = name || $scope.layerName;
       $http.post('/auth/adminlogin/deleteLayer', {name: name})
       .success(function(data) {
         console.log("DONE: ", data);
@@ -212,11 +213,12 @@ angular.module('parserApp')
 
       name = name || $scope.databaseName;
       $scope.setLeftStatus(null,"CLIENT: CREATE DB: " + name);
-      if(!name){
+      if(!name || name === $scope.currDB){
         $scope.setRightStatus(3000,"ERROR: provide valid name.");
         $scope.setLeftStatus(3000);
         return;
       }
+      $scope.setRightStatus(null, "WAITING FOR DATABASE");
       $http.post('/auth/adminlogin/createDatabase', {name: name})
        .success(function(data) {
 

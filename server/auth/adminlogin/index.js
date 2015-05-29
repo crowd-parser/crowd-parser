@@ -169,31 +169,35 @@ router.post('/deleteLayer', function(req, res, next) {
 
 router.post('/createDatabase', function(req, res, next) {
   var name = req.body.name;
-  db.createDatabase(name, function(err, name) {
+  db.createDatabase(name, function(err, name, fields) {
+      console.log("CREATE:", arguments);
     if(err){
-      console.log(err);
       res.send(false);
       return;
     }
+
       res.send(name);
+
   });
 });
 
 router.post('/changeToDatabase', function(req, res, next) {
   var name = req.body.name;
-  db.changeToDatabase(name, function(err, name) {
+  db.changeToDatabase(name, function(err, name, fields) {
+    console.log("CHANGE:", arguments);
     if(err){
       res.send(false);
       return;
     }
       res.send(name);
+
   });
 });
 
 router.post('/deleteDatabase', function(req, res, next) {
   var name = req.body.name;
   db.deleteDatabase(name, function(err, rows, fields) {
-    console.log("DEL ARGS: ", arguments);
+    console.log("DELETE:", arguments);
     if(err){
       console.log(err);
       res.send(false);

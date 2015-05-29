@@ -53,6 +53,11 @@ var mysql = require('mysql');
 //stores connection information from non-shared database configuration file
 
 
+//TODO CHANGE THIS TO PROD WHEN LIVE
+//OR FIGURE OUT HOW TO USE LIVE VESUS DEV DEPLOY
+exports.currDB = 'dev';
+
+
 //establishes connection to persistent database previously configured
 var connectionLoop = function(){
   exports.db = mysql.createConnection(config);
@@ -63,6 +68,21 @@ var connectionLoop = function(){
     }else{
       console.log("==============CONNECTED as ID ", exports.db.threadId);
       exports.isLive = true;
+
+      //this changes to the database
+      exports.changeToDatabase(exports.currDB, function(err){
+         if(err){
+          console.log(err);
+         }
+
+         if(this.notifiersForLive){
+            for(var i = 0; i < this.notifiersForLive.length; i++){
+             this.notifiersForLive[i]();
+           }
+           this.notifiersForLive = null;
+         }
+      });
+
 
       exports.db.on('error', function(err) {
          console.log("MYSQL ERROR CONNECTION", err);
@@ -78,14 +98,6 @@ var connectionLoop = function(){
 
 connectionLoop();
 
-
-/*==================================================================*/
-
-
-
-/*============= DEBUG and MACRO SETTINGS =================*/
-//ONLY SET THIS IF YOU PLAN TO CHANGE SCHEMA, OTHERWISE LEAVE AS IS
-exports.currDB = 'production';
 
 /*==================================================================*/
 
@@ -106,7 +118,16 @@ exports.searchForTweetsWithKeyword = function(keyword, callback){
 
 exports.filterALLTweetsByKeyword = function(keyword, callback){
   callback = callback || exports.errCB;
-  this.db.query("INSERT INTO tweets_containing_" + keyword + " (tweet_id) SELECT id FROM tweets WHERE text LIKE '%" + keyword + "%'", callback);
+  this.db.query("INSERT INTO tweets_containing_" + keyword + " (tweet_id) SELECT id FROM tweets WHERE text LIKE '%" + keyword + "%'", function(err, rows, fields){
+    if(err){
+      console.log(err);
+      callback(err, rows);
+      return;
+    }
+        //TODO: this needs to set last highest index on keyword table
+
+    callback(err, rows, fields);
+  });
 }
 
 exports.filterALLTweetsFromIdByKeyword = function(id, keyword, callback){
@@ -129,6 +150,14 @@ exports.processSingleTweetObjForLayer = function(tweetHolder, layerName, callbac
     tweetHolder.layers.push({layer: layerName, result: thing.result});
     exports.genericAddToTable(layerName,[thing],callback, null);
 
+};
+
+exports.filterSingleTweetForLayer = function(tweetObj, layerName, callback){
+  console.log("FILTER: ", layerName, tweetObj);
+//hmm
+  var rowObj = {result: exports[layerName+"_Function"](tweetObj.text), tweet_id: tweetObj.id};
+  //hmm
+  exports.genericAddToTable(layerName,[rowObj],callback, null);
 };
 
 
@@ -178,7 +207,7 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
       for(var i = 0; exports.cache.keywordList.length; i++){
           for(var j = 0; j < newTweetIds.length; j++ ){
-            exports.processSingleTweetIDForKeyword(newTweetIds[j], exports.cache.keywordList[i], null);
+            exports.processSingleTweetIDForKeyword(newTweetIds[j], exports.cache.keywordList[i],exports.errCB);
           }
       }
       //database is now cranking on updating keyword lists async
@@ -250,6 +279,10 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
 exports.layer_Base_Function = require('../sentiment/baseWordsLayer/baseWordsLayerAnalysis.js');
 exports.layer_Emoticons_Function = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js');
+exports.layer_Random_Function = function(){return Math.rand()};
+exports.layer_Test_Function = function(){return "TEST STRING FOR TEST LAYER"};
+
+exports.currentValidLayerNames = {"Base":true, "Emoticons":true, "Random":true, "Test":true};
 
 exports.getLayerNames = function(cb){
   if(this.cache.layerList){
@@ -272,17 +305,45 @@ exports.addLayerTable = function(callback){
 };
 
 exports.addNewLayer = function(layerName, finalCB){
+  if(exports.currentValidLayerNames[layerName] !== true){
+    finalCB(true, false);
+    return;
+  }
 
   this.addLayerTable(function(){
-    exports.getAllTweets(function(err, rows, fields){
-      layerName = "layer_" + layerName;
-      exports.genericAddToTable("layers", {layerName: layerName}, null);
-      exports.genericCreateTable(layerName,{result: 1}, function(){
-        exports.addForeignKey(layerName, "tweet_id", "tweets", "id", function(){
-          exports.setColumnToUnique(layerName,"tweet_id", function(){
+    layerName = "layer_" + layerName;
+      exports.genericAddToTable("layers", {layerName: layerName}, function(err, rows, fields){
 
-            finalCB();
+        if(err || !rows){
+          finalCB(err, false);
+          return;
+        }
+        exports.genericCreateTable(layerName,{result: 1}, function(err,rows){
+          if(err){
+            console.log(err);
+            finalCB(err, null);
+            return;
+          }
+          exports.addForeignKey(layerName, "tweet_id", "tweets", "id", function(){
+            exports.setColumnToUnique(layerName,"tweet_id", function(){
+              finalCB(null, layerName); //calling here to avoid server timeout
+              exports.getAllTweets(function(err, rows, fields){
+                if(err){
+                  console.log(err);
+                  return;
+                }
+                var count = 0;
+                console.log("LAYER ADD: PULLED TWEETS COUNT: ", rows.length);
+                for(var i = 0; i < rows.length; i++){
 
+                  exports.filterSingleTweetForLayer(rows[i], layerName, function(count, err,rows){
+                    count++;
+                    if(count % 100 === 0){
+                      console.log("LAYER ADD: PROCESSED ANOTHER 100 TWEETS");
+                    }
+                  }.bind(exports, count));
+                }
+            });
           });
         });
       });
@@ -690,8 +751,10 @@ exports.getCurrentDatabaseName = function(cb){
 exports.createDatabase = function(name, callback){
   exports.cache.layerList = null;
   exports.cache.keywordList = null;
-  this.db.query("CREATE DATABASE IF NOT EXISTS " + name, function(err){
+  this.db.query("CREATE DATABASE " + name, function(err, rows, fields){
+    console.log("INSIDE CREATE:", arguments);
     if(err){
+      console.log(err);
       callback(err, name);
       return;
     }
@@ -734,7 +797,9 @@ exports.genericDropDatabase = exports.deleteDatabase = function(name, callback){
   }
   exports.cache.layerList = null;
   exports.cache.keywordList = null;
-  this.db.query("DROP DATABASE IF EXISTS " + name, callback);
+  this.db.query("DROP DATABASE " + name, function(err, rows, fields){
+    callback(err, rows, fields);
+  });
 };
 
 exports.tellMeWhenDatabaseIsLive = function(callback){
@@ -836,29 +901,8 @@ exports.testTweet5 = {"created_at":"Wed May 20 23:16:04 +0000 2015","id":6011637
 //this is called in app.js after the database module is exported
 //it processes the debug commands at the top of the file, we'll remove it in production
 exports.trigger = function(){
-  if(this.triggerHasRun) return;
+//moved into connection loop
 
-  if(this.db === undefined || this.isLive !== true){
-    console.log("========waiting for db==========");
-    setTimeout(this.trigger.bind(this), 100);
-    return;
-  }else{
-    console.log("==========DB exists===========");
-  }
-
-  this.triggerHasRun = true;
-
-  exports.changeToDatabase(exports.currDB, function(err){
-    if(err)console.log(err);
-
-    if(this.notifiersForLive){
-       for(var i = 0; i < this.notifiersForLive.length; i++){
-        this.notifiersForLive[i]();
-      }
-      this.notifiersForLive = null;
-    }
-
- });
 };
 
 //===========================================

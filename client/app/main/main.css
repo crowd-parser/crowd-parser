@@ -1,11 +1,10 @@
 .main {
     position: relative;
     background: url('../../assets/images/tweets-3d.png');
+    background-size: cover;
     text-align: center;
     color: #FFF;
-    height: 100vh;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    padding: 140px 0;
+    padding: 40px 0;
 }
 
 .main img {
@@ -36,8 +35,11 @@
 }
 
 .intro {
+    background: rgba(0,0,0,.4);
     color: #EEEFF7;
-    margin-top: 60px;
+    margin: 4%;
+    padding: 20px;
+    border: 10px solid rgba(255,255,255,.7);
 }
 
 .we-downloaded {
@@ -52,7 +54,8 @@
     color: #FFF;
     font-size: 100px;
     font-weight: 100;
-    margin-top: 80px;
+    line-height: 1em;
+    margin-top: 50px;
 }
 
 .click-to-begin {
@@ -60,7 +63,7 @@
     font-size: 25px;
     font-weight: 100;
     letter-spacing: 1px;
-    margin-top: 75px;
+    margin-top: 50px;
     padding: 5px 14px;
     border-radius: 0;
 }

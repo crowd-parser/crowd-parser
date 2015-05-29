@@ -279,7 +279,7 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
 exports.layer_Base_Function = require('../sentiment/baseWordsLayer/baseWordsLayerAnalysis.js');
 exports.layer_Emoticons_Function = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js');
-exports.layer_Random_Function = function(){return Math.rand()};
+exports.layer_Random_Function = function(){return Math.random()};
 exports.layer_Test_Function = function(){return "TEST STRING FOR TEST LAYER"};
 
 exports.currentValidLayerNames = {"Base":true, "Emoticons":true, "Random":true, "Test":true};

@@ -9,3 +9,5 @@ server/config/twitter-config.js
 server/database/database-config-1.js
 server/config/twitter_CH_private.js
 server/auth/adminlogin/adminloginsecret.js
+client/assets/fonts/droid/NOTICE
+client/assets/fonts/droid/README.txt

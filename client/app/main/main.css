@@ -2,6 +2,8 @@
     position: absolute;
     top: 0;
     left: 0;
+    right: 0;
+    margin: 0 auto;
     text-align: center;
     color: #FFF;
     padding: 40px 0;
@@ -25,7 +27,7 @@
 .learn-more {
     position: absolute;
     top: 20px;
-    left: 20px;
+    right: 20px;
     color: #EEEFF7;
     font-size: 20px;
 }
@@ -39,7 +41,7 @@
     background: rgba(0,0,0,.4);
     color: #EEEFF7;
     height: 380px;
-    margin: 4%;
+    margin: 40px 15%;
     padding: 20px;
     border: 10px solid rgba(255,255,255,.7);
 }
@@ -109,7 +111,7 @@
     }
 }
 
-@media (max-width: 350px) {
+@media (max-width: 380px) {
     .intro {
         margin-top: 22px;
     }

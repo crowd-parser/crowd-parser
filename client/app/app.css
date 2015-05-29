@@ -45,6 +45,10 @@ body {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
+.tweets-cube {
+    height: 1026px;
+}
+
 #adminPanelHolder{
     min-width: 800px;
     position: relative;

@@ -210,10 +210,7 @@ angular.module('parserApp.display3dService', [])
 
         var fadeOut = new TWEEN.Tween( layers[i].combinedMaterial )
           .to( {opacity: 0}, 500)
-          .easing( TWEEN.Easing.Quadratic.InOut )
-          .onComplete(function () {
-            layers[0].titleEl.textContent = layers[0].title + ' layer';
-          });
+          .easing( TWEEN.Easing.Quadratic.InOut );
         var fadeIn = new TWEEN.Tween( layers[i].titleMaterial )
           .to( {opacity: 0.5}, 500)
           .easing( TWEEN.Easing.Quadratic.InOut );
@@ -272,7 +269,7 @@ angular.module('parserApp.display3dService', [])
                 }).join(' + ') + ' layers',
           {
             size: (12*rows),
-            font: 'gentilis', // Must be lowercase!
+            font: 'droid sans', // Must be lowercase!
             height: 0
           });
         var combinedTextMesh = new THREE.Mesh(combinedTextGeom, combinedMaterial);
@@ -285,12 +282,7 @@ angular.module('parserApp.display3dService', [])
 
         var fadeOut = new TWEEN.Tween( layers[i].titleMaterial )
           .to( {opacity: 0}, 500)
-          .easing( TWEEN.Easing.Quadratic.InOut )
-          .onComplete(function () {
-            layers[0].titleEl.textContent = layers.map(function (item) {
-              return item.title;
-            }).join(' + ') + ' layers';
-          });
+          .easing( TWEEN.Easing.Quadratic.InOut );
         var fadeIn = new TWEEN.Tween( combinedMaterial )
           .to( {opacity: 0.5}, 500)
           .easing( TWEEN.Easing.Quadratic.InOut );
@@ -469,29 +461,14 @@ angular.module('parserApp.display3dService', [])
     var textMesh = new THREE.Mesh( textGeom, layerTitleMaterial );
     textGeom.computeBoundingBox();
     textMesh.textWidth = textGeom.boundingBox.max.x - textGeom.boundingBox.min.x;
-    textMesh.position.y = (rows*(ySpacing))/2;
+    var textHeight = textGeom.boundingBox.max.y - textGeom.boundingBox.min.y;
+    textMesh.position.y = (rows*(ySpacing+15))/2 - textHeight/2;
     textMesh.position.z = z-1;
 
     sceneGL.add( textMesh );
     layerObj.titleMesh = textMesh;
     layerObj.titleMaterial = layerTitleMaterial;
 
-    var ribbonText = document.createElement( 'div' );
-    ribbonText.className = 'layer-title';
-    ribbonText.textContent = layerTitle + ' layer';
-    ribbonText.style.opacity = 1;
-    ribbonText.style.fontSize = (15*rows) + 'px';
-    ribbonText.style.width = (150*rows) + 'px';
-
-    layerObj.titleEl = ribbonText;
-
-    var ribbonTitleObject = new THREE.CSS3DObject( ribbonText );
-    ribbonTitleObject.position.x = 0;
-    ribbonTitleObject.position.y = (rows*(ySpacing+12))/2;
-    ribbonTitleObject.position.z = z-1;
-
-    sceneCSS.add( ribbonTitleObject );
-    layerObj.titleObj = ribbonTitleObject;
     //layerObj.ribbonEl = ribbon;
 
     layers.push(layerObj);

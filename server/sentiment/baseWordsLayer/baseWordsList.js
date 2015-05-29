@@ -3809,6 +3809,7 @@ var sentimentNegative = {
   frustration: -3,
   frustrations: -3,
   fuck: -3,
+  fucker: -3,
   fucking: -3,
   fudge: -3,
   fugitive: -3,

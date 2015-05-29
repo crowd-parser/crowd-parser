@@ -38,9 +38,12 @@ exports.convertEmojisInTweet = function(text) {
 
   var emojisArray = text.match(emojiRegex());
 
-  emojisArray.forEach(function(item) {
-    text = text.replace(item, '<%-' + exports.toCodePoint(item) + '%>');
-  });
+  if (emojisArray !== null) {
+
+    emojisArray.forEach(function(item) {
+      text = text.replace(item, '<%-' + exports.toCodePoint(item) + '%>');
+    });
+  }
 
   return text;
 };

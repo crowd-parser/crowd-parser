@@ -1,6 +1,8 @@
 var allLayersAnalysis = require('./sentiment/allLayersAnalysis');
 var db = require('./database/database');
 
+var emojiConverter = require('./sentiment/emoticonLayer/emojiConverter');
+
 module.exports = function(io, T) {
 
   try {
@@ -150,3 +152,11 @@ module.exports = function(io, T) {
   });
 
 };
+
+// var tweet = 'If this doesn\'t make you smile, I don\'t know what will: http://youtu.be/RoQwFxEkW2E  👶😂';
+
+// console.log(emojiConverter.convertEmojisInTweet(tweet));
+
+// var convertedTweet = 'If this doesn\'t make you smile, I don\'t know what will: http://youtu.be/RoQwFxEkW2E  <%-1f476%><%-1f602%>';
+
+// console.log(emojiConverter.restoreEmojisInTweet(convertedTweet));

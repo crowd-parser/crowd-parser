@@ -15,7 +15,7 @@ module.exports = function(string) {
   string.split(' ').forEach(function(word, i) {
 
     // Make a lowercase copy of each word to compare against the base words library
-    var lowerCaseWord = word.toLowerCase();
+    var lowerCaseWord = word.toLowerCase().replace(/[\.\!]/g, '');
 
     // If the copied word matches a positive word in the library, add the original word to the positive words array
     if (slangPositive[lowerCaseWord]) {

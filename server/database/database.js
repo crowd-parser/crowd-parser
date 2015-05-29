@@ -118,7 +118,16 @@ exports.searchForTweetsWithKeyword = function(keyword, callback){
 
 exports.filterALLTweetsByKeyword = function(keyword, callback){
   callback = callback || exports.errCB;
-  this.db.query("INSERT INTO tweets_containing_" + keyword + " (tweet_id) SELECT id FROM tweets WHERE text LIKE '%" + keyword + "%'", callback);
+  this.db.query("INSERT INTO tweets_containing_" + keyword + " (tweet_id) SELECT id FROM tweets WHERE text LIKE '%" + keyword + "%'", function(err, rows, fields){
+    if(err){
+      console.log(err);
+      callback(err, rows);
+      return;
+    }
+        //TODO: this needs to set last highest index on keyword table
+
+    callback(err, rows, fields);
+  });
 }
 
 exports.filterALLTweetsFromIdByKeyword = function(id, keyword, callback){
@@ -141,6 +150,14 @@ exports.processSingleTweetObjForLayer = function(tweetHolder, layerName, callbac
     tweetHolder.layers.push({layer: layerName, result: thing.result});
     exports.genericAddToTable(layerName,[thing],callback, null);
 
+};
+
+exports.filterSingleTweetForLayer = function(tweetObj, layerName, callback){
+  console.log("FILTER: ", layerName, tweetObj);
+//hmm
+  var rowObj = {result: exports[layerName+"_Function"](tweetObj.text), tweet_id: tweetObj.id};
+  //hmm
+  exports.genericAddToTable(layerName,[rowObj],callback, null);
 };
 
 
@@ -190,7 +207,7 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
       for(var i = 0; exports.cache.keywordList.length; i++){
           for(var j = 0; j < newTweetIds.length; j++ ){
-            exports.processSingleTweetIDForKeyword(newTweetIds[j], exports.cache.keywordList[i], null);
+            exports.processSingleTweetIDForKeyword(newTweetIds[j], exports.cache.keywordList[i],exports.errCB);
           }
       }
       //database is now cranking on updating keyword lists async
@@ -263,6 +280,9 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
 exports.layer_Base_Function = require('../sentiment/baseWordsLayer/baseWordsLayerAnalysis.js');
 exports.layer_Emoticons_Function = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js');
 exports.layer_Random_Function = function(){return Math.rand()};
+exports.layer_Test_Function = function(){return "TEST STRING FOR TEST LAYER"};
+
+exports.currentValidLayerNames = {"Base":true, "Emoticons":true, "Random":true, "Test":true};
 
 exports.getLayerNames = function(cb){
   if(this.cache.layerList){
@@ -285,17 +305,45 @@ exports.addLayerTable = function(callback){
 };
 
 exports.addNewLayer = function(layerName, finalCB){
+  if(exports.currentValidLayerNames[layerName] !== true){
+    finalCB(true, false);
+    return;
+  }
 
   this.addLayerTable(function(){
-    exports.getAllTweets(function(err, rows, fields){
-      layerName = "layer_" + layerName;
-      exports.genericAddToTable("layers", {layerName: layerName}, null);
-      exports.genericCreateTable(layerName,{result: 1}, function(){
-        exports.addForeignKey(layerName, "tweet_id", "tweets", "id", function(){
-          exports.setColumnToUnique(layerName,"tweet_id", function(){
+    layerName = "layer_" + layerName;
+      exports.genericAddToTable("layers", {layerName: layerName}, function(err, rows, fields){
 
-            finalCB();
+        if(err || !rows){
+          finalCB(err, false);
+          return;
+        }
+        exports.genericCreateTable(layerName,{result: 1}, function(err,rows){
+          if(err){
+            console.log(err);
+            finalCB(err, null);
+            return;
+          }
+          exports.addForeignKey(layerName, "tweet_id", "tweets", "id", function(){
+            exports.setColumnToUnique(layerName,"tweet_id", function(){
+              finalCB(null, layerName); //calling here to avoid server timeout
+              exports.getAllTweets(function(err, rows, fields){
+                if(err){
+                  console.log(err);
+                  return;
+                }
+                var count = 0;
+                console.log("LAYER ADD: PULLED TWEETS COUNT: ", rows.length);
+                for(var i = 0; i < rows.length; i++){
 
+                  exports.filterSingleTweetForLayer(rows[i], layerName, function(count, err,rows){
+                    count++;
+                    if(count % 100 === 0){
+                      console.log("LAYER ADD: PROCESSED ANOTHER 100 TWEETS");
+                    }
+                  }.bind(exports, count));
+                }
+            });
           });
         });
       });

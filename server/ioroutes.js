@@ -10,7 +10,29 @@ module.exports = function(io, T) {
     var TCH = T;
   }
 
+  var clientIDGenerator = 0;
+
   io.on('connection', function(socket) {
+
+    // for tracking "rooms" different clients are in
+    socket.on('getID', function(idFromClient) { 
+      var clientID = idFromClient || clientIDGenerator;
+      console.log('joining client room ', clientID);
+      socket.join(clientID); 
+      socket.emit('clientID', clientID);
+      clientIDGenerator++;
+    });
+
+    socket.on('unsubscribe', function(room) {  
+        console.log('leaving client room', room);
+        socket.leave(room); 
+    });
+
+    // for testing connection to clients
+    socket.on('send', function(data) {
+        console.log('sending message' + data.message);
+        io.sockets.in(data.room).emit('message', data);
+    });
 
     // Gets top 10 trending topics.
     // This is requested on main.html page load and used for the sentiment display section
@@ -27,7 +49,7 @@ module.exports = function(io, T) {
 
     // Gets tweets for a search query
     // This is used for the sentiment display section
-    socket.on('twitter rest search', function(query, result_type, count, max_id) {
+    socket.on('twitter rest search', function(query, result_type, count, max_id, clientID) {
 
       var params = {
         q: query,
@@ -50,7 +72,9 @@ module.exports = function(io, T) {
           // Add layer analyses to each tweet
           var allLayersResults = allLayersAnalysis.tweetsArray(data.statuses);
 
-          io.emit('all layers', allLayersResults);
+          //io.emit('all layers', allLayersResults);
+          console.log('sending REST results to id ' + clientID);
+          io.sockets.in(clientID).emit('all layers', allLayersResults);
         }
 
       });

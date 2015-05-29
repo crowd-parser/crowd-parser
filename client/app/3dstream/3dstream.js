@@ -7,6 +7,8 @@ angular.module('parserApp')
     $scope.tweetCount = 0;
     $scope.autoScroll = 'ON';
     $scope.numTweetsToGet = 400;
+    $scope.receivingTweets = 'OFF';
+    $scope.clientID = undefined;
     var runFakeTweets = false;
     var intervalID;
 
@@ -84,40 +86,86 @@ angular.module('parserApp')
       intervalID = setInterval(addFakeTweet, 5);
     };
 
-    $scope.fullScreen = function () {
-      $scope.tweetData = [];
-      $scope.tweetCount = 0;
-      $scope.stopTweets();
-      $location.path('/3dstream');
+    // $scope.fullScreen = function () {
+    //   $scope.tweetData = [];
+    //   $scope.tweetCount = 0;
+    //   $scope.stopTweets();
+    //   $location.path('/3dstream');
+    // };
+
+    // helper function to get clientID if we don't have one
+    // and then run whatever code in cb
+    var socketWithRoom = function(cb) {
+      if ($scope.clientID === undefined) {
+        console.log('getting ID');
+        socket.emit('getID', $scope.clientID);
+        socket.on('clientID', function(ID) {
+          console.log('gotID: ' + ID);
+          $scope.clientID = ID;
+          cb();
+        });
+      } else {
+        cb();
+      }
     };
 
-    $scope.macroScale = function () {
-      $scope.tweetData = [];
-      $scope.tweetCount = 0;
-      $scope.stopTweets();
-      $location.path('/3dstream');
-    };
-
+    // get REST tweets from server
     $scope.getRestTweets = function () {
+      $scope.tweetData = [];
+      $scope.tweetCount = 0;
+
       if (!$scope.keywordStream) {
         return;
       }
-      socket.emit('twitter rest search', $scope.keywordStream, 'recent', 100);
-      socket.on('all layers', function (data) {
-        var tweets = data.tweetsWithAnalyses;
-        var oldestID = tweets[tweets.length-1].id;
-        $scope.tweetData = $scope.tweetData.concat(tweets);
-        tweets.forEach(function (tweet) {
-          Display3d.addTweet(tweet, $scope.tweetCount, $scope);
-          $scope.tweetCount++;
-          // tweet.addEventListener( 'click', function ( event ) {
-          //   console.log(event);
-          // }, false);
-        });
-        if ($scope.tweetData.length < $scope.numTweetsToGet) {
-          socket.emit('twitter rest search', $scope.keywordStream, 'recent', 100, oldestID);
-        } else {
-          console.log($scope.tweetData.length);
+
+      socketWithRoom(function () {
+        socket.emit('twitter rest search', $scope.keywordStream, 'recent', 100, null, $scope.clientID);
+      });
+    };
+      
+    // listen for REST tweets from server
+    socket.on('all layers', function (data) {
+      var tweets = data.tweetsWithAnalyses;
+      var oldestID = tweets[tweets.length-1].id;
+      $scope.tweetData = $scope.tweetData.concat(tweets);
+      tweets.forEach(function (tweet) {
+        Display3d.addTweet(tweet, $scope.tweetCount, $scope);
+        $scope.tweetCount++;
+        // tweet.addEventListener( 'click', function ( event ) {
+        //   console.log(event);
+        // }, false);
+      });
+      if ($scope.tweetData.length < $scope.numTweetsToGet) {
+        socket.emit('twitter rest search', $scope.keywordStream, 'recent', 100, oldestID, $scope.clientID);
+      } else {
+        console.log($scope.tweetData.length);
+      }
+    });
+
+    $scope.startLiveStream = function () {
+      $scope.tweetData = [];
+      $scope.tweetCount = 0;
+
+      if ($scope.receivingTweets === 'OFF') {
+        $scope.receivingTweets = 'ON';
+      } else {
+        $scope.receivingTweets = 'OFF';
+      }
+
+      // receive
+      socket.on('tweet added', function (tweetFromDB) {
+        if ($scope.receivingTweets === 'ON') {
+          console.log('received tweet');
+          console.log(tweetFromDB);
+          //$scope.tweetData.push(tweetFromDB.tweet);
+          var tweetFormatted = {};
+          tweetFormatted.text = tweetFromDB.tweet.text;
+          tweetFormatted.username = tweetFromDB.tweet.username;
+          tweetFormatted.baseLayerResults = {};
+          tweetFormatted.emoticonLayerResults = {};
+
+          //Display3d.addTweet(tweetFormatted, $scope.tweetCount);
+          //$scope.tweetCount++;
         }
       });
     };
@@ -145,6 +193,7 @@ angular.module('parserApp')
 
     $scope.stopTweets = function () {
       socket.emit('twitter stop continuous stream');
+      $scope.receivingTweets = 'OFF';
       runFakeTweets = false;
       if (intervalID) {
         clearInterval(intervalID);

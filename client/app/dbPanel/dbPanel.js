@@ -141,7 +141,7 @@ angular.module('parserApp')
       $http.post('/auth/adminlogin/addNewLayer', {name: name})
       .success(function(data) {
         console.log("LAYER ADD COMPLETE");
-        $scope.showAllKeywords();
+        $scope.showAllLayers();
         $scope.getTables();
       })
       .error(function(data){
@@ -292,6 +292,7 @@ angular.module('parserApp')
           $scope.setLeftStatus(3000);
           return;
         }
+
         $scope.setRightStatus(3000,"DB CHANGE SUCCESS");
         $scope.setLeftStatus(3000);
         $scope.currDB = data;
@@ -316,6 +317,12 @@ angular.module('parserApp')
      $scope.ADDTHEFIVETESTTWEETS = function(){
        $http.post('/auth/adminlogin/ADDTHEFIVETESTTWEETS', {})
        .success(function(data) {
+
+        if(data === false){
+          $scope.setRightStatus(null, "ERROR");
+        }else{
+          $scope.setRightStatus(null, "YAY");
+        }
 
       }).error(function(data){
 

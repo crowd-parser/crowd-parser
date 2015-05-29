@@ -1,6 +1,8 @@
 //TODO
 
+//add send all tweet/layer data function
 
+//add delete tweets button
 //test delete database
 
 //test add layer
@@ -87,9 +89,12 @@ var connectionLoop = function(){
       exports.db.on('error', function(err) {
          console.log("MYSQL ERROR CONNECTION", err);
          if(err.code === 'PROTOCOL_CONNECTION_LOST') {
+            console.log("CONNECTION LOST");
            connectionLoop();
          } else {
-           throw err;
+            console.log(err);
+            connectionLoop();
+           //throw err;
          }
        });
     }
@@ -153,7 +158,7 @@ exports.processSingleTweetObjForLayer = function(tweetHolder, layerName, callbac
 };
 
 exports.filterSingleTweetForLayer = function(tweetObj, layerName, callback){
-  console.log("FILTER: ", layerName, tweetObj);
+  // console.log("FILTER: ", layerName, tweetObj);
 //hmm
   var rowObj = {result: exports[layerName+"_Function"](tweetObj.text), tweet_id: tweetObj.id};
   //hmm
@@ -184,32 +189,45 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
     tweets = [tweets];
   }
 
-  this.genericAddToTable('tweets', tweets, function(err, _tweetIds, fields){
+  exports.genericAddToTable('tweets', tweets, function(err, _tweetIds, fields){
     //tweets added to database, done
+    if(err){
+      console.log("ERROR FULL CHAIN GENERIC ADD", err);
+
+    }
     var newTweetIds = _tweetIds;
+    if(!_tweetIds || _tweetIds.length === 0){
+      finalCallback(true, null);
+      return;
+    }
 
     var preBuildForkeywordCache = function(main){
       exports.genericGetAll('keywords', function(err, theKeywords, fields){
 
         if(err){
-          console.log(err);
+          console.log("BUILD CACHE ERR", err);
           theKeywords = theKeywords || [];
         }
-        exports.cache.keywordList = [];
+
+        theCache.keywordList = [];
         for(var i = 0; i < theKeywords.length; i++){
-          exports.cache.keywordList.push(theKeywords[i].keyword);
+          theCache.keywordList.push(theKeywords[i].keyword);
         }
-        main.call(exports);
+
+
+        main();
       });
     };
 
     var main = function(){
-
-      for(var i = 0; exports.cache.keywordList.length; i++){
+      console.log("Main using cache kw: ", theCache.keywordList);
+      for(var i = 0; i < theCache.keywordList.length; i++){
           for(var j = 0; j < newTweetIds.length; j++ ){
-            exports.processSingleTweetIDForKeyword(newTweetIds[j], exports.cache.keywordList[i],exports.errCB);
+            console.log("processing tweet for keyword " + theCache.keywordList[i]);
+            exports.processSingleTweetIDForKeyword(newTweetIds[j], theCache.keywordList[i],exports.errCB);
           }
       }
+      console.log("past processing keywords");
       //database is now cranking on updating keyword lists async
       //we don't care about keywords being finished generating before sending to the client
 
@@ -219,11 +237,17 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
         var preBuildForLayerCache = function(finishLayers){
           exports.genericGetAll('layers', function(err, theLayers, fields){
-            exports.cache.layerList = [];
+             if(err){
+                console.log("BUILD CACHE ERR", err);
+                theLayers = theLayers || [];
+             }
+
+            theCache.layerList = [];
             for(var i = 0; i < theLayers.length; i++){
-              exports.cache.layerList.push(theLayers[i].layer);
+              theCache.layerList.push(theLayers[i].layerName);
             }
-            finishLayers.call(exports);
+
+            finishLayers();
           });
         };
 
@@ -234,16 +258,23 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
           var count = newTweetIds.length;
           for(var i = 0; i < newTweetIds.length; i++){
             exports.getTweetForId(newTweetIds[i], function(err, rows, fields){
+              if(err){
+                console.log("tweet didn't exist",err);
+              }
              var tweetObj = {tweet: rows[0], layers:[]};
              container.push(tweetObj);
-              for(var j = 0; j < exports.cache.layerList.length; j++){
-                funcList.push(exports.processSingleTweetObjForLayer.bind(tweetObj,exports.cache.layerList[i]));
+
+
+              for(var j = 0; j < theCache.layerList.length; j++){
+                funcList.push(exports.processSingleTweetObjForLayer.bind(tweetObj,theCache.layerList[i]));
               }
+
               count--;
+              console.log("FINISH LAYERS count", count);
               if(count === 0){
                 exports.asyncMap(funcList, function(finalCallback, container, err, results, fields){
                   //ignore results from callback, containing is holding all data
-
+                    console.log("async for chain finished");
                     finalCallback(null, container, null);
                  }.bind(exports, finalCallback, container));
               }
@@ -252,9 +283,11 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
         };
 
-        if(!exports.cache.layerList){
+        if(theCache.layerList === undefined || theCache.layerList === null){
+          console.log("no layer cache");
           preBuildForLayerCache(finishLayers);
         }else{
+          console.log("layer cache exists");
           finishLayers();
         }
 
@@ -264,9 +297,12 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
         //send to all clients on the wire
     };
 
-    if(!exports.cache.keywordList){
+    console.log("CACHE", exports.currDB);
+    if(theCache.keywordList === undefined || theCache.keywordList === null){
+      console.log("no cache of keywords");
       preBuildForkeywordCache(main);
     }else{
+      console.log("cache for keywords exists");
       main();
     }
 
@@ -282,21 +318,21 @@ exports.layer_Emoticons_Function = require('../sentiment/emoticonLayer/emoticonL
 exports.layer_Random_Function = function(){return Math.random()};
 exports.layer_Test_Function = function(){return "TEST STRING FOR TEST LAYER"};
 
-exports.currentValidLayerNames = {"Base":true, "Emoticons":true, "Random":true, "Test":true};
+exports.currentValidLayerNames = {"Base":true, "Emoticons":true, "Random":true, "Test": true};
 
 exports.getLayerNames = function(cb){
-  if(this.cache.layerList){
-    cb(this.cache.layerList)
+  if(theCache.layerList){
+    cb(theCache.layerList)
   }else{
     this.db.query("SELECT layerName FROM layers", function(err, rows){
-      exports.cache.layerList = rows;
+      theCache.layerList = rows;
       cb(rows);
     });
   }
 };
 
 exports.addLayerTable = function(callback){
-  this.cache.layerList = null;
+  theCache.layerList = null;
   this.genericCreateTable("layers",{layerName: "layers", lastHighestIndexed: 0}, function(){
     exports.setColumnToUnique("layers","layerName", function(){
       callback();
@@ -305,45 +341,54 @@ exports.addLayerTable = function(callback){
 };
 
 exports.addNewLayer = function(layerName, finalCB){
+  var layerTableName = "layer_"+layerName;
   if(exports.currentValidLayerNames[layerName] !== true){
+    console.log("NOT A VALID LAYER");
     finalCB(true, false);
     return;
   }
 
-  this.addLayerTable(function(){
-    layerName = "layer_" + layerName;
+  exports.addLayerTable(function(){
+    console.log("past layer table")
       exports.genericAddToTable("layers", {layerName: layerName}, function(err, rows, fields){
 
-        if(err || !rows){
+        if(err){
+          console.log(err);
           finalCB(err, false);
           return;
         }
-        exports.genericCreateTable(layerName,{result: 1}, function(err,rows){
+        console.log("past add layer to layer table");
+        exports.genericCreateTable(layerTableName,{result: 1}, function(err,rows){
           if(err){
             console.log(err);
             finalCB(err, null);
             return;
           }
-          exports.addForeignKey(layerName, "tweet_id", "tweets", "id", function(){
-            exports.setColumnToUnique(layerName,"tweet_id", function(){
+          console.log("past create layer table");
+          exports.addForeignKey(layerTableName, "tweet_id", "tweets", "id", function(err){
+            if(err){
+              console.log(err);
+            }
+            console.log("past add foreign key");
+            exports.setColumnToUnique(layerTableName,"tweet_id", function(){
               finalCB(null, layerName); //calling here to avoid server timeout
-              exports.getAllTweets(function(err, rows, fields){
-                if(err){
-                  console.log(err);
-                  return;
-                }
-                var count = 0;
-                console.log("LAYER ADD: PULLED TWEETS COUNT: ", rows.length);
-                for(var i = 0; i < rows.length; i++){
+            //   exports.getAllTweets(function(err, rows, fields){
+            //     if(err){
+            //       console.log(err);
+            //       return;
+            //     }
+            //     var count = 0;
+            //     console.log("LAYER ADD: PULLED TWEETS COUNT: ", rows.length);
+            //     for(var i = 0; i < rows.length; i++){
 
-                  exports.filterSingleTweetForLayer(rows[i], layerName, function(count, err,rows){
-                    count++;
-                    if(count % 100 === 0){
-                      console.log("LAYER ADD: PROCESSED ANOTHER 100 TWEETS");
-                    }
-                  }.bind(exports, count));
-                }
-            });
+            //       exports.filterSingleTweetForLayer(rows[i], layerName, function(count, err,rows){
+            //         count++;
+            //         if(count % 100 === 0){
+            //           console.log("LAYER ADD: PROCESSED ANOTHER 100 TWEETS");
+            //         }
+            //       }.bind(exports, count));
+            //     }
+            // });
           });
         });
       });
@@ -353,21 +398,21 @@ exports.addNewLayer = function(layerName, finalCB){
 
 exports.redoLayer = function(layerName, finalCB){
 
-  this.genericDropTable("layer_" + layerName, function(){
+  exports.genericDropTable("layer_" + layerName, function(){
     exports.addLayerTable(layerName, finalCB);
   })
 };
 
 exports.deleteLayer = function(layerName, cb){
-  this.cache.layerList = null;
-  this.db.query("DELETE FROM layers WHERE layerName = ?", [layerName], function(){});
-  this.genericDropTable("layer_"+layerName, cb);
+  theCache.layerList = null;
+  exports.db.query("DELETE FROM layers WHERE layerName = ?", [layerName], function(){});
+  exports.genericDropTable("layer_"+layerName, cb);
 };
 
 
 //============= KEYWORDS ==================
 exports.addKeywordsTable = function(callback){
-  this.cache.keywordsList = null;
+  theCache.keywordsList = null;
   this.genericCreateTable("keywords",{tableName: "tweets_containing_keyword",keyword:"keyword", lastHighestIndexed: 0}, function(){
     exports.setColumnToUnique("keywords","keyword", function(){
       callback();
@@ -376,7 +421,7 @@ exports.addKeywordsTable = function(callback){
 };
 
 exports.addNewKeyword = function(keyword, callback){
-  this.cache.keywordList = null;
+  theCache.keywordList = null;
   this.temp.kObj = {keyword: keyword, tableName: "tweets_containing_" + keyword, lastHighestIndexed: 0};
   this.temp.kCB = {tweets:false};
 
@@ -386,11 +431,11 @@ exports.addNewKeyword = function(keyword, callback){
       exports.genericCreateTable(exports.temp.kObj['tableName'], { }, function(err){
         exports.addForeignKey(exports.temp.kObj['tableName'], "tweet_id", "tweets", "id", function(err){
           callback();//Avoid long delay on server timeout
-          exports.filterALLTweetsByKeyword(exports.temp.kObj.keyword,function(err, rows, fields){
-            if(err){
-              console.log(err);
-            }
-            });
+          // exports.filterALLTweetsByKeyword(exports.temp.kObj.keyword,function(err, rows, fields){
+          //   if(err){
+          //     console.log(err);
+          //   }
+          //   });
           });
         });
       });
@@ -411,17 +456,17 @@ exports.redoKeyword = function(keyword, callbackForTweets){
 };
 
 exports.deleteKeyword = function(keyword, callback){
-  this.cache.keywordList = null;
+  theCache.keywordList = null;
   this.db.query("DELETE FROM keywords WHERE keyword = ?", [keyword], function(){});
   this.genericDropTable("tweets_containing_"+keyword, callback);
 }
 
 exports.getKeywordNames = function(cb){
-  if(this.cache.keywordList){
-    cb(this.cache.keywordList)
+  if(theCache.keywordList){
+    cb(theCache.keywordList)
   }else{
     this.db.query("SELECT keyword FROM keywords", function(err, rows){
-      exports.cache.keywordList = rows;
+      theCache.keywordList = rows;
       cb(rows);
     });
   }
@@ -439,7 +484,7 @@ exports.returnTablesWithColumns = function(finalCB){
   //TABLES WITH COLUMNS IS NOW BREAKING. **** START HERE NEXT TO FIX
 
   this.db.query("SHOW TABLES", function(err, rows){
-    console.log("SHOW TABLES: ", rows);
+
     var tableNames = [];
     if(err){
       console.log(err);
@@ -452,7 +497,7 @@ exports.returnTablesWithColumns = function(finalCB){
         tableNames.push(rows[i][key]);
       }
     }
-    console.log("TABLE NAMES: ", tableNames);
+
 
     var funcs = [];
     for(var i = 0; i < tableNames.length; i++){
@@ -613,7 +658,7 @@ exports.asyncMap = function(funcs, finalCB){
 };
 
 //=============== ADD STUFF ====================
-exports.cache = exports.cache || {};
+var theCache = {cache: true};
 
 exports.genericAddToTable = function(tableName, _listOfObjects, callbackPerAdd, callbackAtEnd){
 var listOfObjects;
@@ -728,9 +773,9 @@ exports.genericDropTable = function(tableName, callback){
       return;
     }
     if(tableName === "layers"){
-      exports.cache.layerList = null;
+      theCache.layerList = null;
     }else if(tableName === "keywords"){
-      exports.cache.keywordList = null;
+      theCache.keywordList = null;
     }
     exports.db.query("DROP TABLE IF EXISTS " + tableName, callback);
   });
@@ -749,10 +794,10 @@ exports.getCurrentDatabaseName = function(cb){
 };
 
 exports.createDatabase = function(name, callback){
-  exports.cache.layerList = null;
-  exports.cache.keywordList = null;
+  theCache.layerList = null;
+  theCache.keywordList = null;
   this.db.query("CREATE DATABASE " + name, function(err, rows, fields){
-    console.log("INSIDE CREATE:", arguments);
+
     if(err){
       console.log(err);
       callback(err, name);
@@ -775,8 +820,8 @@ exports.createDatabase = function(name, callback){
 };
 
 exports.changeToDatabase = function(name, callback){
-  exports.cache.layerList = null;
-  exports.cache.keywordList = null;
+  theCache.layerList = null;
+  theCache.keywordList = null;
   this.db.query("USE " + name, function(err, rows, fields){
     if(!err){
       exports.currDB = name;
@@ -795,8 +840,8 @@ exports.genericDropDatabase = exports.deleteDatabase = function(name, callback){
     callback(err, name);
     return;
   }
-  exports.cache.layerList = null;
-  exports.cache.keywordList = null;
+  theCache.layerList = null;
+  theCache.keywordList = null;
   this.db.query("DROP DATABASE " + name, function(err, rows, fields){
     callback(err, rows, fields);
   });
@@ -824,7 +869,7 @@ exports.genericDescribeTable = function(name, callback){
 
 exports.ADDALLTHETWEETS = function(callback){
 
-  var modForTest = 75;
+  var modForTest = 1;
 
   this.getCurrentDatabaseName(function(name){
     if(name === 'production'){
@@ -839,7 +884,6 @@ exports.ADDALLTHETWEETS = function(callback){
               if(i % modForTest !== 0){
                 continue;
               }
-
             }
           exports.executeFullChainForIncomingTweets([ALL_THE_TEST_TWEETS[i]],function(err, container, fields) {
              if (err) {
@@ -861,37 +905,37 @@ exports.ADDALLTHETWEETS = function(callback){
   });
 };
 
+
 exports.ADDTHEFIVETESTTWEETS = function(callback){
 
   this.getCurrentDatabaseName(function(name){
       if(name === 'production'){
         console.log("can't use test data on production database");
+        callback(false, null);
         return;
       }else{
-        var sendCallback = true;
+        callback(false, true);
         for(var i = 1; i < 6; i++){
+          var eye = i;
           //[{tweet: tweetObj, layers:[layer1resultObj, layer2resultObj}]
-          exports.executeFullChainForIncomingTweets([exports["testTweet" + i]], function(err, container, fields) {
+          setTimeout(function(i){
+          this.executeFullChainForIncomingTweets([this["testTweet" + i]], function(err, container, fields) {
               if (err) {
                 console.log(err);
-                callback(err, container);
                 return;
               } else {
                 exports.io.emit('tweet added', container);
-                if(sendCallback === true){
-                  sendCallback = false;
-                  callback(err, container);
-                }
                 console.log('Tweet id: ' + container[0].tweet.id + " Layers: " + container[0].layers.length);
 
               }
            });
+        }.bind(exports,eye),0);
       }
     }
   });
 };
 
-exports.testTweet1 = {"created_at":"Wed May 20 23:13:04 +0000 2015","id":601163762242981900,"id_str":"601163762242981888","text":"@LanaeBeau_TY 😥😥😥 suck sad happy frowing","source":"<a href=\"http://twitter.com/download/android\" rel=\"nofollow\">Twitter for Android</a>","truncated":false,"in_reply_to_status_id":601160439414857700,"in_reply_to_status_id_str":"601160439414857728","in_reply_to_user_id":277764780,"in_reply_to_user_id_str":"277764780","in_reply_to_screen_name":"LanaeBeau_TY","user":{"id":3252488177,"id_str":"3252488177","name":"●○●○♡","screen_name":"2411Clark","location":"","url":null,"description":"I'm dope just follow .","protected":false,"verified":false,"followers_count":7,"friends_count":29,"listed_count":0,"favourites_count":11,"statuses_count":40,"created_at":"Wed May 13 19:04:37 +0000 2015","utc_offset":null,"time_zone":null,"geo_enabled":false,"lang":"en","contributors_enabled":false,"is_translator":false,"profile_background_color":"C0DEED","profile_background_image_url":"http://abs.twimg.com/images/themes/theme1/bg.png","profile_background_image_url_https":"https://abs.twimg.com/images/themes/theme1/bg.png","profile_background_tile":false,"profile_link_color":"0084B4","profile_sidebar_border_color":"C0DEED","profile_sidebar_fill_color":"DDEEF6","profile_text_color":"333333","profile_use_background_image":true,"profile_image_url":"http://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_image_url_https":"https://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_banner_url":"https://pbs.twimg.com/profile_banners/3252488177/1431961882","default_profile":true,"default_profile_image":false,"following":null,"follow_request_sent":null,"notifications":null},"geo":null,"coordinates":null,"place":null,"contributors":null,"retweet_count":0,"favorite_count":0,"entities":{"hashtags":[],"trends":[],"urls":[],"user_mentions":[{"screen_name":"LanaeBeau_TY","name":"tyisha.","id":277764780,"id_str":"277764780","indices":[0,13]}],"symbols":[]},"favorited":false,"retweeted":false,"possibly_sensitive":false,"filter_level":"low","lang":"en","timestamp_ms":"1432163584658"};
+exports.testTweet1 = {"created_at":"Wed May 20 23:13:04 +0000 2015","id":601163762242981900,"id_str":"601163762242981888","text":"@LanaeBeau_TY 😥😥😥 suck sad happy frowing you are awesome obama yay","source":"<a href=\"http://twitter.com/download/android\" rel=\"nofollow\">Twitter for Android</a>","truncated":false,"in_reply_to_status_id":601160439414857700,"in_reply_to_status_id_str":"601160439414857728","in_reply_to_user_id":277764780,"in_reply_to_user_id_str":"277764780","in_reply_to_screen_name":"LanaeBeau_TY","user":{"id":3252488177,"id_str":"3252488177","name":"●○●○♡","screen_name":"2411Clark","location":"","url":null,"description":"I'm dope just follow .","protected":false,"verified":false,"followers_count":7,"friends_count":29,"listed_count":0,"favourites_count":11,"statuses_count":40,"created_at":"Wed May 13 19:04:37 +0000 2015","utc_offset":null,"time_zone":null,"geo_enabled":false,"lang":"en","contributors_enabled":false,"is_translator":false,"profile_background_color":"C0DEED","profile_background_image_url":"http://abs.twimg.com/images/themes/theme1/bg.png","profile_background_image_url_https":"https://abs.twimg.com/images/themes/theme1/bg.png","profile_background_tile":false,"profile_link_color":"0084B4","profile_sidebar_border_color":"C0DEED","profile_sidebar_fill_color":"DDEEF6","profile_text_color":"333333","profile_use_background_image":true,"profile_image_url":"http://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_image_url_https":"https://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_banner_url":"https://pbs.twimg.com/profile_banners/3252488177/1431961882","default_profile":true,"default_profile_image":false,"following":null,"follow_request_sent":null,"notifications":null},"geo":null,"coordinates":null,"place":null,"contributors":null,"retweet_count":0,"favorite_count":0,"entities":{"hashtags":[],"trends":[],"urls":[],"user_mentions":[{"screen_name":"LanaeBeau_TY","name":"tyisha.","id":277764780,"id_str":"277764780","indices":[0,13]}],"symbols":[]},"favorited":false,"retweeted":false,"possibly_sensitive":false,"filter_level":"low","lang":"en","timestamp_ms":"1432163584658"};
 exports.testTweet2 = {"created_at":"Wed May 20 23:15:04 +0000 2015","id":501163762242981901,"id_str":"601163762242981889","text":"@LanaeBeau_TY well you are the worst thing in the world","source":"<a href=\"http://twitter.com/download/android\" rel=\"nofollow\">Twitter for Android</a>","truncated":false,"in_reply_to_status_id":601160439414857700,"in_reply_to_status_id_str":"601160439414857728","in_reply_to_user_id":277764780,"in_reply_to_user_id_str":"277764780","in_reply_to_screen_name":"LanaeBeau_TY","user":{"id":3252488177,"id_str":"3252488177","name":"●○●○♡","screen_name":"2411Clark","location":"","url":null,"description":"I'm dope just follow .","protected":false,"verified":false,"followers_count":7,"friends_count":29,"listed_count":0,"favourites_count":11,"statuses_count":40,"created_at":"Wed May 13 19:04:37 +0000 2015","utc_offset":null,"time_zone":null,"geo_enabled":false,"lang":"en","contributors_enabled":false,"is_translator":false,"profile_background_color":"C0DEED","profile_background_image_url":"http://abs.twimg.com/images/themes/theme1/bg.png","profile_background_image_url_https":"https://abs.twimg.com/images/themes/theme1/bg.png","profile_background_tile":false,"profile_link_color":"0084B4","profile_sidebar_border_color":"C0DEED","profile_sidebar_fill_color":"DDEEF6","profile_text_color":"333333","profile_use_background_image":true,"profile_image_url":"http://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_image_url_https":"https://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_banner_url":"https://pbs.twimg.com/profile_banners/3252488177/1431961882","default_profile":true,"default_profile_image":false,"following":null,"follow_request_sent":null,"notifications":null},"geo":null,"coordinates":null,"place":null,"contributors":null,"retweet_count":0,"favorite_count":0,"entities":{"hashtags":[],"trends":[],"urls":[],"user_mentions":[{"screen_name":"LanaeBeau_TY","name":"tyisha.","id":277764780,"id_str":"277764780","indices":[0,13]}],"symbols":[]},"favorited":false,"retweeted":false,"possibly_sensitive":false,"filter_level":"low","lang":"en","timestamp_ms":"1432163584658"};
 exports.testTweet3 = {"created_at":"Wed May 20 23:16:04 +0000 2015","id":601163762242981902,"id_str":"601163762242981880","text":"@LanaeBeau_TY super duper you are awesome","source":"<a href=\"http://twitter.com/download/android\" rel=\"nofollow\">Twitter for Android</a>","truncated":false,"in_reply_to_status_id":601160439414857700,"in_reply_to_status_id_str":"601160439414857728","in_reply_to_user_id":277764780,"in_reply_to_user_id_str":"277764780","in_reply_to_screen_name":"LanaeBeau_TY","user":{"id":3252488177,"id_str":"3252488177","name":"●○●○♡","screen_name":"2411Clark","location":"","url":null,"description":"I'm dope just follow .","protected":false,"verified":false,"followers_count":7,"friends_count":29,"listed_count":0,"favourites_count":11,"statuses_count":40,"created_at":"Wed May 13 19:04:37 +0000 2015","utc_offset":null,"time_zone":null,"geo_enabled":false,"lang":"en","contributors_enabled":false,"is_translator":false,"profile_background_color":"C0DEED","profile_background_image_url":"http://abs.twimg.com/images/themes/theme1/bg.png","profile_background_image_url_https":"https://abs.twimg.com/images/themes/theme1/bg.png","profile_background_tile":false,"profile_link_color":"0084B4","profile_sidebar_border_color":"C0DEED","profile_sidebar_fill_color":"DDEEF6","profile_text_color":"333333","profile_use_background_image":true,"profile_image_url":"http://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_image_url_https":"https://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_banner_url":"https://pbs.twimg.com/profile_banners/3252488177/1431961882","default_profile":true,"default_profile_image":false,"following":null,"follow_request_sent":null,"notifications":null},"geo":null,"coordinates":null,"place":null,"contributors":null,"retweet_count":0,"favorite_count":0,"entities":{"hashtags":[],"trends":[],"urls":[],"user_mentions":[{"screen_name":"LanaeBeau_TY","name":"tyisha.","id":277764780,"id_str":"277764780","indices":[0,13]}],"symbols":[]},"favorited":false,"retweeted":false,"possibly_sensitive":false,"filter_level":"low","lang":"en","timestamp_ms":"1432163584658"};
 exports.testTweet4 = {"created_at":"Wed May 20 23:17:04 +0000 2015","id":601163762242981903,"id_str":"601163762242981881","text":"@LanaeBeau_TY Hilary Clinton is the best","source":"<a href=\"http://twitter.com/download/android\" rel=\"nofollow\">Twitter for Android</a>","truncated":false,"in_reply_to_status_id":601160439414857700,"in_reply_to_status_id_str":"601160439414857728","in_reply_to_user_id":277764780,"in_reply_to_user_id_str":"277764780","in_reply_to_screen_name":"LanaeBeau_TY","user":{"id":3252488177,"id_str":"3252488177","name":"●○●○♡","screen_name":"2411Clark","location":"","url":null,"description":"I'm dope just follow .","protected":false,"verified":false,"followers_count":7,"friends_count":29,"listed_count":0,"favourites_count":11,"statuses_count":40,"created_at":"Wed May 13 19:04:37 +0000 2015","utc_offset":null,"time_zone":null,"geo_enabled":false,"lang":"en","contributors_enabled":false,"is_translator":false,"profile_background_color":"C0DEED","profile_background_image_url":"http://abs.twimg.com/images/themes/theme1/bg.png","profile_background_image_url_https":"https://abs.twimg.com/images/themes/theme1/bg.png","profile_background_tile":false,"profile_link_color":"0084B4","profile_sidebar_border_color":"C0DEED","profile_sidebar_fill_color":"DDEEF6","profile_text_color":"333333","profile_use_background_image":true,"profile_image_url":"http://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_image_url_https":"https://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_banner_url":"https://pbs.twimg.com/profile_banners/3252488177/1431961882","default_profile":true,"default_profile_image":false,"following":null,"follow_request_sent":null,"notifications":null},"geo":null,"coordinates":null,"place":null,"contributors":null,"retweet_count":0,"favorite_count":0,"entities":{"hashtags":[],"trends":[],"urls":[],"user_mentions":[{"screen_name":"LanaeBeau_TY","name":"tyisha.","id":277764780,"id_str":"277764780","indices":[0,13]}],"symbols":[]},"favorited":false,"retweeted":false,"possibly_sensitive":false,"filter_level":"low","lang":"en","timestamp_ms":"1432163584658"};

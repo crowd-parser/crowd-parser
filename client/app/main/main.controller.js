@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('parserApp')
-  .controller('MainCtrl', function ($http, $scope, $state, $location, Header, Twitter) {
+  .controller('MainCtrl', function ($http, $scope, $state, $location, Landing, Twitter) {
 
     Twitter.getTweetsForKeyword('Obama', function(data) {
       console.log(data);
@@ -10,7 +10,7 @@ angular.module('parserApp')
   // =========== Setup ============= //
 
   // Makes the header rotate in 3D
-  Header.init();
+  Landing.init();
 
   // "socket" is used for socket.io events
   var socket = Twitter.socket;
@@ -59,6 +59,7 @@ angular.module('parserApp')
   };
 
   $scope.goToDisplay = function () {
+    $('.tweets-cube').remove();
     $location.path('/3dstream');
   };
 

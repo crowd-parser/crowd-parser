@@ -6,7 +6,7 @@ angular.module('parserApp.twitterService', [])
 
   // ========== Setup =============== //
 
-  var socket = io();
+  var socket = $window.io();
 
   var getTweetsForKeyword = function(keyword, cb) {
     $http.get('/database/getTweetsForKeyword')

@@ -29,7 +29,7 @@ angular.module('parserApp.headerService', [])
 
     // ======== PANORAMA ========= //
 
-    var camera, scene, renderer;
+    var cameraMain, sceneMain, rendererMain;
     var geometry, material, mesh;
     var target = new THREE.Vector3();
     var lon = 90, lat = 0;
@@ -38,8 +38,8 @@ angular.module('parserApp.headerService', [])
     init();
     animate();
     function init() {
-      camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
-      scene = new THREE.Scene();
+      cameraMain = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
+      sceneMain = new THREE.Scene();
       var sides = [
         {
           url: '../../assets/images/tweets-3d.png',
@@ -73,7 +73,7 @@ angular.module('parserApp.headerService', [])
         }
       ];
       for ( var i = 0; i < sides.length; i ++ ) {
-        console.log(i);
+        
         var side = sides[ i ];
         var element = document.createElement( 'img' );
         element.className = 'tweets-cube';
@@ -82,32 +82,34 @@ angular.module('parserApp.headerService', [])
         var object = new THREE.CSS3DObject( element );
         object.position.fromArray( side.position );
         object.rotation.fromArray( side.rotation );
-        scene.add( object );
+        sceneMain.add( object );
       }
-      renderer = new THREE.CSS3DRenderer();
-      renderer.setSize( window.innerWidth, window.innerHeight );
-      document.body.appendChild( renderer.domElement );
-      //
+      rendererMain = new THREE.CSS3DRenderer();
+      rendererMain.setSize( window.innerWidth, window.innerHeight );
+      document.getElementById('tweets-cube').appendChild( rendererMain.domElement );
+      
       document.addEventListener( 'mousedown', onDocumentMouseDown, false );
       document.addEventListener( 'touchstart', onDocumentTouchStart, false );
       document.addEventListener( 'touchmove', onDocumentTouchMove, false );
       window.addEventListener( 'resize', onWindowResize, false );
 
       $('.click-to-begin').on('click', function() {
+        cancelAnimationFrame(mainAnimationFrame);
         $('.tweets-cube').remove();
-        camera = null;
-        scene = null;
-        renderer = null;
-        document.addEventListener( 'mousedown', null, false );
-        document.addEventListener( 'touchstart', null, false );
-        document.addEventListener( 'touchmove', null, false );
-        window.addEventListener( 'resize', null, false );
+        cameraMain = null;
+        sceneMain = null;
+        rendererMain = null;
+
+        document.removeEventListener( 'mousedown', onDocumentMouseDown, false );
+        document.removeEventListener( 'touchstart', onDocumentTouchStart, false );
+        document.removeEventListener( 'touchmove', onDocumentTouchMove, false );
+        window.removeEventListener('resize', onWindowResize, false);
       });
     }
     function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize( window.innerWidth, window.innerHeight );
+      cameraMain.aspect = window.innerWidth / window.innerHeight;
+      cameraMain.updateProjectionMatrix();
+      rendererMain.setSize( window.innerWidth, window.innerHeight );
     }
     function onDocumentMouseDown( event ) {
       event.preventDefault();
@@ -125,8 +127,8 @@ angular.module('parserApp.headerService', [])
       document.removeEventListener( 'mouseup', onDocumentMouseUp );
     }
     function onDocumentMouseWheel( event ) {
-      camera.fov -= event.wheelDeltaY * 0.05;
-      camera.updateProjectionMatrix();
+      cameraMain.fov -= event.wheelDeltaY * 0.05;
+      cameraMain.updateProjectionMatrix();
     }
     function onDocumentTouchStart( event ) {
       event.preventDefault();
@@ -143,16 +145,16 @@ angular.module('parserApp.headerService', [])
       touchY = touch.screenY;
     }
     function animate() {
-      requestAnimationFrame( animate );
-      lon +=  0.1;
-      lat = Math.max( - 85, Math.min( 85, lat ) );
-      phi = THREE.Math.degToRad( 75 - lat );
+      mainAnimationFrame = requestAnimationFrame( animate );
+      lon +=  0.2;
+      lat = Math.max( - 75, Math.min( 75, lat ) );
+      phi = THREE.Math.degToRad( 64 - lat );
       theta = THREE.Math.degToRad( lon );
       target.x = Math.sin( phi ) * Math.cos( theta );
       target.y = Math.cos( phi );
       target.z = Math.sin( phi ) * Math.sin( theta );
-      camera.lookAt( target );
-      renderer.render( scene, camera );
+      cameraMain.lookAt( target );
+      rendererMain.render( sceneMain, cameraMain );
     }
 
   };

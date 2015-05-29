@@ -1,8 +1,8 @@
 'use strict';
 
 angular.module('parserApp')
-  .controller('AboutCtrl', function (Header) {
+  .controller('AboutCtrl', function (Landing) {
 
-    Header.init();
+    Landing.init();
     
   });

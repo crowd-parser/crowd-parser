@@ -6,24 +6,15 @@
 
   <div id="admin_database_controls" class="box">
 
-          <div class="admin_database_section">
-            <form ng-submit="createDatabase()">
-              <input  class="form-control" ng-model="createDatabaseInput" placeholder="Database Name">
-              <button class="btn btn-success">Create Database</button>
-            </form>
-          </div><div class="admin_database_section">
-          <form ng-submit="changeToDatabase()">
-            <input  class="form-control" ng-model="changeToDatabaseInput" placeholder="Database Name">
-            <button class="btn btn-primary">Select Database</button>
-          </form>
-        </div><div class="admin_database_section">
-        <form ng-submit="deleteDatabase()">
-          <input  class="form-control" ng-model="deleteDatabaseInput" placeholder="Database Name">
-          <button class="btn btn-danger">Delete Database</button>
-        </form>
-        </div>
-  </div>
+    <input  class="form-control" ng-model="databaseName" placeholder="Database Name">
+    <button ng-click="createDatabase()" class="btn btn-success">Create Database</button>
 
+    <button ng-click="changeToDatabase()" class="btn btn-primary">Select Database</button>
+
+    <button ng-click="deleteDatabase()" class="btn btn-danger">Delete Database</button>
+
+  </div>
+  <div id="admin_status"><div id="admin_status_left">{{leftStatus}}</div><div id="admin_status_right">{{rightStatus}}</div></div>
   <div ng-show="currDB">
         <div id="admin_keywords_display" class="box">
                <button class="btn btn-info" ng-click="showAllKeywords()">Refresh Keywords</button>
@@ -38,10 +29,10 @@
        </div><div id="admin_tables_display" class="box">
            <div class="adminSubSection"><button class="btn btn-info" ng-click="getTables()">Refresh Tables</button></div>
           <div ng-repeat="table in dbtables" class="extendX">
-            <button class="btn btn-info"  ng-click="selectTable(table[0])">{{table}}</button>
+            <button class="btn btn-primary"  ng-click="selectTable(table[0])">{{table}}</button>
           </div>
       </div><div id="admin_selectedTable_display" class="box">
-          <div>Selected Table: {{selectedTableName}}:Size:{{tableSize}}</div>
+          <div class="selectedTableHeader">Selected Table: &nbsp{{selectedTableName}}&nbsp &nbsp Size:&nbsp{{tableSize}}</div>
           <div ng-repeat="row in selectedTable | limitTo:100">
             <div class="extendX">{{row}}</div>
           </div>

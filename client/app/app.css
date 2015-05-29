@@ -47,6 +47,7 @@ body {
 }
 
 #adminPanelHolder{
+    min-width: 800px;
     position: relative;
     width: 100%;
     height: 100%;
@@ -90,31 +91,40 @@ body {
     display: inline-block;
     width: 50%;
     height: 300px;
+    background-color: #777777;
 
 }
 #admin_tables_display{
     display: inline-block;
     width: 50%;
     height: 300px;
+    background-color: #888888;
 
 }
 
 #admin_selectedTable_display{
     display: inline-block;
-
+background-color: #999999;
     width: 50%;
     height: 300px;
 }
 #admin_database_controls{
     display: inline-block;
-
-    width: 100%;
+    width: 50%;
     height: auto;
     vertical-align: top;
 }
 .admin_database_section{
     display:inline-block;
     width: 33.333333%;
+}
+.admin_database_controls input{
+    width: 100%;
+
+}
+.admin_database_controls button{
+    display: inline-block;
+    width:33%;
 }
 .box{
     border-radius: 4px;
@@ -199,6 +209,17 @@ html .download-status{
     text-align: center;
 }
 
+#admin_tests2_display{
+    display: inline-block;
+
+    width: 33%;
+    background-color: #999999;
+    color:white;
+    height: 200px;
+    vertical-align: bottom;
+    text-align: center;
+}
+
 #admin_stream_display{
     display: inline-block;
 
@@ -208,4 +229,35 @@ html .download-status{
     height: 200px;
 
 }
-
+.selectedTableHeader{
+    display: inline-block;
+    width: 100%;
+    background-color: #9999aa;
+    color: white;
+    padding: .5em;
+    border-radius: 4px;
+    text-align: center;
+}
+#admin_status{
+    display:inline-block;
+    width: 100%;
+    height: 40px;
+    background-color: white;
+    border-radius: 4px;
+}
+#admin_status_left{
+    display: inline-block;
+    width: 50%;
+    height: 100%;
+    overflow-y: scroll;
+    background-color: #888888;
+    border-radius: 4px;
+}
+#admin_status_right{
+    display: inline-block;
+    width:50%;
+    height:100%;
+    overflow-y: scroll;
+    background-color: #666666;
+    border-radius: 4px;
+}

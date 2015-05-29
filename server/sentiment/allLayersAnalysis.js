@@ -1,5 +1,6 @@
 var baseLayerAnalysis = require('./baseWordsLayer/baseWordsLayerAnalysis');
 var emoticonLayerAnalysis = require('./emoticonLayer/emoticonLayerAnalysis');
+var slangLayerAnalysis = require('./slangLayer/slangLayerAnalysis');
 
   var allLayersAnalysis = {
 
@@ -30,6 +31,9 @@ var emoticonLayerAnalysis = require('./emoticonLayer/emoticonLayerAnalysis');
 
           // Get emoticon layer analysis result object; includes list of matching emojis and score
           emoticonLayerResults: emoticonLayerAnalysis(tweet.text),
+
+          // Get slang layer analysis result object; includes list of matching slang and score
+          slangLayerResults: slangLayerAnalysis(tweet.text),
 
           // Combined score of all layers
           overallResults: {}
@@ -70,6 +74,9 @@ var emoticonLayerAnalysis = require('./emoticonLayer/emoticonLayerAnalysis');
           // Get emoticon layer analysis result object; includes list of matching emojis and score
           emoticonLayerResults: emoticonLayerAnalysis(string),
 
+          // Get slang layer analysis result object; includes list of matching slang and score
+          slangLayerResults: slangLayerAnalysis(string),
+
           // Combined score of all layers
           overallResults: {}
         };
@@ -85,5 +92,7 @@ var emoticonLayerAnalysis = require('./emoticonLayer/emoticonLayerAnalysis');
       return results;
     }
   };
-
 module.exports = allLayersAnalysis;
+
+// For testing
+// console.log(allLayersAnalysis.tweetsArray([{text: 'I love this omg fml :) >< terrible lol rofl', user: {'screen_name': 'michael', 'followers_count': 234}}]).tweetsWithAnalyses[0].slangLayerResults);

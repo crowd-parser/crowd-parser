@@ -29,28 +29,16 @@ angular.module('parserApp.display3dService', [])
     return elLo;
   };
 
-  var tweetMaterialNeutral = new THREE.MeshBasicMaterial( { color: 'rgb(225,225,225)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
-  tweetMaterialNeutral.transparent = true;
-  tweetMaterialNeutral.opacity = 0.5;
-
-  var tweetMaterialPos = new THREE.MeshBasicMaterial( { color: 'rgb(0,20,190)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
-  tweetMaterialPos.transparent = true;
-  tweetMaterialPos.opacity = 0.5;
-
-  var tweetMaterialNeg = new THREE.MeshBasicMaterial( { color: 'rgb(225,0,0)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
-  tweetMaterialNeg.transparent = true;
-  tweetMaterialNeg.opacity = 0.5;
-
-  var makeLoResMesh = function (layersSeparated, elData) {
+  var makeLoResMesh = function (layersSeparated, elData, layerObj) {
     var loGeo = new THREE.PlaneBufferGeometry(140, 140);
     var loMesh;
     var score = +elData.score.split(': ')[1]
     if (score > 0) {
-      loMesh = new THREE.Mesh(loGeo, tweetMaterialPos);
+      loMesh = new THREE.Mesh(loGeo, layerObj.tweetMaterialPos);
     } else if (score < 0) {
-      loMesh = new THREE.Mesh(loGeo, tweetMaterialNeg);
+      loMesh = new THREE.Mesh(loGeo, layerObj.tweetMaterialNeg);
     } else {
-      loMesh = new THREE.Mesh(loGeo, tweetMaterialNeutral);
+      loMesh = new THREE.Mesh(loGeo, layerObj.tweetMaterialNeutral);
     }
     //elData.baseBGColorRGB;
     return loMesh;
@@ -81,7 +69,7 @@ angular.module('parserApp.display3dService', [])
     }
   };
 
-  var makeTweetElement = function (layersSeparated, elData, scope) {
+  var makeTweetElement = function (layersSeparated, elData, scope, layerObj) {
 
       var tweet = document.createElement( 'div' );
       tweet.className = 'tweet-3d';
@@ -319,7 +307,8 @@ angular.module('parserApp.display3dService', [])
   var sceneCSS, sceneGL, camera, rendererCSS, rendererGL, controls, prevCameraPosition;
 
   var layersSeparated;
-  var layers;
+  var layers; // visible layers
+  var allLayers = {};
   var ribbonHeight;
   var scope;
 
@@ -341,6 +330,31 @@ angular.module('parserApp.display3dService', [])
   var yStart = 300;
   var xSpacing = 320;
   var xStart = -800;
+
+  var updateLayers = function (layersVisible) {
+    console.log(JSON.stringify(layersVisible));
+    // uiLayer is a layer title
+    for (var uiLayer in layersVisible) {
+      // if there is a hidden layer that should be visible,
+      // toggle on visible and put it in layers
+      if (layersVisible[uiLayer].viz && !allLayers[uiLayer].visible) {
+        allLayers[uiLayer].visible = true;
+        layers.push(allLayers[uiLayer].layer);
+        showLayer(layers.length-1);
+      } else if (!layersVisible[uiLayer].viz && allLayers[uiLayer].visible) {
+      // if there is a visible layer that should be hidden,
+      // toggle off visible and splice it out of layers
+        allLayers[uiLayer].visible = false;
+        layers.forEach(function (layer, i) {
+          if (layer.title === uiLayer) {
+            hideLayer(i);
+            layers.splice(i, 1);
+          }
+        });
+      }
+    }
+    console.log(layers);
+  };
 
   var autoScrollToggle = function () {
     neverAutoScroll = !neverAutoScroll;
@@ -404,13 +418,13 @@ angular.module('parserApp.display3dService', [])
 
       var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, x, y, z );
       if (tweetDistance > 3000) {
-        object = displayHelpers.makeLoResMesh(layersSeparated, elData);
+        object = displayHelpers.makeLoResMesh(layersSeparated, elData, layerObj);
         object.position.x = x;
         object.position.y = y;
         object.position.z = z;
         sceneGL.add( object );
       } else {
-        tweet = displayHelpers.makeTweetElement(layersSeparated, elData, scope);
+        tweet = displayHelpers.makeTweetElement(layersSeparated, elData, scope, layerObj);
 
         object = new THREE.CSS3DObject( tweet );
         object.position.x = x;
@@ -424,9 +438,6 @@ angular.module('parserApp.display3dService', [])
     });
 
   };
-  var ribbonMaterial = new THREE.MeshBasicMaterial( { color: 'rgb(0,132,180)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
-  ribbonMaterial.transparent = true;
-  ribbonMaterial.opacity = 0.5;
 
   var makeTweetLayer = function(layerResultsProp, layerTitle, z) {
     var layerObj = {};
@@ -434,6 +445,22 @@ angular.module('parserApp.display3dService', [])
     layerObj.resultsName = layerResultsProp;
     layerObj.title = layerTitle;
     layerObj.z = z;
+
+    layerObj.tweetMaterialNeutral = new THREE.MeshBasicMaterial( { color: 'rgb(225,225,225)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
+    layerObj.tweetMaterialNeutral.transparent = true;
+    layerObj.tweetMaterialNeutral.opacity = 0.5;
+
+    layerObj.tweetMaterialPos = new THREE.MeshBasicMaterial( { color: 'rgb(0,20,190)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
+    layerObj.tweetMaterialPos.transparent = true;
+    layerObj.tweetMaterialPos.opacity = 0.5;
+
+    layerObj.tweetMaterialNeg = new THREE.MeshBasicMaterial( { color: 'rgb(225,0,0)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
+    layerObj.tweetMaterialNeg.transparent = true;
+    layerObj.tweetMaterialNeg.opacity = 0.5;
+
+    var ribbonMaterial = new THREE.MeshBasicMaterial( { color: 'rgb(0,132,180)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
+    ribbonMaterial.transparent = true;
+    ribbonMaterial.opacity = 0.5;
 
     var ribbonGeo = new THREE.PlaneBufferGeometry( 1, ribbonHeight, 2, 2 );
     $window.ribbonGeo = ribbonGeo;
@@ -444,6 +471,7 @@ angular.module('parserApp.display3dService', [])
 
     sceneGL.add( ribbonMesh );
     layerObj.ribbonMesh = ribbonMesh;
+    layerObj.ribbonMaterial = ribbonMaterial;
 
     // var ribbon = document.createElement('div');
     // ribbon.style.height = ribbonHeight + 'px';
@@ -453,6 +481,7 @@ angular.module('parserApp.display3dService', [])
     var layerTitleMaterial = new THREE.MeshBasicMaterial( { color: 'rgb(0,150,210)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
     layerTitleMaterial.transparent = true;
     layerTitleMaterial.opacity = 0.5;
+
     var textGeom = new THREE.TextGeometry( layerTitle + ' layer', {
       size: (12*rows),
       font: 'droid sans', // Must be lowercase!
@@ -471,7 +500,34 @@ angular.module('parserApp.display3dService', [])
 
     //layerObj.ribbonEl = ribbon;
 
+    // stores all layers (hidden and visible) and their current visibility
+    allLayers[layerObj.title] = {visible: true, layer: layerObj};
+    // stores visible layers
     layers.push(layerObj);
+  };
+
+  var hideLayer = function (layerIndex) {
+    // hide tweets
+    layers[layerIndex].tweetMaterialNeg.opacity = 0;
+    layers[layerIndex].tweetMaterialNeutral.opacity = 0;
+    layers[layerIndex].tweetMaterialPos.opacity = 0;
+    //layers[layerIndex].tweets;
+    // hide ribbon mesh
+    layers[layerIndex].ribbonMaterial.opacity = 0;
+    // hide layer title
+    layers[layerIndex].titleMaterial.opacity = 0;
+  };
+
+  var showLayer = function (layerIndex) {
+    // show tweets
+    layers[layerIndex].tweetMaterialNeg.opacity = 0.5;
+    layers[layerIndex].tweetMaterialNeutral.opacity = 0.5;
+    layers[layerIndex].tweetMaterialPos.opacity = 0.5;
+    //layers[layerIndex].tweets;
+    // show ribbon mesh
+    layers[layerIndex].ribbonMaterial.opacity = 0.5;
+    // show layer title
+    layers[layerIndex].titleMaterial.opacity = 0.5;
   };
 
   var render = function() {
@@ -559,6 +615,12 @@ angular.module('parserApp.display3dService', [])
     }
   };
 
+  var makeLayers = function () {
+    makeTweetLayer('baseLayerResults', 'word', frontLayerZ);
+    makeTweetLayer('emoticonLayerResults', 'emoji', frontLayerZ - layerSpacing);
+    scope.allLayers = allLayers;
+  };
+
   var init = function(context, passedScope) {
     scope = passedScope;
     console.log(context);
@@ -631,9 +693,7 @@ angular.module('parserApp.display3dService', [])
       xStart = 0 - (displayHelpers.getDisplayWidthAtPoint(camera,0,0,0) / 4);
     }
 
-    makeTweetLayer('baseLayerResults', 'word', frontLayerZ);
-    makeTweetLayer('emoticonLayerResults', 'emoji', frontLayerZ - layerSpacing);
-
+    makeLayers();
 
     addButtonEvent('separate-3d', 'click', function() {
       if (!layersSeparated) {
@@ -693,7 +753,8 @@ angular.module('parserApp.display3dService', [])
     makeTweetLayer: makeTweetLayer,
     init: init,
     animate: animate,
-    autoScrollToggle: autoScrollToggle
+    autoScrollToggle: autoScrollToggle,
+    updateLayers: updateLayers
   };
 }]);
   

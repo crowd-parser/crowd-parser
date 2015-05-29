@@ -229,6 +229,47 @@ canvas {  }
   background-color: rgba(0,190,255,0.75);
 }
 
+.layer-menu {
+  position: relative;
+  width: 200px;
+  color: rgba(127,220,255,0.75);
+  background: rgba(0,40,50,0.75);
+  outline: 1px solid rgba(0,200,255,0.75);
+  border: 0px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.layer-menu table {
+  width: 100%;
+}
+.layer-menu-title {
+  position: relative;
+  width: 100%;
+  color: rgba(127,220,255,0.75);
+  background: rgba(0,40,50,0.75);
+}
+.layer-menu-title:hover {
+  background-color: rgba(0,120,160,0.75);
+  color: rgba(180,220,255,1);
+}
+.layer-menu-title:active {
+  color: #000000;
+  background-color: rgba(0,190,255,0.75);
+}
+
+.layer-menu td {
+  padding: 0 5px;
+}
+
+.layer-menu-item {
+  color: rgba(127,220,255,0.75);
+  background: rgba(0,40,50,0.75);
+  outline: 1px solid rgba(0,200,255,0.75);
+  border: 0px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
 .arrow-3d .button-3d {
   margin: auto;
   position: absolute;

@@ -9,6 +9,11 @@ angular.module('parserApp')
     $scope.numTweetsToGet = 400;
     $scope.receivingTweets = 'OFF';
     $scope.clientID = undefined;
+    $scope.showLayerMenu = false;
+    $scope.allLayers = {};
+    $scope.layers = [];
+    $scope.radio = {};
+    $scope.layersVisible = {};
     var runFakeTweets = false;
     var intervalID;
 
@@ -21,6 +26,43 @@ angular.module('parserApp')
     }
 
     Display3d.animate();
+
+    // fake layers for test
+    // $scope.layers = [
+    //   {title: 'word'},
+    //   {title: 'emoji'},
+    //   {title: 'cat'},
+    //   {title: 'dog'}
+    // ];
+
+    // check all boxes on
+    for (var layer in $scope.allLayers) {
+      $scope.layers.push($scope.allLayers[layer].layer);
+    }
+
+    $scope.layers.forEach(function (layer) {
+      $scope.layersVisible[layer.title] = { viz: true };
+    });
+
+    $scope.clearSolo = function () {
+      // clear solo
+      for (var layer in $scope.layersVisible) {
+        $scope.layersVisible[layer].solo = false;
+      }
+      Display3d.updateLayers($scope.layersVisible);
+    };
+
+    $scope.soloLayer = function (layerToSolo) {
+      for (var layer in $scope.layersVisible) {
+        if (layer !== layerToSolo) {
+          $scope.layersVisible[layer].viz = false;
+          $scope.layersVisible[layer].solo = false;
+        } else {
+          $scope.layersVisible[layer].viz = true;
+        }
+      }
+      Display3d.updateLayers($scope.layersVisible);
+    };
 
     // stops stream if user leaves page
     // two options, option 1: user navigates away traditionally (close browser,
@@ -78,6 +120,10 @@ angular.module('parserApp')
         $scope.autoScroll = 'ON';
       }
     };
+
+    $scope.toggleLayerMenu = function () {
+      $scope.showLayerMenu = !$scope.showLayerMenu;
+    }
 
     $scope.streamFakeTweets = function () {
       // stop any existing stream

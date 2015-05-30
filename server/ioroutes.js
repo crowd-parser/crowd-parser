@@ -155,8 +155,34 @@ module.exports = function(io, T) {
 
 // var tweet = 'If this doesn\'t make you smile, I don\'t know what will: http://youtu.be/RoQwFxEkW2E  👶😂';
 
-// console.log(emojiConverter.convertEmojisInTweet(tweet));
+// console.log(emojiConverter.convertEmojisInTweet('u\'ve been our inspiration for the past 19 years! Wishing you a wonderful day! 😃😘🎁🎉🎈🎂🍸'));
 
 // var convertedTweet = 'If this doesn\'t make you smile, I don\'t know what will: http://youtu.be/RoQwFxEkW2E  <%-1f476%><%-1f602%>';
 
-// console.log(emojiConverter.restoreEmojisInTweet(convertedTweet));
+// console.log(emojiConverter.restoreEmojisInTweet('u\'ve been our inspiration for the past 19 years! Wishing you a wonderful day! <%-1f603%><%-1f618%><%-1f381%><%-1f389%><%-1f388%><%-1f382%><%-1f378%>'));
+
+// streamDownload.on('tweet', function(tweet) {
+
+//   if (tweet.lang === 'en') {
+//     count++;
+//     if(count > 10000000) count = 2;
+//     if (count === 1 || count % rate === 0) {
+//       if(!db || !db.isLive){
+//         console.log("WAITING FOR DB");
+//         return;
+//     }
+
+//     tweet.text = emojiConverter.convertEmojisInTweet(tweet.text);
+//       db.genericAddToTable('tweets', [tweet], function(err, container, fields) {
+//         if (err) {
+//           console.log(err);
+//           return;
+//         } else {
+//           // console.log("EMIT tweet");
+//           // exports.io.emit('tweet added', container);
+//           console.log('TWEET ADDED', tweet.text);
+//         }
+//       });
+//     }
+//   }
+// });

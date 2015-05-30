@@ -156,6 +156,14 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB){
       //we ignore results here
       exports.socket.emit('tweet added', tweetPackages);
 
+
+      for(var key in tweetPackages){
+        var thing = tweetPackages[key].layers.Emoticons;
+
+          console.log("||||||||||||||||EMOJI:", thing);
+
+      }
+
       console.log("<<<<=============CLIENT EMIT==============>>>");
       if(finalCB){
         finalCB(false, true);;

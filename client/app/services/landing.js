@@ -43,32 +43,32 @@ angular.module('parserApp.headerService', [])
       var sides = [
         {
           url: '../../assets/images/cloudscube4.jpg',
-          position: [ -512, 0, 0 ],
+          position: [ -511, 0, 0 ],
           rotation: [ 0, Math.PI / 2, 0 ]
         },
         {
           url: '../../assets/images/cloudscube2.jpg',
-          position: [ 512, 0, 0 ],
+          position: [ 511, 0, 0 ],
           rotation: [ 0, -Math.PI / 2, 0 ]
         },
         {
           url: '../../assets/images/cloudscube1.jpg',
-          position: [ 0,  512, 0 ],
+          position: [ 0,  511, 0 ],
           rotation: [ Math.PI / 2, 0, Math.PI ]
         },
         {
           url: '../../assets/images/cloudscube6.jpg',
-          position: [ 0, -512, 0 ],
+          position: [ 0, -511, 0 ],
           rotation: [ - Math.PI / 2, 0, Math.PI ]
         },
         {
           url: '../../assets/images/cloudscube3.jpg',
-          position: [ 0, 0,  760 ],
+          position: [ 0, 0,  511 ],
           rotation: [ 0, Math.PI, 0 ]
         },
         {
           url: '../../assets/images/cloudscube5.jpg',
-          position: [ 0, 0, -760 ],
+          position: [ 0, 0, -511 ],
           rotation: [ 0, 0, 0 ]
         }
       ];
@@ -94,7 +94,7 @@ angular.module('parserApp.headerService', [])
       window.addEventListener( 'resize', onWindowResize, false );
 
       $('.click-to-begin').on('click', function() {
-        cancelAnimationFrame(mainAnimationFrame);
+        // cancelAnimationFrame(mainAnimationFrame);
         $('.tweets-cube').remove();
         cameraMain = null;
         sceneMain = null;
@@ -145,7 +145,7 @@ angular.module('parserApp.headerService', [])
       touchY = touch.screenY;
     }
     function animate() {
-      mainAnimationFrame = requestAnimationFrame( animate );
+      var mainAnimationFrame = requestAnimationFrame( animate );
       lon +=  0.2;
       lat = Math.max( - 75, Math.min( 75, lat ) );
       phi = THREE.Math.degToRad( 85 - lat );
@@ -155,6 +155,11 @@ angular.module('parserApp.headerService', [])
       target.z = Math.sin( phi ) * Math.sin( theta );
       cameraMain.lookAt( target );
       rendererMain.render( sceneMain, cameraMain );
+
+      $('.click-to-begin').on('click', function() {
+        cancelAnimationFrame(mainAnimationFrame);
+        $('.tweets-cube').remove();
+      });
     }
 
   };

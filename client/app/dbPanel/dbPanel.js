@@ -172,7 +172,7 @@ angular.module('parserApp')
     };
 
     $scope.addNewKeyword = function(name) {
-       name = name || $scope.newKeywordInput;
+       name = name || $scope.keywordName;
        $http.post('/auth/adminlogin/addNewKeyword', {name: name})
        .success(function(data) {
         $scope.showAllKeywords();
@@ -184,7 +184,7 @@ angular.module('parserApp')
     };
 
     $scope.redoKeyword = function(name) {
-      name = name || $scope.redoKeywordInput;
+      name = name || $scope.keywordName;
       $http.post('/auth/adminlogin/redoKeyword', {name: name})
       .success(function(data) {
         $scope.showAllKeywords();
@@ -196,7 +196,7 @@ angular.module('parserApp')
     };
 
     $scope.deleteKeyword = function(name) {
-      name = name || $scope.deleteKeywordInput;
+      name = name || $scope.keywordName;
       $http.post('/auth/adminlogin/deleteKeyword', {name: name})
       .success(function(data) {
         console.log("DONE with delete: ", data);

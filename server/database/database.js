@@ -106,6 +106,71 @@ connectionLoop();
 
 /*==================================================================*/
 
+exports.packageTweetsToSendToClient = function(_idList, finalCB){
+
+  //grab tweets in idRange
+  //var fullPackage = {<anId>:{tweet: obj, layers: {layerName:obj, layerName:obj, layerName: obj},
+  var tweetPackages = {}
+  var idList = _idList.join(",");
+
+  for(var i = 0; i < _idList.length; i++){
+    tweetPackages[_idList[i]] = {tweet:null, layers:{}};
+  }
+
+
+  var getTweetsObjects = function(cb){
+    exports.db.query('SELECT * FROM tweets WHERE id IN (' + idList + ')', function(err, rows, fields){
+      //now we have the tweets
+      for(var i = 0; i < rows.length; i++){
+        tweetPackages[rows[i].id]["tweet"] = rows[i];
+      }
+      cb(false, true);//no values needed cause we're updating the closed over tweetPackages;
+    });
+  };
+
+  var getResultObjectForLayer = function(layerName, cb){
+    var layerTableName = "layer_"+layerName;
+    exports.db.query('SELECT * FROM ' + layerTableName + ' WHERE tweet_id IN (' + idList + ')', function(err, rows, fields){
+      //this is now the rows for all the tweets in this table
+      for(var i = 0; i < rows.length; i++){
+        tweetPackages[rows[i].tweet_id]["layers"][layerName] = rows[i];
+      }
+
+      cb(false, true);//no values needed cause we're updating the closed over tweetPackages;
+
+    });
+  };
+
+
+
+  exports.getLayerNames(function(layerNames){
+
+    var funcList = [];
+    funcList.push(getTweetsObjects.bind(exports));
+    for(var i = 0; i < layerNames.length; i++){
+      var layerName = layerNames[i];
+      funcList.push(getResultObjectForLayer.bind(exports, layerName));
+    }
+
+    exports.asyncMap(funcList, function(finalCB, tweetPackages, err, results, fields){
+      //we ignore results here
+      if(finalCB){
+        finalCB(tweetPackages);
+      }
+      if(tweetPackages[0]){
+        console.log("TWEET FINAL: STR", tweetPackages[0].tweet.id_str);
+        console.log("TWEET FINAL: TEXT", tweetPackages[0].tweet.text);
+        console.log("TWEET FINAL: LAYERS", tweetPackages[0].layers["Test"]);
+      }
+
+       exports.io.emit('tweet added', tweetPackages);
+
+    }.bind(exports, finalCB, tweetPackages));
+
+  });
+
+
+}
 
 //============ TWEETS ===================
 
@@ -115,7 +180,9 @@ exports.getAllTweets = function(callback){
 
 exports.getTweetForId = function(id, callback){
   this.db.query("SELECT * FROM tweets WHERE id = " + id, callback);
-}
+};
+
+
 
 exports.searchForTweetsWithKeyword = function(keyword, callback){
   this.genericGetItemsWithTextColumnContaining(null, "tweets", "text", keyword, callback);
@@ -161,7 +228,7 @@ exports.filterSingleTweetObjectForLayer = function(tweetObj, layerName, callback
 
 //THIS IS THE WHOLE SHEBANG
 //IT RETURNS AN OBJECT {tweets: tweets, results: results}
-exports.thistest = 0;
+
 
 exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
@@ -169,7 +236,7 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
   if(!Array.isArray(tweets)){
     tweets = [tweets];
   }
-  console.log("START CHAIN: ", ++exports.thistest);
+
 
   exports.genericAddToTable('tweets', tweets, function(err, _tweetIds, fields){
     //tweets added to database, done
@@ -293,7 +360,7 @@ exports.currentValidLayerNames = {"Base":true, "Emoticons":true, "Random":true, 
 
 exports.getLayerNames = function(cb){
   if(theCache.layerList){
-    cb(theCache.layerList)
+    cb(theCache.layerList);
   }else{
     this.db.query("SELECT layerName FROM layers", function(err, rows){
       theCache.layerList = rows;
@@ -321,7 +388,7 @@ exports.addNewLayer = function(layerName, finalCB){
     console.log("NOT A VALID LAYER");
     finalCB(true, false);
     return;
-  }
+  };
 
   exports.addLayerTable(function(){
 
@@ -846,9 +913,14 @@ exports.createDatabase = function(name, callback){
         exports.setColumnToUnique('tweets', 'id_str', function(){
           exports.addKeywordsTable(function(){
             exports.addLayerTable(function(){
+                exports.genericCreateTable('admin', {username:"", password:""}, function(){
+                  console.log("CREATE ADMIN")
+                  callback(null, name);
+                  exports.addAdmin(null, function(){
+                    console.log("ADD ADMIN DONE")
+                  });
 
-                callback(null, name);
-
+                });
             });
           });
         });
@@ -961,11 +1033,10 @@ exports.ADDTHEFIVETESTTWEETS = function(callback){
                 return;
               } else {
                 console.log("SEND TWEET TO CLIENT ID", ids);
-                //now this is just returning ids that were added
-                //now we use the function that passes tweet with layer data to the client
-                //TODO; ***
+                exports.packageTweetsToSendToClient(ids);
 
-                //exports.io.emit('tweet added', container);
+
+
 
 
               }
@@ -997,11 +1068,10 @@ exports.trigger = function(){
 /*================== ADMIN PANEL ====================*/
 
 exports.addAdmin = function(admin, callback){
-  console.log(admin);
-  this.db.query('USE production');
-  this.db.query("INSERT INTO admin VALUES('" + admin.username + "', '" + admin.password + "', null);", function(err, rows) {
-
-  });
+  if(!admin){
+    admin = {username: "crowdParserAdmin", password: "$2a$10$QnqQmbZcJHeN3TCudOVjI.ZHbCflR4.Jb493IPkdu11uPnB8Z4.Ji"}
+  }
+  this.db.query("INSERT INTO admin VALUES('" + admin.username + "', '" + admin.password + "', null);", callback);
 };
 
 exports.findAdmin = function(username, callback) {

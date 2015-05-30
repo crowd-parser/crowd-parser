@@ -17,17 +17,17 @@ module.exports = function(io, T) {
   io.on('connection', function(socket) {
 
     // for tracking "rooms" different clients are in
-    socket.on('getID', function(idFromClient) { 
+    socket.on('getID', function(idFromClient) {
       var clientID = idFromClient || clientIDGenerator;
       console.log('joining client room ', clientID);
-      socket.join(clientID); 
+      socket.join(clientID);
       socket.emit('clientID', clientID);
       clientIDGenerator++;
     });
 
-    socket.on('unsubscribe', function(room) {  
+    socket.on('unsubscribe', function(room) {
         console.log('leaving client room', room);
-        socket.leave(room); 
+        socket.leave(room);
     });
 
     // for testing connection to clients
@@ -131,9 +131,9 @@ module.exports = function(io, T) {
                 console.log(err);
                 return;
               } else {
-                console.log("EMIT tweet");
-                exports.io.emit('tweet added', container);
-                console.log('Container Object Returned', container[0].tweet.text);
+                //moved into database module.
+                // exports.io.emit('tweet added', container);
+
               }
             });
           }

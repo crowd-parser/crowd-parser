@@ -1,6 +1,8 @@
 var em = require('./emoticonsList');
 var emojiRegex = require('./emojiRegex');
 
+var emojiConverter = require('./emojiConverter');
+
 module.exports = function(string) {
 
   // Initialize results object with what we want in theh end

@@ -5,12 +5,10 @@
 //add delete tweets button
 //test delete database
 
-//test add layer
-//test redo layer
+
 //test delete layer
 
-//test add keyword
-//test redo keyword
+
 //test delete keyword
 
 //test refresh table
@@ -27,6 +25,8 @@
 //run keywords on production
 //run layers on production
 //restart stream
+
+//add loop until feedback system for UI visuals
 
 
 /*============= DATABASE MODULE WRAPPER for SQL commands =========*/
@@ -123,10 +123,8 @@ exports.searchForTweetsWithKeyword = function(keyword, callback){
 
 exports.filterALLTweetsByKeyword = function(keyword, callback){
   callback = callback || exports.errCB;
-  console.log(keyword);
-  this.db.query("SELECT text tweets WHERE id < 5", function(err, rows, fields){
-    console.log(rows);
-  })
+  console.log("FILTERING FOR KEYWORD: ",keyword);
+
   this.db.query("INSERT INTO tweets_containing_" + keyword + " (tweet_id) SELECT id FROM tweets WHERE text LIKE '%" + keyword + "%'", function(err, rows, fields){
     if(err){
       console.log(err);
@@ -163,12 +161,15 @@ exports.filterSingleTweetObjectForLayer = function(tweetObj, layerName, callback
 
 //THIS IS THE WHOLE SHEBANG
 //IT RETURNS AN OBJECT {tweets: tweets, results: results}
+exports.thistest = 0;
 
 exports.executeFullChainForIncomingTweets = function(tweets, callback){
+
   var finalCallback = callback;
   if(!Array.isArray(tweets)){
     tweets = [tweets];
   }
+  console.log("START CHAIN: ", ++exports.thistest);
 
   exports.genericAddToTable('tweets', tweets, function(err, _tweetIds, fields){
     //tweets added to database, done
@@ -245,17 +246,15 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
              var tweetObj = rows[0];
 
               for(var j = 0; j < theCache.layerList.length; j++){
-                console.log("PROCESSING LAYER: ", theCache.layerList[i]);
-                funcList.push(exports.filterSingleTweetObjectForLayer.bind(tweetObj,theCache.layerList[i]), function(){
-                  //not really using this now, could delete
-                });
+                console.log("PROCESSING LAYER: ", theCache.layerList[j]);
+                funcList.push(exports.filterSingleTweetObjectForLayer.bind(exports,tweetObj,theCache.layerList[j]));
               }
 
               count--;
 
-              if(count === 0){
-                exports.asyncMap(funcList, function(finalCallback, tweetIds, err, results, fields){
-                    console.log("PAST PROCESSING LAYERS: ID", newTweetIds[0]);
+              if(count <= 0){
+                exports.asyncMap(funcList, function(finalCallback, tweetIds,results){
+                    console.log("PAST PROCESSING LAYERS: ID", tweetIds[0]);
                     finalCallback(null, tweetIds, null);
                  }.bind(exports, finalCallback, newTweetIds));
               }
@@ -325,22 +324,22 @@ exports.addNewLayer = function(layerName, finalCB){
   }
 
   exports.addLayerTable(function(){
-    console.log("past layer table");
+
     var result = exports.exampleObjectForLayerResults(layerName);
       exports.genericAddToTable("layers", {layerName: layerName}, function(err, rows, fields){
 
-        console.log("past add layer to layer table");
+
 
         exports.genericCreateTable(layerTableName,result, function(err,rows){
           if(err){
             finalCB(null, layerName);
           }
-          console.log("past create layer table");
+
           exports.addForeignKey(layerTableName, "tweet_id", "tweets", "id", function(err){
             if(err){
               console.log(err);
             }
-            console.log("past add foreign key");
+
             exports.setColumnToUnique(layerTableName,"tweet_id", function(){
               finalCB(null, layerName); //calling here to avoid server timeout
 
@@ -364,8 +363,8 @@ var layerTableName = "layer_"+layerName;
 
         exports.db.query('SELECT COUNT(*) FROM tweets', function(err, rows) {
           length = rows[0]["COUNT(*)"];
-          console.log("number of tweets", length);
-          var chunkNumber = 1000;
+          console.log("TWEETS TO FILTER: ", length);
+          var chunkNumber = 50;
 
           var setLastIndexedOnLayerTable = function(val){
             exports.db.query("UPDATE layers SET lastHighestIndexed="+val+" WHERE layerName="+layerName);
@@ -376,25 +375,22 @@ var layerTableName = "layer_"+layerName;
           for(var i = 0; i < length; i+=chunkNumber){
             chunkNumber = Math.min(chunkNumber, length - i);
             var eye = i;
-            var thisFunc = function(exports, chunkNumber, i){
-
+            var thisFunc = function(exports, chunkNumber, i,cb){
+                console.log("NEW CHUNK: ",chunkNumber);
                  exports.db.query('SELECT * FROM tweets WHERE id BETWEEN ' + i + " AND " + (i+chunkNumber), function(err, rows, fields){
 
-                  for(var i = 0; i < rows.length; i++){
-                    if(i%100===0){
-                      console.log("PULLING TWEET: ", rows[i].id_str);
+                    var thisHighest = rows[0];
+                    if(thisHighest > lastHighestIndexed){
+                      lastHighestIndexed = thisHighest;
+                      setLastIndexedOnLayerTable(lastHighestIndexed);
                     }
 
-                    exports.filterSingleTweetObjectForLayer(rows[i], layerName);
-                  }
-
-                  var thisHighest = rows[rows.length-1];
-                  if(thisHighest > lastHighestIndexed){
-                    lastHighestIndexed = thisHighest;
-                    setLastIndexedOnLayerTable(lastHighestIndexed);
-                  }
-
-                    return rows.length;
+                    for(var i = 0; i < rows.length; i++){
+                      if(i%10===0){
+                        console.log("PULLING TWEET OBJECTS: ",i );
+                      }
+                      setTimeout(exports.filterSingleTweetObjectForLayer.bind(exports, rows[i], layerName, function(tweets){cb(null,tweets.length);}.bind(exports, rows),i*5));
+                    }
                });
 
             }.bind(exports, exports, chunkNumber, eye);
@@ -463,7 +459,6 @@ exports.redoKeyword = function(keyword, callback, _finalCB){
 
   this.genericDropTable("tweets_containing_"+keyword, function(){
     exports.addNewKeyword(keyword, function(){
-      console.log("inside add keyword");
       callback(null, true);
        exports.filterALLTweetsByKeyword(keyword,function(err, rows, fields){
           if(err){
@@ -533,7 +528,7 @@ exports.returnTablesWithColumns = function(finalCB){
           }
           cbArr.unshift(name);
 
-          cb(err,cbArr);
+          cb(null,cbArr);
         });
 
       }.bind(this,tableNames[i]));
@@ -681,7 +676,7 @@ exports.asyncMap = function(funcs, finalCB){
     return;
   }
 
-  var cb = function(index, err, results, fields){
+  var cb = function(index, err, results){
     finalResults[index] = results;
     count--;
     if(count === 0){
@@ -690,7 +685,7 @@ exports.asyncMap = function(funcs, finalCB){
   };
 
   for(var i = 0; i < funcs.length; i++){
-    funcs[i](cb.bind(this,i));
+    funcs[i](cb.bind(exports,i));
   }
 };
 
@@ -910,26 +905,25 @@ exports.genericDescribeTable = function(name, callback){
 
 exports.ADDALLTHETWEETS = function(callback){
 
-  var modForTest = 1;
-
   this.getCurrentDatabaseName(function(name){
     if(name === 'production'){
       console.log("can't use test data on production database");
+      callback(true, false);
       return;
     }else{
-
+      callback(false, true);//server timeout
       var ALL_THE_TEST_TWEETS = require('./tweets_test.js');
 
       for(var i = 0; i < ALL_THE_TEST_TWEETS.length; i++){
-             var eye = i;
+        var eye = i;
           //[{tweet: tweetObj, layers:[layer1resultObj, layer2resultObj}]
           setTimeout(function(i){
-          this.executeFullChainForIncomingTweets([ALL_THE_TEST_TWEETS[i]], function(err, ids, fields) {
+          this.executeFullChainForIncomingTweets(ALL_THE_TEST_TWEETS[i], function(err, ids, fields) {
               if (err) {
                 console.log(err);
                 return;
               } else {
-                console.log(ids);
+                console.log("SEND TWEET TO CLIENT ID", ids);
                 //now this is just returning ids that were added
                 //now we use the function that passes tweet with layer data to the client
                 //TODO; ***
@@ -939,7 +933,7 @@ exports.ADDALLTHETWEETS = function(callback){
 
               }
            });
-        }.bind(exports,eye),0);
+        }.bind(exports,eye),i * 16);
         }
       }
   });

@@ -158,9 +158,9 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB){
 
 
       for(var key in tweetPackages){
-        var thing = tweetPackages[key].layers.Emoticons;
+        var thing = tweetPackages[key].layers.Base;
 
-          console.log("||||||||||||||||EMOJI:", thing);
+          console.log("||||||||||||||||BASE:", thing);
 
       }
 
@@ -259,6 +259,7 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
   }
 
   exports.queueLength++;
+
 
 
 
@@ -381,6 +382,9 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
 
 //=========== LAYERS ===================
+
+exports.convertToUnicode = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js').convertEmojisInTweet;
+exports.restoreFromUnicode = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js').restoreEmojisInTweet;
 
 exports.layer_Base_Function = require('../sentiment/baseWordsLayer/baseWordsLayerAnalysis.js').tweetObject;
 exports.layer_Emoticons_Function = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js').tweetObject;
@@ -733,6 +737,11 @@ exports.rearchitectArrWithDeepObjects = function(arr){
         tryToPushObject(thing, nameSoFar, finalObject);
         return;
       }
+
+      if(typeof thing === "string"){
+        thing = exports.convertToUnicode(thing);
+      }
+
       if(Array.isArray(thing)){
         var jArr = JSON.stringify(thing);
         tryToPushObject(jArr, nameSoFar, finalObject);

@@ -1,6 +1,8 @@
 var em = require('./emoticonsList');
 var emojiRegex = require('./emojiRegex');
 
+var emojiConverter = require('./emojiConverter');
+
 module.exports = function(string) {
 
   // Initialize results object with what we want in theh end
@@ -112,6 +114,7 @@ module.exports.tweetObject = function(tweetObject) {
 
       // If emoji is in the positive emoticons list, add to positive words array
       if (itemCode in em.positive) {
+        item = '<%-' + emojiConverter.toCodePoint(item) + '%>';
         results.positiveWords.push(item);
 
         // Increment the final score of the string
@@ -119,12 +122,14 @@ module.exports.tweetObject = function(tweetObject) {
 
       // If emoji is in the negative emoticons list, add to negative words array
       } else if (toCodePoint(item) in em.negative) {
+        item = '<%-' + emojiConverter.toCodePoint(item) + '%>';
         results.negativeWords.push(item);
 
         // Decrement the final score of the string
         results.score--;
 
       } else {
+        item = '<%-' + emojiConverter.toCodePoint(item) + '%>';
         // If not in either table, store it in 'unknown' array so we know what we missed
         results.unknown.push(item);
       }

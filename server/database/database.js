@@ -383,8 +383,8 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
 //=========== LAYERS ===================
 
-exports.convertToUnicode = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js').convertEmojisInTweet;
-exports.restoreFromUnicode = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js').restoreEmojisInTweet;
+exports.convertToUnicode = require('../sentiment/emoticonLayer/emojiConverter.js').convertEmojisInTweet;
+exports.restoreFromUnicode = require('../sentiment/emoticonLayer/emojiConverter.js').restoreEmojisInTweet;
 
 exports.layer_Base_Function = require('../sentiment/baseWordsLayer/baseWordsLayerAnalysis.js').tweetObject;
 exports.layer_Emoticons_Function = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js').tweetObject;

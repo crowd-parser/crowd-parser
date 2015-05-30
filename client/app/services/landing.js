@@ -89,8 +89,8 @@ angular.module('parserApp.headerService', [])
       document.getElementById('tweets-cube').appendChild( rendererMain.domElement );
       
       document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-      document.addEventListener( 'touchstart', onDocumentTouchStart, false );
-      document.addEventListener( 'touchmove', onDocumentTouchMove, false );
+      // document.addEventListener( 'touchstart', onDocumentTouchStart, false );
+      // document.addEventListener( 'touchmove', onDocumentTouchMove, false );
       window.addEventListener( 'resize', onWindowResize, false );
 
       $('.click-to-begin').on('click', function() {

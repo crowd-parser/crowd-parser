@@ -52,12 +52,14 @@ exports.restoreEmojisInTweet = function(text) {
 
   var matchedUnicodesArray = text.match(/<%-.....%>/g);
 
-  matchedUnicodesArray.forEach(function(item) {
-    item = item.replace('<%-', '');
-    item = item.replace('%>', '');
-    
-    text = text.replace('<%-' + item + '%>', exports.fromCodePoint(item))
-  });
+  if (matchedUnicodesArray) {
+    matchedUnicodesArray.forEach(function(item) {
+      item = item.replace('<%-', '');
+      item = item.replace('%>', '');
+      
+      text = text.replace('<%-' + item + '%>', exports.fromCodePoint(item))
+    });
+  }
 
   return text;
 };

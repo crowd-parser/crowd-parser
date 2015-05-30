@@ -140,6 +140,11 @@ canvas {  }
   border: 2px solid rgba(0,132,180,1);
   cursor: pointer;
   padding: 2px;
+  opacity: 1;
+}
+
+.tweet-3d.invisible {
+  opacity: 0;
 }
 
 .tweet-3d:hover {
@@ -227,6 +232,53 @@ canvas {  }
 .button-3d:active {
   color: #000000;
   background-color: rgba(0,190,255,0.75);
+}
+.form-holder {
+  float: left;
+  padding: 0;
+}
+.layer-menu {
+  box-sizing: border-box;
+  margin-left: 10px;
+  margin-top: 1px;
+  float: left;
+  width: 200px;
+  color: rgba(127,220,255,0.75);
+  background: rgba(0,40,50,0.75);
+  outline: 1px solid rgba(0,200,255,0.75);
+  border: 0px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.layer-menu table {
+  width: 100%;
+}
+.layer-menu-title {
+  position: relative;
+  width: 100%;
+  color: rgba(127,220,255,0.75);
+  background: rgba(0,40,50,0.75);
+}
+.layer-menu-title:hover {
+  background-color: rgba(0,120,160,0.75);
+  color: rgba(180,220,255,1);
+}
+.layer-menu-title:active {
+  color: #000000;
+  background-color: rgba(0,190,255,0.75);
+}
+
+.layer-menu td {
+  padding: 0 5px;
+}
+
+.layer-menu-item {
+  color: rgba(127,220,255,0.75);
+  background: rgba(0,40,50,0.75);
+  outline: 1px solid rgba(0,200,255,0.75);
+  border: 0px;
+  padding: 5px 10px;
+  cursor: pointer;
 }
 
 .arrow-3d .button-3d {

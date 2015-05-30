@@ -1,18 +1,30 @@
 <div class="3d-display">
   <div id="container-3d"></div>
   <div class="keyword-form-3d form-inline">
-    <form>
-      <div class="form-group">
-        <label for="keyword-stream">Keyword</label>
-        <input type="text" class="form-control" ng-model="keywordStream">
-      </div>
-<!--       <button class="button-3d"  ng-click="start3DKeywordStream()"disabled>Submit</button> -->
-      <button class="button-3d" type="notSubmit" ng-click="getRestTweets()">Get {{numTweetsToGet}} Tweets</button>
-      <button class="button-3d" type="notSubmit" ng-click="startLiveStream()">Live Stream: {{receivingTweets}}</button>
-      <button class="button-3d" type="notSubmit" ng-click="socketTest()">Socket Test</button>
-<!--       <button class="button-3d" type="notSubmit" ng-click="streamFakeTweets()">Stream Fake Tweets</button> -->
-      <button class="button-3d" type="notSubmit" ng-click="autoScrollToggle()">Autoscroll: {{autoScroll}}</button>
-    </form>
+    <div class="form-holder">
+      <form>
+        <div class="form-group">
+          <label for="keyword-stream">Keyword</label>
+          <input type="text" class="form-control" ng-model="keywordStream">
+        </div>
+      <!--       <button class="button-3d"  ng-click="start3DKeywordStream()"disabled>Submit</button> -->
+        <button class="button-3d" type="notSubmit" ng-click="getRestTweets()">Get {{numTweetsToGet}} Tweets</button>
+        <button class="button-3d" type="notSubmit" ng-click="startLiveStream()">Live Stream: {{receivingTweets}}</button>
+        <button class="button-3d" type="notSubmit" ng-click="socketTest()">Socket Test</button>
+      <!--       <button class="button-3d" type="notSubmit" ng-click="streamFakeTweets()">Stream Fake Tweets</button> -->
+        <button class="button-3d" type="notSubmit" ng-click="autoScrollToggle()">Autoscroll: {{autoScroll}}</button>
+      </form>
+    </div>
+    <div class="layer-menu">
+      <table>
+      <tr class="layer-menu-title" ng-click="toggleLayerMenu()"> <td colspan="3">Show/Hide Layers</td> </tr>
+      <tr ng-show="showLayerMenu"> <td>Layer</td> <td>ON</td> <td>SOLO</td> </tr>
+      <tr class="layer-menu-item" ng-repeat="layer in layers" ng-show="showLayerMenu">
+        <td>{{layer.title}}</td>
+        <td><input type="checkbox" ng-model=layersVisible[layer.title].viz ng-change="clearSolo()"></td>
+        <td><input type="checkbox" ng-model=layersVisible[layer.title].solo ng-change="soloLayer(layer.title)"></td></tr>
+      </table>
+    </div>
   </div>
   <div class="arrow-3d" id="leftarrow-3d">
     <button class="button-3d" id="left-3d"><span>&lt;</span></button>

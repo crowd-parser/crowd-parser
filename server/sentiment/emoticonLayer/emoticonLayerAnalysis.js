@@ -83,3 +83,53 @@ function toCodePoint(unicodeSurrogates, sep) {
   }
   return r.join(sep || '-');
 }
+
+module.exports.tweetObject = function(tweetObject) {
+
+  // Initialize results object with what we want in theh end
+  var results = {
+    positiveWords: [],
+    negativeWords: [],
+    unknown: [],
+    score: 0
+  };
+
+  var string = tweetObject.text;
+
+  // Create an array of the emojis in the string
+  var emojis = string.match(emojiRegex());
+
+  // Character representation of emoji
+  var itemCode;
+
+  if (emojis) {
+
+    // check each emoji against emoticon list
+    emojis.forEach(function(item) {
+
+      // Convert emoji to characters
+      itemCode = toCodePoint(item);
+
+      // If emoji is in the positive emoticons list, add to positive words array
+      if (itemCode in em.positive) {
+        results.positiveWords.push(item);
+
+        // Increment the final score of the string
+        results.score++;
+
+      // If emoji is in the negative emoticons list, add to negative words array
+      } else if (toCodePoint(item) in em.negative) {
+        results.negativeWords.push(item);
+
+        // Decrement the final score of the string
+        results.score--;
+
+      } else {
+        // If not in either table, store it in 'unknown' array so we know what we missed
+        results.unknown.push(item);
+      }
+    });
+  }
+
+  return results;
+};

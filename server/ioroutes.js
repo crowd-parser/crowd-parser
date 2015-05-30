@@ -153,12 +153,6 @@ module.exports = function(io, T) {
 
 };
 
-// db.db.query('USE randomcreateddatabase', function(err, response) {
-//   console.log(err, response)
-// });
-
-// db.addNewLayer('')
-
 // var tweet = 'If this doesn\'t make you smile, I don\'t know what will: http://youtu.be/RoQwFxEkW2E  👶😂';
 
 // console.log(emojiConverter.convertEmojisInTweet('u\'ve been our inspiration for the past 19 years! Wishing you a wonderful day! 😃😘🎁🎉🎈🎂🍸'));

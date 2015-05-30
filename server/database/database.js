@@ -107,7 +107,7 @@ connectionLoop();
 /*==================================================================*/
 
 exports.packageTweetsToSendToClient = function(_idList, finalCB){
-
+  exports.queueLength--;
   //grab tweets in idRange
   //var fullPackage = {<anId>:{tweet: obj, layers: {layerName:obj, layerName:obj, layerName: obj},
   var tweetPackages = {}
@@ -154,16 +154,20 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB){
 
     exports.asyncMap(funcList, function(finalCB, tweetPackages, err, results, fields){
       //we ignore results here
+      exports.socket.emit('tweet added', tweetPackages);
+
+      console.log("<<<<=============CLIENT EMIT==============>>>");
       if(finalCB){
-        finalCB(tweetPackages);
-      }
-      if(tweetPackages[0]){
-        console.log("TWEET FINAL: STR", tweetPackages[0].tweet.id_str);
-        console.log("TWEET FINAL: TEXT", tweetPackages[0].tweet.text);
-        console.log("TWEET FINAL: LAYERS", tweetPackages[0].layers["Test"]);
+        finalCB(false, true);;
       }
 
-       exports.io.emit('tweet added', tweetPackages);
+      // if(tweetPackages[0]){
+      //   console.log("TWEET FINAL: STR", tweetPackages[0].tweet.id_str);
+      //   console.log("TWEET FINAL: TEXT", tweetPackages[0].tweet.text);
+      //   console.log("TWEET FINAL: LAYERS", tweetPackages[0].layers["Test"]);
+      // }
+
+
 
     }.bind(exports, finalCB, tweetPackages));
 
@@ -217,7 +221,7 @@ exports.processSingleTweetIDForKeyword = function(id, keyword, callback){
 
 exports.filterSingleTweetObjectForLayer = function(tweetObj, layerName, callback){
 //hmm
-  
+
   var rowObj = exports["layer_"+layerName+"_Function"](tweetObj);
   rowObj.tweet_id = tweetObj.id;
   //hmm
@@ -229,8 +233,26 @@ exports.filterSingleTweetObjectForLayer = function(tweetObj, layerName, callback
 //THIS IS THE WHOLE SHEBANG
 //IT RETURNS AN OBJECT {tweets: tweets, results: results}
 
-
+exports.queueLength = 0;
 exports.executeFullChainForIncomingTweets = function(tweets, callback){
+
+  if(exports.queueLength % 100 === 0){
+    console.log("++++++++++++++QUEUE LENGTH+++++++",exports.queueLength);
+  }
+
+  if(exports.queueLength > 1000){
+    //abandon all hope, start dropping tweets
+    return;
+  }
+
+  if(exports.queueLength > 50){
+    setTimeout(exports.executeFullChainForIncomingTweets.bind(exports,tweets, callback), 1000);
+    return;
+  }
+
+  exports.queueLength++;
+
+
 
   var finalCallback = callback;
   if(!Array.isArray(tweets)){
@@ -322,7 +344,8 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
               if(count <= 0){
                 exports.asyncMap(funcList, function(finalCallback, tweetIds,results){
                     console.log("PAST PROCESSING LAYERS: ID", tweetIds[0]);
-                    finalCallback(null, tweetIds, null);
+                    exports.packageTweetsToSendToClient(tweetIds, finalCallback);
+                    // finalCallback(null, tweetIds, null);
                  }.bind(exports, finalCallback, newTweetIds));
               }
             });
@@ -497,7 +520,11 @@ exports.addNewKeyword = function(keyword, callback){
     callback(true, false);
     return;
   }
-  var kObj = {keyword: keyword, tableName: "tweets_containing_" + keyword, lastHighestIndexed: 0};
+
+
+  var tableName = "tweets_containing_" + keyword;
+  //tableName = exports.db.escapeId(tableName); //TODO
+  var kObj = {keyword: keyword, tableName: tableName, lastHighestIndexed: 0};
 
   this.addKeywordsTable(function(err){
 
@@ -522,7 +549,7 @@ exports.redoKeyword = function(keyword, callback, _finalCB){
     return;
   }
 
-
+//keyword = exports.db.escapeId(keyword);//TODO
 
   this.genericDropTable("tweets_containing_"+keyword, function(){
     exports.addNewKeyword(keyword, function(){
@@ -541,6 +568,7 @@ exports.redoKeyword = function(keyword, callback, _finalCB){
 };
 
 exports.deleteKeyword = function(keyword, callback){
+  //keyword = exports.db.escapeId(keyword); //TOdo
   theCache.keywordList = null;
   this.db.query("DELETE FROM keywords WHERE keyword = ?", [keyword], function(){});
   this.genericDropTable("tweets_containing_"+keyword, callback);
@@ -774,7 +802,7 @@ if(!Array.isArray(_listOfObjects)){
     if(err){
       console.log(err);
     }
-    console.log(err, rows, fields)
+
     var tableColumns = []; //TODO this should get cached / memoized basically
     for(var i = 0; i < rows.length; i++){
         if(rows[i]['COLUMN_NAME'] === "id"){
@@ -998,6 +1026,7 @@ exports.ADDALLTHETWEETS = function(callback){
                 return;
               } else {
                 console.log("SEND TWEET TO CLIENT ID", ids);
+                // exports.packageTweetsToSendToClient(ids);
                 //now this is just returning ids that were added
                 //now we use the function that passes tweet with layer data to the client
                 //TODO; ***
@@ -1032,8 +1061,8 @@ exports.ADDTHEFIVETESTTWEETS = function(callback){
                 console.log(err);
                 return;
               } else {
-                console.log("SEND TWEET TO CLIENT ID", ids);
-                exports.packageTweetsToSendToClient(ids);
+                console.log("SENT TWEET TO CLIENT ID", ids);
+                // exports.packageTweetsToSendToClient(ids);
 
 
 

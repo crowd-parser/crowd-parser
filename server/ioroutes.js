@@ -47,7 +47,19 @@ module.exports = function(io, T) {
     });
 
     //this adds the io object to the datbase module so it can fire tweet emits on completion.
-    db.io = io;
+    //db.io = io;
+
+    var setSocketOnDatabase = function(){
+      db.socket = socket;
+    };
+
+    if(!db){
+      setTimeout(setSocketOnDatabase.bind(this), 50);
+    }else{
+      db.socket = socket;
+    }
+
+
 
     // Gets tweets for a search query
     // This is used for the sentiment display section

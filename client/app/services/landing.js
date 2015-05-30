@@ -63,12 +63,12 @@ angular.module('parserApp.headerService', [])
         },
         {
           url: '../../assets/images/cloudscube3.jpg',
-          position: [ 0, 0,  512 ],
+          position: [ 0, 0,  760 ],
           rotation: [ 0, Math.PI, 0 ]
         },
         {
           url: '../../assets/images/cloudscube5.jpg',
-          position: [ 0, 0, -512 ],
+          position: [ 0, 0, -760 ],
           rotation: [ 0, 0, 0 ]
         }
       ];
@@ -146,7 +146,7 @@ angular.module('parserApp.headerService', [])
     }
     function animate() {
       mainAnimationFrame = requestAnimationFrame( animate );
-      lon +=  0/*.2*/;
+      lon +=  0.2;
       lat = Math.max( - 75, Math.min( 75, lat ) );
       phi = THREE.Math.degToRad( 85 - lat );
       theta = THREE.Math.degToRad( lon );

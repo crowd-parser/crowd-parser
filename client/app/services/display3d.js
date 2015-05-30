@@ -129,7 +129,7 @@ angular.module('parserApp.display3dService', [])
     return bgRGBA;
   };
 
-  var swapLOD = function (sceneCSS, sceneGL, tweet, layersSeparated, swapTo, scope) {
+  var swapLOD = function (sceneCSS, sceneGL, tweet, layersSeparated, swapTo, scope, layer) {
 
     var el, object;
 
@@ -149,7 +149,7 @@ angular.module('parserApp.display3dService', [])
 
     if (swapTo === 'lo') {
       sceneCSS.remove(tweet.obj);
-      object = makeLoResMesh(layersSeparated, tweet.elData);
+      object = makeLoResMesh(layersSeparated, tweet.elData, layer);
       object.position.x = x;
       object.position.y = y;
       object.position.z = z;
@@ -332,7 +332,6 @@ angular.module('parserApp.display3dService', [])
   var xStart = -800;
 
   var updateLayers = function (layersVisible) {
-    console.log(JSON.stringify(layersVisible));
     // uiLayer is a layer title
     for (var uiLayer in layersVisible) {
       // if there is a hidden layer that should be visible,
@@ -353,7 +352,6 @@ angular.module('parserApp.display3dService', [])
         });
       }
     }
-    console.log(layers);
   };
 
   var autoScrollToggle = function () {
@@ -511,7 +509,11 @@ angular.module('parserApp.display3dService', [])
     layers[layerIndex].tweetMaterialNeg.opacity = 0;
     layers[layerIndex].tweetMaterialNeutral.opacity = 0;
     layers[layerIndex].tweetMaterialPos.opacity = 0;
-    //layers[layerIndex].tweets;
+    layers[layerIndex].tweets.forEach(function (tweet) {
+      if (tweet.el) {
+        tweet.el.className = tweet.el.className + ' invisible';
+      }
+    });
     // hide ribbon mesh
     layers[layerIndex].ribbonMaterial.opacity = 0;
     // hide layer title
@@ -523,6 +525,11 @@ angular.module('parserApp.display3dService', [])
     layers[layerIndex].tweetMaterialNeg.opacity = 0.5;
     layers[layerIndex].tweetMaterialNeutral.opacity = 0.5;
     layers[layerIndex].tweetMaterialPos.opacity = 0.5;
+    layers[layerIndex].tweets.forEach(function (tweet) {
+      if (tweet.el) {
+        tweet.el.className = tweet.el.className.split(' ')[0];
+      }
+    });
     //layers[layerIndex].tweets;
     // show ribbon mesh
     layers[layerIndex].ribbonMaterial.opacity = 0.5;
@@ -544,11 +551,11 @@ angular.module('parserApp.display3dService', [])
         if (tweetDistance > 1000 && tweet.el) {
 
           // switch to lower LOD
-          displayHelpers.swapLOD(sceneCSS, sceneGL, tweet, layersSeparated, 'lo', scope);
+          displayHelpers.swapLOD(sceneCSS, sceneGL, tweet, layersSeparated, 'lo', scope, layers[layerIndex]);
         } else if (tweetDistance <= 1000 && !tweet.el) {
 
           // switch to higher LOD
-          displayHelpers.swapLOD(sceneCSS, sceneGL, tweet, layersSeparated, 'hi', scope);
+          displayHelpers.swapLOD(sceneCSS, sceneGL, tweet, layersSeparated, 'hi', scope, layers[layerIndex]);
         }
       }
     }

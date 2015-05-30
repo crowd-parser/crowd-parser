@@ -5,19 +5,6 @@ angular.module('parserApp.display3dService', [])
 
 .factory('displayHelpers', ['$window', function($window){
 
-  window.WebFontConfig = {
-    google: { families: [ 'Lato::latin' ] }
-  };
-  (function() {
-    var wf = document.createElement('script');
-    wf.src = ('https:' === document.location.protocol ? 'https' : 'http') +
-      '://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js';
-    wf.type = 'text/javascript';
-    wf.async = 'true';
-    var s = document.getElementsByTagName('script')[0];
-    s.parentNode.insertBefore(wf, s);
-  })();
-
   var THREE = $window.THREE;
   var TWEEN = $window.TWEEN;
 
@@ -161,10 +148,10 @@ angular.module('parserApp.display3dService', [])
   };
 
   var separateLayers = function (layers, frontLayerZ, layerSpacing) {
-    new TWEEN.Tween( tweetMaterialNeutral )
-      .to ({opacity: 0.5}, 1000)
-      .start();
     for (var i = 0; i < layers.length; i++) {
+      new TWEEN.Tween( layers[i].tweetMaterialNeutral )
+        .to ({opacity: 0.5}, 1000)
+        .start();
       layers[i].tweets.forEach(function(tweet) {
         new TWEEN.Tween( tweet.obj.position )
           .to( {z: frontLayerZ - layerSpacing*i}, 1000 )
@@ -208,11 +195,11 @@ angular.module('parserApp.display3dService', [])
   };
 
   var flattenLayers = function (layers, frontLayerZ, layerSpacing, rows, sceneGL) {
-    new TWEEN.Tween( tweetMaterialNeutral )
-      .to ({opacity: 0}, 1000)
-      .start();
 
     for (var i = 0; i < layers.length; i++) {
+      new TWEEN.Tween( layers[i].tweetMaterialNeutral )
+        .to ({opacity: 0}, 1000)
+        .start();
       layers[i].tweets.forEach(function(tweet) {
         new TWEEN.Tween( tweet.obj.position )
           .to( {z: frontLayerZ - 2*i}, 1000 )
@@ -359,7 +346,8 @@ angular.module('parserApp.display3dService', [])
   };
 
   var adjustRibbonWidth = function() {
-    layers.forEach(function(layer) {
+    var lastX = 50;
+    layers.forEach(function(layer, i) {
       var farthestYOnRibbon;
       // probably would be more precise to find out angle of camera vector relative
       // to ribbon but this should work in most cases
@@ -371,8 +359,21 @@ angular.module('parserApp.display3dService', [])
       var newRibbonWidth = displayHelpers.getDisplayWidthAtPoint(camera, 0, farthestYOnRibbon, layer.z) + 10;
       layer.ribbonMesh.scale.x = newRibbonWidth;
       layer.ribbonMesh.position.x = controls.target.x;
-      //var titleWidth = layer.titleEl.clientWidth;
-      layer.titleMesh.position.x = controls.target.x-(displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, 0)/2) + layer.titleMesh.textWidth*3/4;
+      // I want the new title to start after the x screen position of the last title
+      var desiredTitleScreenXPosition = lastX;
+      var screenWidthIn3DCoords = displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, layer.z);
+      var screenWidthInBrowser = window.innerWidth;
+      var leftEdgeIn3DCoords = controls.target.x - screenWidthIn3DCoords/2;
+      var desiredTitleXCoord = leftEdgeIn3DCoords + desiredTitleScreenXPosition * (screenWidthIn3DCoords/screenWidthInBrowser);
+      // center - half screen width = left edge
+      // controls.target.x - (displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, frontLayerZ)/2)
+      // left edge + 200 screen pixels?
+      // var newTitlePosition = controls.target.x - 
+      //     (displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, frontLayerZ)/2) +
+      //     layer.titleMesh.textWidth/2 + i*layer.titleMesh.textWidth/3;
+      // need to more accurately calculate screen position of last X
+      lastX += layer.titleMesh.textWidth * (screenWidthInBrowser/screenWidthIn3DCoords);
+      layer.titleMesh.position.x = desiredTitleXCoord;
       //layer.titleObj.position.x = controls.target.x-(displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, 0)/2) + titleWidth*3/4;
     });
   };
@@ -458,7 +459,7 @@ angular.module('parserApp.display3dService', [])
 
     var ribbonMaterial = new THREE.MeshBasicMaterial( { color: 'rgb(0,132,180)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
     ribbonMaterial.transparent = true;
-    ribbonMaterial.opacity = 0.5;
+    ribbonMaterial.opacity = 0.3;
 
     var ribbonGeo = new THREE.PlaneBufferGeometry( 1, ribbonHeight, 2, 2 );
     $window.ribbonGeo = ribbonGeo;
@@ -623,8 +624,12 @@ angular.module('parserApp.display3dService', [])
   };
 
   var makeLayers = function () {
+    var numLayers = 4;
+    frontLayerZ = numLayers * layerSpacing;
     makeTweetLayer('baseLayerResults', 'word', frontLayerZ);
     makeTweetLayer('emoticonLayerResults', 'emoji', frontLayerZ - layerSpacing);
+    makeTweetLayer('slangLayerResults', 'slang', frontLayerZ - layerSpacing*2);
+    makeTweetLayer('negationLayerResults', 'negation', frontLayerZ - layerSpacing*3);
     scope.allLayers = allLayers;
   };
 
@@ -701,6 +706,8 @@ angular.module('parserApp.display3dService', [])
     }
 
     makeLayers();
+
+    camera.position.z = camera.position.z + layers.length * layerSpacing;
 
     addButtonEvent('separate-3d', 'click', function() {
       if (!layersSeparated) {

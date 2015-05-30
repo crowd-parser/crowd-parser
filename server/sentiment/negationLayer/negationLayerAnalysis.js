@@ -22,7 +22,6 @@ module.exports = function(string) {
     modString = modString.replace(re, word);
   });
 
-  console.log(modString);
 
   var words = tokenizer.tokenize(modString);
   words = _.map(words, function (word) {
@@ -34,10 +33,8 @@ module.exports = function(string) {
   });
   var negScope = false;
 
-  console.log(words);
 
   _.each(words, function (word, i, words) {
-    console.log('word: ' + word + ' negScope: ' + negScope);
     // skip pseudo negatives
     if (word !== '~PSEU~') {
       // if word is a pre-condition negative
@@ -103,5 +100,3 @@ module.exports = function(string) {
 
   return results;
 };
-
-console.log(module.exports("I'm not exactly happy about it.  It sucks."));

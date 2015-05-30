@@ -199,19 +199,30 @@ angular.module('parserApp')
       }
 
       // receive
-      socket.on('tweet added', function (tweetFromDB) {
+      socket.on('tweet added', function (tweetsFromDB) {
         if ($scope.receivingTweets === 'ON') {
           console.log('received tweet');
-          console.log(tweetFromDB);
-          //$scope.tweetData.push(tweetFromDB.tweet);
-          var tweetFormatted = {};
-          tweetFormatted.text = tweetFromDB.tweet.text;
-          tweetFormatted.username = tweetFromDB.tweet.username;
-          tweetFormatted.baseLayerResults = {};
-          tweetFormatted.emoticonLayerResults = {};
+          console.log(tweetsFromDB);
 
-          //Display3d.addTweet(tweetFormatted, $scope.tweetCount);
-          //$scope.tweetCount++;
+          var tweetIDs = Object.keys(tweetsFromDB);
+          var tweetFormatted = {};
+          tweetIDs.sort();
+          for (var i = 0; i < tweetIDs.length; i++) {
+            tweetFormatted = {};
+            var tweetObj = tweetsFromDB[tweetIDs[i]];
+            tweetFormatted.text = tweetObj.tweet.text;
+            tweetFormatted.username = tweetObj.tweet.user_name;
+            tweetFormatted.baseLayerResults = tweetObj.layers.Base;
+            tweetFormatted.baseLayerResults.negativeWords = JSON.parse(tweetObj.layers.Base.negativeWords);
+            console.log(tweetFormatted.baseLayerResults.negativeWords);
+            tweetFormatted.baseLayerResults.positiveWords = JSON.parse(tweetObj.layers.Base.positiveWords);
+            tweetFormatted.emoticonLayerResults = {};
+          }
+
+          $scope.tweetData.push(tweetFormatted);
+
+          Display3d.addTweet(tweetFormatted, $scope.tweetCount);
+          $scope.tweetCount++;
         }
       });
     };

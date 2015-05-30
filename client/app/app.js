@@ -35,8 +35,7 @@ angular.module('parserApp', [
       })
       .state('about', {
         url: '/about',
-        templateUrl: 'app/about/about.html',
-        controller: 'AboutCtrl'
+        templateUrl: 'app/about/about.html'
       });
 
     $urlRouterProvider

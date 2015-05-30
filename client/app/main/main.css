@@ -15,20 +15,6 @@
     max-width: 500px;
 }
 
-
-.tweets-cube {
-    
-}
-
-.about {
-    height: 280px;
-    padding: 80px 0;
-}
-
-.about-container img {
-    width: 150px;
-}
-
 .learn-more {
     position: absolute;
     top: 20px;
@@ -43,22 +29,23 @@
 }
 
 .intro {
+    background: #000;
     background: rgba(0,0,0,.4);
     color: #EEEFF7;
-    height: 380px;
     margin: 40px 15%;
     padding: 20px;
+    border: 10px solid #FFF;
     border: 10px solid rgba(255,255,255,.7);
 }
 
 .we-downloaded {
-    font-size: 20px;
+    font-size: 30px;
     margin-top: 5%;
     margin-bottom: 15px;
 }
 
 .our-discoveries {
-    font-size: 18px;
+    font-size: 24px;
 }
 
 .in-3d {
@@ -96,28 +83,7 @@
   transform-style: preserve-3d;
 }
 
-@media (max-width: 380px) {
-    .main img {
-        width: 100%;
-    }
-    .intro {
-        margin-top: 70px;
-    }
-    .we-downloaded {
-        font-size: 27px;
-    }
-    .our-discoveries {
-        font-size: 21px;
-    }
-    .in-3d {
-        font-size: 50px;
-    }
-    .click-to-begin {
-        font-size: 19px;
-    }
-}
-
-@media (max-width: 380px) {
+@media (max-width: 100px) {
     .intro {
         margin-top: 22px;
     }

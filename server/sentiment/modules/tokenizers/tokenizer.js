@@ -25,10 +25,10 @@ var Tokenizer = function() {
 };
 
 Tokenizer.prototype.trim = function(array) {
-  while (array[array.length - 1] == '')
+  while (array[array.length - 1] === '')
     array.pop();
 
-  while (array[0] == '')
+  while (array[0] === '')
     array.shift();
 
   return array;

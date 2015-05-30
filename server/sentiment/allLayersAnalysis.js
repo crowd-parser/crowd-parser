@@ -1,6 +1,7 @@
 var baseLayerAnalysis = require('./baseWordsLayer/baseWordsLayerAnalysis');
 var emoticonLayerAnalysis = require('./emoticonLayer/emoticonLayerAnalysis');
 var slangLayerAnalysis = require('./slangLayer/slangLayerAnalysis');
+var negationLayerAnalysis = require('./negationLayer/negationLayerAnalysis');
 
   var allLayersAnalysis = {
 
@@ -34,6 +35,9 @@ var slangLayerAnalysis = require('./slangLayer/slangLayerAnalysis');
 
           // Get slang layer analysis result object; includes list of matching slang and score
           slangLayerResults: slangLayerAnalysis(tweet.text),
+
+          // Base layer with negation checking added
+          negationLayerResults: negationLayerAnalysis(tweet.text),
 
           // Combined score of all layers
           overallResults: {}

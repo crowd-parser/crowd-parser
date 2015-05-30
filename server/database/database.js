@@ -150,7 +150,7 @@ exports.processSingleTweetIDForKeyword = function(id, keyword, callback){
 
 exports.filterSingleTweetObjectForLayer = function(tweetObj, layerName, callback){
 //hmm
-
+  
   var rowObj = exports["layer_"+layerName+"_Function"](tweetObj);
   rowObj.tweet_id = tweetObj.id;
   //hmm
@@ -284,8 +284,8 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
 //=========== LAYERS ===================
 
-exports.layer_Base_Function = require('../sentiment/baseWordsLayer/baseWordsLayerAnalysis.js');
-exports.layer_Emoticons_Function = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js');
+exports.layer_Base_Function = require('../sentiment/baseWordsLayer/baseWordsLayerAnalysis.js').tweetObject;
+exports.layer_Emoticons_Function = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js').tweetObject;
 exports.layer_Random_Function = function(){return {score: Math.random(), someStuff: "stuff", otherStuff:"moreStuff"}};
 exports.layer_Test_Function = function(){return {score:0, testArray12345: [1,2,3,4,5]}};
 
@@ -707,6 +707,7 @@ if(!Array.isArray(_listOfObjects)){
     if(err){
       console.log(err);
     }
+    console.log(err, rows, fields)
     var tableColumns = []; //TODO this should get cached / memoized basically
     for(var i = 0; i < rows.length; i++){
         if(rows[i]['COLUMN_NAME'] === "id"){
@@ -752,6 +753,7 @@ if(!Array.isArray(_listOfObjects)){
         queryStr = queryStr + ' )';
 
         queryStr = insertStr + queryStr;
+
         exports.db.query(queryStr, function(err, rows, fields){
           //this returns ids of added object, not the whole object
           if(err){

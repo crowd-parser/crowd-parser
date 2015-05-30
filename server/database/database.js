@@ -1,6 +1,6 @@
 //TODO
 
-//add send all tweet/layer data function
+//add functionality to escape keywords to allow use of @ symbol
 
 //add delete tweets button
 //test delete database

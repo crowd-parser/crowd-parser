@@ -106,9 +106,10 @@ connectionLoop();
 
 /*==================================================================*/
 
-exports.packageTweetsToSendToClient = function(_idList){
+exports.packageTweetsToSendToClient = function(_idList, finalCB){
+
   //grab tweets in idRange
-  //{tweet: obj, layers: [obj, obj, obj]}
+  //var fullPackage = {<anId>:{tweet: obj, layers: {layerName:obj, layerName:obj, layerName: obj},
   var tweetPackages = {}
   var idList = _idList.join(",");
 
@@ -123,7 +124,7 @@ exports.packageTweetsToSendToClient = function(_idList){
       for(var i = 0; i < rows.length; i++){
         tweetPackages[rows[i].id]["tweet"] = rows[i];
       }
-      cb();//no values needed cause we're updating the closed over tweetPackages;
+      cb(false, true);//no values needed cause we're updating the closed over tweetPackages;
     });
   };
 
@@ -135,21 +136,40 @@ exports.packageTweetsToSendToClient = function(_idList){
         tweetPackages[rows[i].tweet_id]["layers"][layerName] = rows[i];
       }
 
-      cb();//no values needed cause we're updating the closed over tweetPackages;
+      cb(false, true);//no values needed cause we're updating the closed over tweetPackages;
 
     });
   };
 
-  var addLayerObjectToTweetPackage
+
 
   exports.getLayerNames(function(layerNames){
 
+    var funcList = [];
+    funcList.push(getTweetsObjects.bind(exports));
+    for(var i = 0; i < layerNames.length; i++){
+      var layerName = layerNames[i];
+      funcList.push(getResultObjectForLayer.bind(exports, layerName));
+    }
 
+    exports.asyncMap(funcList, function(finalCB, tweetPackages, err, results, fields){
+      //we ignore results here
+      if(finalCB){
+        finalCB(tweetPackages);
+      }
+      if(tweetPackages[0]){
+        console.log("TWEET FINAL: STR", tweetPackages[0].tweet.id_str);
+        console.log("TWEET FINAL: TEXT", tweetPackages[0].tweet.text);
+        console.log("TWEET FINAL: LAYERS", tweetPackages[0].layers["Test"]);
+      }
+
+       exports.io.emit('tweet added', tweetPackages);
+
+    }.bind(exports, finalCB, tweetPackages));
 
   });
 
-  //join tweets table to all layer
-  this.db
+
 }
 
 //============ TWEETS ===================
@@ -208,7 +228,7 @@ exports.filterSingleTweetObjectForLayer = function(tweetObj, layerName, callback
 
 //THIS IS THE WHOLE SHEBANG
 //IT RETURNS AN OBJECT {tweets: tweets, results: results}
-exports.thistest = 0;
+
 
 exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
@@ -216,7 +236,7 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
   if(!Array.isArray(tweets)){
     tweets = [tweets];
   }
-  console.log("START CHAIN: ", ++exports.thistest);
+
 
   exports.genericAddToTable('tweets', tweets, function(err, _tweetIds, fields){
     //tweets added to database, done
@@ -340,7 +360,7 @@ exports.currentValidLayerNames = {"Base":true, "Emoticons":true, "Random":true, 
 
 exports.getLayerNames = function(cb){
   if(theCache.layerList){
-    cb(theCache.layerList)
+    cb(theCache.layerList);
   }else{
     this.db.query("SELECT layerName FROM layers", function(err, rows){
       theCache.layerList = rows;
@@ -368,7 +388,7 @@ exports.addNewLayer = function(layerName, finalCB){
     console.log("NOT A VALID LAYER");
     finalCB(true, false);
     return;
-  }
+  };
 
   exports.addLayerTable(function(){
 
@@ -1013,11 +1033,10 @@ exports.ADDTHEFIVETESTTWEETS = function(callback){
                 return;
               } else {
                 console.log("SEND TWEET TO CLIENT ID", ids);
-                //now this is just returning ids that were added
-                //now we use the function that passes tweet with layer data to the client
-                //TODO; ***
+                exports.packageTweetsToSendToClient(ids);
 
-                //exports.io.emit('tweet added', container);
+
+
 
 
               }

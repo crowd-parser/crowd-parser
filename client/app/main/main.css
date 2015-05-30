@@ -16,10 +16,9 @@
 }
 
 
-/*.tweets-cube {
-    height: 1005px !important;
-    width: 729px !important;
-}*/
+.tweets-cube {
+    
+}
 
 .about {
     height: 280px;
@@ -87,6 +86,7 @@
 
 .viewport {
     background: #FFF;
+    cursor: move;
 }
 
 #world div {

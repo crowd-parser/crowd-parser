@@ -202,12 +202,13 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
     var main = function(){
       for(var i = 0; i < theCache.keywordList.length; i++){
+          console.log("PROCESSING KEYWORD: ", theCache.keywordList[i]);
           for(var j = 0; j < newTweetIds.length; j++ ){
-            console.log("processing tweet for keyword " + theCache.keywordList[i]);
+
             exports.processSingleTweetIDForKeyword(newTweetIds[j], theCache.keywordList[i],exports.errCB);
           }
       }
-      console.log("past processing keywords");
+      console.log("PAST KEYWORD PROCESSING: ID", newTweetIds[0]);
       //database is now cranking on updating keyword lists async
       //we don't care about keywords being finished generating before sending to the client
 
@@ -244,17 +245,19 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
              var tweetObj = rows[0];
 
               for(var j = 0; j < theCache.layerList.length; j++){
-                funcList.push(exports.filterSingleTweetObjectForLayer.bind(tweetObj,theCache.layerList[i]));
+                console.log("PROCESSING LAYER: ", theCache.layerList[i]);
+                funcList.push(exports.filterSingleTweetObjectForLayer.bind(tweetObj,theCache.layerList[i]), function(){
+                  //not really using this now, could delete
+                });
               }
 
               count--;
-              console.log("FINISH LAYERS count", count);
-              if(count === 0){
-                exports.asyncMap(funcList, function(finalCallback, err, results, fields){
 
-                    console.log("async for chain finished");
-                    finalCallback(null, results, null);
-                 }.bind(exports, finalCallback));
+              if(count === 0){
+                exports.asyncMap(funcList, function(finalCallback, tweetIds, err, results, fields){
+                    console.log("PAST PROCESSING LAYERS: ID", newTweetIds[0]);
+                    finalCallback(null, tweetIds, null);
+                 }.bind(exports, finalCallback, newTweetIds));
               }
             });
           }
@@ -267,10 +270,6 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
           finishLayers();
         }
 
-      //then use a loop to tell db to insert into with result data and id
-
-      //at this point, maybe earliet, we could have sent the tweets back to the server to
-        //send to all clients on the wire
     };
 
     if(theCache.keywordList === undefined || theCache.keywordList === null){
@@ -965,7 +964,7 @@ exports.ADDTHEFIVETESTTWEETS = function(callback){
                 console.log(err);
                 return;
               } else {
-                console.log("ID", ids);
+                console.log("SEND TWEET TO CLIENT ID", ids);
                 //now this is just returning ids that were added
                 //now we use the function that passes tweet with layer data to the client
                 //TODO; ***

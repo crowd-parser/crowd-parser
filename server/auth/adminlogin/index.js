@@ -67,7 +67,7 @@ router.post('/showTableSize', function(req, res, next) {
 
 router.get('/showAllKeywords', function(req, res, next) {
   db.db.query('SELECT * FROM keywords;', function(err, rows) {
-    console.log(err, rows);
+
 
     res.send(rows);
   });
@@ -75,7 +75,7 @@ router.get('/showAllKeywords', function(req, res, next) {
 
 router.get('/showAllLayers', function(req, res, next) {
   db.db.query('SELECT * FROM layers;', function(err, rows) {
-    console.log(err, rows);
+
 
     res.send(rows);
   });
@@ -170,7 +170,7 @@ router.post('/deleteLayer', function(req, res, next) {
 router.post('/createDatabase', function(req, res, next) {
   var name = req.body.name;
   db.createDatabase(name, function(err, name, fields) {
-      console.log("CREATE:", arguments);
+      console.log("CREATE DB:");
     if(err){
       res.send(false);
       return;
@@ -184,7 +184,7 @@ router.post('/createDatabase', function(req, res, next) {
 router.post('/changeToDatabase', function(req, res, next) {
   var name = req.body.name;
   db.changeToDatabase(name, function(err, name, fields) {
-    console.log("CHANGE:", arguments);
+    console.log("CHANGE DB:");
     if(err){
       res.send(false);
       return;
@@ -197,7 +197,7 @@ router.post('/changeToDatabase', function(req, res, next) {
 router.post('/deleteDatabase', function(req, res, next) {
   var name = req.body.name;
   db.deleteDatabase(name, function(err, rows, fields) {
-    console.log("DELETE:", arguments);
+    console.log("DELETE DB:");
     if(err){
       console.log(err);
       res.send(false);
@@ -232,14 +232,14 @@ router.post('/ADDTHEFIVETESTTWEETS', function(req, res, next) {
   //   console.log("hit timeout");
   // });
 //this test only fires the callback on the first tweet
-  db.ADDTHEFIVETESTTWEETS(function(err, container) {
+  db.ADDTHEFIVETESTTWEETS(function(err, val) {
     if(err){
       console.log(err);
       res.send(false);
       return;
     }
       //container is {tweet: obj, layers:[obj,obj]}
-      res.send(container);
+      res.send(true);
   });
 });
 

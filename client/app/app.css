@@ -149,10 +149,9 @@ html .extendX button{
 }
 
 #admin_layers_controls{
-     display: inline-block;
+    display: inline-block;
     width: 50%;
-    height: auto;
-    vertical-align: top;
+    height: 200px;
 }
 
 #admin_layers_controls input{
@@ -169,16 +168,26 @@ html .extendX button{
 
 
 #admin_keywords_controls{
-     display: inline-block;
-    width: 100%;
-    height: auto;
-    vertical-align: top;
+    display: inline-block;
+    width: 50%;
+    height: 200px;
+    background-color: #666666;
+    color: white;
 }
 
-.admin_keywords_section{
-    display:inline-block;
-    width: 33.333333%;
+#admin_keywords_controls input{
+    display: inline-block;
+    width: 100%;
+
 }
+
+#admin_keywords_controls button{
+    display: inline-block;
+    width: 33%;
+
+}
+
+
 html .headerSection{
     display: inline-block;
     width: 30%;

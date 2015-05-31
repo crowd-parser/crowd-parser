@@ -76,41 +76,41 @@ angular.module('parserApp')
       socket.emit('twitter stop continuous stream');
     });
 
-    var fakeScore = function () {
-      if (Math.random() < 0.6) {
-        return 0;
-      }
-      return Math.round(-1 + 2 * Math.random());
-    };
+    // var fakeScore = function () {
+    //   if (Math.random() < 0.6) {
+    //     return 0;
+    //   }
+    //   return Math.round(-1 + 2 * Math.random());
+    // };
 
-    var fakeText = function () {
-      var length = 10 + 100 * Math.random();
-      var chars = "abcdefghijklmnopqurstuvwxyz";
-      var text = '';
-      for (var i = 0; i < length; i++) {
-        if (3 * Math.random() <= 1 && text[text.length-1] !== ' ') {
-          text += ' '
-        }
-        text += chars[Math.floor(chars.length * Math.random())];
-      }
-      return text;
-    };
+    // var fakeText = function () {
+    //   var length = 10 + 100 * Math.random();
+    //   var chars = "abcdefghijklmnopqurstuvwxyz";
+    //   var text = '';
+    //   for (var i = 0; i < length; i++) {
+    //     if (3 * Math.random() <= 1 && text[text.length-1] !== ' ') {
+    //       text += ' '
+    //     }
+    //     text += chars[Math.floor(chars.length * Math.random())];
+    //   }
+    //   return text;
+    // };
 
-    var addFakeTweet = function () {
-      if ($scope.tweetCount >= 600) {
-        $scope.stopTweets();
-      }
-      if (runFakeTweets === true) {
-        var fakeTweet = {};
-        fakeTweet.baseLayerResults = { score: fakeScore() };
-        fakeTweet.emoticonLayerResults = { score: fakeScore() };
-        fakeTweet.username = 'user' + Math.round(1000 * Math.random());
-        fakeTweet.text = fakeText();
-        $scope.tweetData.push(fakeTweet);
-        Display3d.addTweet(fakeTweet, $scope.tweetCount);
-        $scope.tweetCount++;
-      }
-    };
+    // var addFakeTweet = function () {
+    //   if ($scope.tweetCount >= 600) {
+    //     $scope.stopTweets();
+    //   }
+    //   if (runFakeTweets === true) {
+    //     var fakeTweet = {};
+    //     fakeTweet.baseLayerResults = { score: fakeScore() };
+    //     fakeTweet.emoticonLayerResults = { score: fakeScore() };
+    //     fakeTweet.username = 'user' + Math.round(1000 * Math.random());
+    //     fakeTweet.text = fakeText();
+    //     $scope.tweetData.push(fakeTweet);
+    //     Display3d.addTweet(fakeTweet, $scope.tweetCount);
+    //     $scope.tweetCount++;
+    //   }
+    // };
 
     $scope.autoScrollToggle = function () {
       Display3d.autoScrollToggle();
@@ -125,12 +125,12 @@ angular.module('parserApp')
       $scope.showLayerMenu = !$scope.showLayerMenu;
     }
 
-    $scope.streamFakeTweets = function () {
-      // stop any existing stream
-      socket.emit('twitter stop continuous stream');
-      runFakeTweets = true;
-      intervalID = setInterval(addFakeTweet, 5);
-    };
+    // $scope.streamFakeTweets = function () {
+    //   // stop any existing stream
+    //   socket.emit('twitter stop continuous stream');
+    //   runFakeTweets = true;
+    //   intervalID = setInterval(addFakeTweet, 5);
+    // };
 
     // $scope.fullScreen = function () {
     //   $scope.tweetData = [];
@@ -197,45 +197,69 @@ angular.module('parserApp')
       } else {
         $scope.receivingTweets = 'OFF';
       }
+    };
 
-      // receive
-      socket.on('tweet added', function (tweetFromDB) {
-        if ($scope.receivingTweets === 'ON') {
-          console.log('received tweet');
-          console.log(tweetFromDB);
-          //$scope.tweetData.push(tweetFromDB.tweet);
-          var tweetFormatted = {};
-          tweetFormatted.text = tweetFromDB.tweet.text;
-          tweetFormatted.username = tweetFromDB.tweet.username;
-          tweetFormatted.baseLayerResults = {};
+    // receive live stream
+    socket.on('tweet added', function (tweetsFromDB) {
+      if ($scope.receivingTweets === 'ON') {
+        console.log('received tweet');
+        console.log(tweetsFromDB);
+
+        var tweetIDs = Object.keys(tweetsFromDB);
+        var tweetFormatted = {};
+        tweetIDs.sort();
+        for (var i = 0; i < tweetIDs.length; i++) {
+          tweetFormatted = {};
+          var tweetObj = tweetsFromDB[tweetIDs[i]];
+          tweetFormatted.text = tweetObj.tweet.text;
+          tweetFormatted.username = tweetObj.tweet.user_name;
+          tweetFormatted.baseLayerResults = tweetObj.layers.Base;
+          tweetFormatted.baseLayerResults.negativeWords = JSON.parse(tweetObj.layers.Base.negativeWords);
+          console.log(tweetFormatted.baseLayerResults.negativeWords);
+          tweetFormatted.baseLayerResults.positiveWords = JSON.parse(tweetObj.layers.Base.positiveWords);
           tweetFormatted.emoticonLayerResults = {};
-
-          //Display3d.addTweet(tweetFormatted, $scope.tweetCount);
-          //$scope.tweetCount++;
         }
-      });
-    };
 
-    $scope.start3DKeywordStream = function () {
-      // stop any existing stream
-      socket.emit('twitter stop continuous stream');
+        $scope.tweetData.push(tweetFormatted);
 
-      // split by commas and trim whitespace
-      var keywords = $scope.keywordStream.split(',');
-      keywords = keywords.map(function (item) {
-        return item.trim();
-      });
-
-      // emit
-      socket.emit('twitter stream filter continuous', keywords);
-
-      // receive
-      socket.on('tweet results', function (tweetResult) {
-        $scope.tweetData.push(tweetResult);
-        Display3d.addTweet(tweetResult, $scope.tweetCount);
+        Display3d.addTweet(tweetFormatted, $scope.tweetCount);
         $scope.tweetCount++;
+      }
+    });
+
+    $scope.requestTweetsByKeyword = function (keyword) {
+      socketWithRoom(function () {
+        socket.emit('tweet keyword', keyword, $scope.clientID);
       });
     };
+
+    socket.on('tweet keyword response', function (tweetsFromDB) {
+      console.log('received tweet');
+      console.log(tweetsFromDB);
+    });
+
+    socket.on('')
+
+    // $scope.start3DKeywordStream = function () {
+    //   // stop any existing stream
+    //   socket.emit('twitter stop continuous stream');
+
+    //   // split by commas and trim whitespace
+    //   var keywords = $scope.keywordStream.split(',');
+    //   keywords = keywords.map(function (item) {
+    //     return item.trim();
+    //   });
+
+    //   // emit
+    //   socket.emit('twitter stream filter continuous', keywords);
+
+    //   // receive
+    //   socket.on('tweet results', function (tweetResult) {
+    //     $scope.tweetData.push(tweetResult);
+    //     Display3d.addTweet(tweetResult, $scope.tweetCount);
+    //     $scope.tweetCount++;
+    //   });
+    // };
 
     $scope.stopTweets = function () {
       socket.emit('twitter stop continuous stream');

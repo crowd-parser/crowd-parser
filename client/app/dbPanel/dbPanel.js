@@ -209,9 +209,9 @@ angular.module('parserApp')
       });
     };
 
-    $scope.testKeyword = function(name) {
+    $scope.testKeywordSearch = function(name) {
       name = name || $scope.keywordName;
-      $http.post('/auth/adminlogin/testKeyword', {name: name})
+      $http.post('/auth/adminlogin/testKeywordSearch', {name: name})
       .success(function(data) {
         console.log("DONE with test: ", data);
 

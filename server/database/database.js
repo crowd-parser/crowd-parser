@@ -131,7 +131,9 @@ exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callbac
     clientID = clientID.toString();
   }
   exports.getKeywordNames(function(keywords){
+    console.log("KEYWORDS:", keywords);
     if(keywords.indexOf(keyword) < 0){
+      console.log("DID NOT FIND KEYWORD");
       callback(true, false);
       return;
     }else{
@@ -178,8 +180,10 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
 
 
   var getTweetsObjects = function(cb){
+    console.log("IDLIST:", idList)
     exports.db.query('SELECT * FROM tweets WHERE id IN (' + idList + ')', function(err, rows, fields){
       //now we have the tweets
+      console.log("ROWS");
       for(var i = 0; i < rows.length; i++){
         tweetPackages[rows[i].id]["tweet"] = rows[i];
       }
@@ -655,8 +659,13 @@ exports.getKeywordNames = function(cb){
     cb(theCache.keywordList)
   }else{
     this.db.query("SELECT keyword FROM keywords", function(err, rows){
-      theCache.keywordList = rows;
-      cb(rows);
+
+      var list = [];
+      for(var i = 0; i < rows.length; i++){
+        list.push(rows[i]["keyword"]);
+      }
+      theCache.keywordList = list;
+      cb(list);
     });
   }
 };
@@ -979,9 +988,9 @@ exports.doAddingMessage = function(count, moduloVal){
 
 exports.genericDropTable = function(tableName, callback){
 
-  this.db.query("SELECT DATABASE()", function(err, rows, fields){
+  exports.getCurrentDatabaseName( function(dbName){
 
-    if(tableName === "tweets" && rows[0][1] === 'production'){
+    if(tableName === "tweets" && dbName === 'production'){
       console.log("ERROR: ATTEMPTED TO DROP TWEETS TABLE ON PRODUCTION, NOT ALLOWED");
       callback();
       return;
@@ -1000,10 +1009,11 @@ exports.getCurrentDatabaseName = function(cb){
   this.db.query("SELECT DATABASE()", function(err, rows, fields){
     if(err){
       console.log(err);
+      cb(null);
       return;
     }
 
-    cb(rows[0][1]);
+    cb(rows[0]["DATABASE()"]);
   });
 };
 

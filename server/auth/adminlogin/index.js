@@ -131,15 +131,15 @@ router.post('/deleteKeyword', function(req, res, next) {
   });
 });
 
-router.post('/testKeyword', function(req, res, next) {
+router.post('/testKeywordSearch', function(req, res, next) {
   var name = req.body.name;
-  db.sendTweetPackagesForKeywordToClient(name, "FAKEID", function(err, rows) {
+  db.sendTweetPackagesForKeywordToClient(name, "FAKEID", function(err, name) {
     if(err){
       console.log(err);
       res.send(false);
       return;
     }
-      res.send(true);
+      res.send(name);
   });
 });
 

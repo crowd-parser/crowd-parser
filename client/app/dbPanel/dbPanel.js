@@ -165,6 +165,8 @@ angular.module('parserApp')
       $http.post('/auth/adminlogin/deleteLayer', {name: name})
       .success(function(data) {
         console.log("DONE: ", data);
+        $scope.showAllLayers();
+        $scope.getTables();
       })
       .error(function(data){
 

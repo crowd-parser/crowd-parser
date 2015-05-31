@@ -313,9 +313,10 @@ exports.processSingleTweetIDForKeyword = function(id, keyword, callback){
 
 exports.filterSingleTweetObjectForLayer = function(tweetObj, layerName, callback){
 //hmm
-
+  console.log(layerName);
   var rowObj = exports["layer_"+layerName+"_Function"](tweetObj);
   rowObj.tweet_id = tweetObj.id;
+  console.log(rowObj);
   //hmm
   exports.genericAddToTable("layer_"+layerName,[rowObj],callback, null);
 };
@@ -907,6 +908,7 @@ if(!Array.isArray(_listOfObjects)){
 
   callbackPerAdd = callbackPerAdd || this.errCB;
   listOfObjects = exports.rearchitectArrWithDeepObjects(listOfObjects);
+
   //this is all so we can push any objects at the db, regardless of table setup
   this.genericGetTableColumnNames(tableName, function(err, rows, fields){
     if(err){
@@ -963,6 +965,8 @@ if(!Array.isArray(_listOfObjects)){
           //this returns ids of added object, not the whole object
           if(err){
             console.log(err);
+          }else{
+            console.log("SUCCESS: ADDING: ", rows.insertId)
           }
           var theseIds = [];
           if(rows){

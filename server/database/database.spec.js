@@ -208,3 +208,85 @@ describe('MANAGING DATABASES', function() {
     done();
   });
 });
+
+describe('ADMIN PANEL FUNCTIONS', function() {
+
+  afterEach(function(done) {
+    db.currDB = 'dev';
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      done();
+    });
+  })
+
+  it('should return tables with columns', function(done) {
+
+    db.currDB = 'randomcreateddatabase';
+
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      db.returnTablesWithColumns(function(err, tables) {
+        expect(tables[0][0]).to.equal('keywords');
+        expect(tables[1][0]).to.equal('layers');
+        expect(tables[2][0]).to.equal('tweets');
+        done();
+      });
+    });
+  });
+
+  it('should get the current database name', function(done) {
+
+    db.currDB = 'randomcreateddatabase';
+
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      db.getCurrentDatabaseName(function(currentDB) {
+        expect(currentDB).to.equal('randomcreateddatabase');
+        done();
+      });
+    });
+  });
+
+  it('should describe a table', function(done) {
+
+    db.currDB = 'randomcreateddatabase';
+
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      db.genericDescribeTable('keywords', function(err, rows) {
+
+        expect(rows[0].Field).to.equal('id');
+        expect(rows[1].Field).to.equal('tableName');
+        expect(rows[2].Field).to.equal('keyword');
+        expect(rows[3].Field).to.equal('lastHighestIndexed');
+        done();
+      });
+    });
+  });
+
+  it('should add new keywords to the keywords table', function(done) {
+
+    this.timeout(3000);
+
+    db.currDB = 'randomcreateddatabase';
+
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      db.deleteKeyword('zztestKeyword', function(err, rows) {
+
+        db.addNewKeyword('zztestKeyword', function(err, rows) {
+
+          db.db.query('SELECT * FROM keywords WHERE keyword="zztestKeyword"', function(err, rows) {
+            expect(rows[0].keyword).to.equal('zztestKeyword');
+            done();
+          })
+        });
+      });
+    });
+  });
+
+  // it('should create a new keyword table', function(done) {
+
+
+  // });
+});

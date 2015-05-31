@@ -394,11 +394,12 @@ angular.module('parserApp.display3dService', [])
       var bgRGBA = displayHelpers.calculateColorFromScore(rawTweet[layerObj.resultsName].score);
 
       var text = rawTweet.text;
-      if (layerObj.resultsName === 'baseLayerResults') {
-        rawTweet.baseLayerResults.positiveWords.forEach( function (posWord) {
+      if (layerObj.resultsName === 'baseLayerResults' || layerObj.resultsName === 'slangLayerResults' ||
+            layerObj.resultsName === 'negationLayerResults') {
+        rawTweet[layerObj.resultsName].positiveWords.forEach( function (posWord) {
           text = text.replace(posWord[0], '<span class="positive-word">' + posWord[0] + '</span>');
         });
-        rawTweet.baseLayerResults.negativeWords.forEach( function (negWord) {
+        rawTweet[layerObj.resultsName].negativeWords.forEach( function (negWord) {
           text = text.replace(negWord[0], '<span class="negative-word">' + negWord[0] + '</span>');
         });
       }

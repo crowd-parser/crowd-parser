@@ -50,14 +50,15 @@ module.exports = function(io, T) {
     //db.io = io;
 
     var setSocketOnDatabase = function(){
+      if(!db){
+        setTimeout(setSocketOnDatabase.bind(exports), 50);
+        return;
+      }
       db.socket = socket;
+      db.io = io;
     };
 
-    if(!db){
-      setTimeout(setSocketOnDatabase.bind(this), 50);
-    }else{
-      db.socket = socket;
-    }
+      setSocketOnDatabase();
 
 
 
@@ -117,6 +118,20 @@ module.exports = function(io, T) {
         continuousStream.stop();
       }
     });
+
+
+    // ===== THIS PULLS TWEETS BY KEYWORDS TO THE DATABASe ======= //
+
+
+    socket.on('tweet keyword', function(keyword, clientID){
+       db.sendTweetPackagesForKeywordToClient(keyword, clientID, function(err, result){
+      //callback will either return error, or the name of the keyword if it exists
+      });
+    });
+
+    //TODO add a cancel request, and only allow one keyword request per client
+
+
 
     // ===== THIS IS USED TO DOWNLOAD TWEETS TO THE DATABASE ====== //
 

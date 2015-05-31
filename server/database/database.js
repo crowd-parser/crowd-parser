@@ -1,23 +1,26 @@
 //TODO
 
+//cache keyword search results for x number of seconds and reuse them
+
+//change all keyword requests to a constant stream, like that
+  //a client can join part way through, and then catch up later, hmm
+
 //add functionality to escape keywords to allow use of @ symbol
+//test ranges inclusivity on all sql "BETWEEN...AND"
+
+//add show actual data in tables, or at least a sub sample;
 
 //add delete tweets button
 //test delete database
 
 
 //test delete layer
-
-
 //test delete keyword
 
 //test refresh table
 //test refresh layers
 //test refresh keywords
 
-//test add 5000 tweets
-
-//test stream on off
 //only allow stream on production eventually
 
 
@@ -27,6 +30,8 @@
 //restart stream
 
 //add loop until feedback system for UI visuals
+
+//ensure that multiple tweets in pipeline arrays still works correctly
 
 
 /*============= DATABASE MODULE WRAPPER for SQL commands =========*/
@@ -49,6 +54,10 @@
         getKeywordNames - <callback>
 
         executeFullChainForIncomingTweets - <[tweetObjects]> <callback>
+
+        //ADD new layer modules in the layers section
+          //function name format matters
+          //also need to add the layer name to the 'allowed' array;
 */
 var config = require('./database-config.js');
 var mysql = require('mysql');
@@ -105,8 +114,47 @@ connectionLoop();
 
 
 /*==================================================================*/
+exports.getTableLength = function(tableName, callback){
+   exports.db.query('SELECT COUNT(*) FROM ' + tableName, function(err, rows, fields){
 
-exports.packageTweetsToSendToClient = function(_idList, finalCB){
+    callback(err, rows[0]["COUNT(*)"], fields);
+
+  });
+};
+
+exports.userRequestCache = {}; //TODO implement active and canceled status for user requests
+
+
+
+exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callback){
+  exports.getKeywordNames(function(keywords){
+    if(keywords.indexOf(keyword) < 0){
+      callback(true, false);
+      return;
+    }else{
+      callback(false, keyword);
+    }
+
+    var tableName = "tweets_containing_"+keyword;
+
+    exports.getTableLength(tableName, function(err, length){
+      var chunk = 100;
+
+      for(var i = 0; i < length; i+=chunk){
+        chunk = Math.min(chunk, length - i);
+         exports.db.query("SELECT tweet_id FROM " + tableName + " WHERE id BETWEEN " + i + " AND " + (i+chunk-1) , function(err, rows){
+          console.log("PULL 100 KEYWORD MATCHES");
+          exports.packageTweetsToSendToClient(rows, exports.errCB, keyword, clientID);
+        });
+      }
+
+    });
+
+  });
+};
+
+
+exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilteredByThisKeyword, ifSoAlsoClientID){
   exports.queueLength--;
   //grab tweets in idRange
   //var fullPackage = {<anId>:{tweet: obj, layers: {layerName:obj, layerName:obj, layerName: obj},
@@ -114,7 +162,15 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB){
   var idList = _idList.join(",");
 
   for(var i = 0; i < _idList.length; i++){
-    tweetPackages[_idList[i]] = {tweet:null, layers:{}};
+    var obj = {tweet:null, layers:{}};
+    if(!previouslyFilteredByThisKeyword && typeof previouslyFilteredByThisKeyword === "string"){
+      if(typeof ifSoAlsoClientID !== "number"){
+        console.log("ERROR: MISMATCHED ARGUMENTS PASSED TO PACKAGE CREATOR");
+        return;
+      }
+      obj.keyword = previouslyFilteredByThisKeyword;
+    }
+    tweetPackages[_idList[i]] = obj;
   }
 
 
@@ -154,17 +210,22 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB){
 
     exports.asyncMap(funcList, function(finalCB, tweetPackages, err, results, fields){
       //we ignore results here
-      exports.socket.emit('tweet added', tweetPackages);
+      if(!exports.socket){
+        console.log("ERROR: NO SOCKET ON DATABASE WRAPPER");
+        return;
+      }
+      if(typeof previouslyFilteredByThisKeyword === "string"){
 
+        exports.io.sockets.in(ifSoAlsoClientID).emit('tweet keyword response', tweetPackages);
 
-      for(var key in tweetPackages){
-        var thing = tweetPackages[key].layers.Base;
-
-          console.log("||||||||||||||||BASE:", thing);
-
+        console.log("<<<<=====KEYWORD EMIT " + clientID +"==============>>>");
+      }else{
+        exports.socket.emit('tweet added', tweetPackages);
+        console.log("<<<<=============ADDED EMIT==============>>>");
       }
 
-      console.log("<<<<=============CLIENT EMIT==============>>>");
+
+
       if(finalCB){
         finalCB(false, true);;
       }

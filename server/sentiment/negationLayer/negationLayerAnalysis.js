@@ -5,6 +5,10 @@ var TreebankWordTokenizer = require('../modules/tokenizers/treebank_word_tokeniz
 
 module.exports = function(string) {
 
+  if (typeof string !== 'string') {
+    string = string.text;
+  }
+
   // Initialize results object with what we want in the end
   var results = {
     negationWordsIndexes: [],

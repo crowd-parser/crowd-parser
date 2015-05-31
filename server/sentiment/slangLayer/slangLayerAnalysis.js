@@ -4,6 +4,10 @@ var slangNegative = slangWords.slangNegative;
 
 module.exports = function(string) {
 
+  if (typeof string !== 'string') {
+    string = string.text;
+  }
+
   // Initialize results object with what we want in the end
   var results = {
     positiveWords: [],

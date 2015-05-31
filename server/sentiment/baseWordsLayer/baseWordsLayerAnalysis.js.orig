@@ -139,4 +139,10 @@ var testTweet = {
     "in_reply_to_screen_name": null,
     // "source": "<a href="//sites.google.com/site/yorufukurou/\"" rel="\"nofollow\"">YoruFukurou</a>",
     "in_reply_to_status_id": null
+<<<<<<< HEAD
   };
+=======
+  };
+
+console.log(module.exports(testTweet));
+>>>>>>> Made all layers able to handle string or object input.

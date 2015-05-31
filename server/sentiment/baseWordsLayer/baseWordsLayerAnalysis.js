@@ -171,5 +171,3 @@ var testTweet = {
     // "source": "<a href="//sites.google.com/site/yorufukurou/\"" rel="\"nofollow\"">YoruFukurou</a>",
     "in_reply_to_status_id": null
   };
-
-console.log(module.exports.tweetObject(testTweet));

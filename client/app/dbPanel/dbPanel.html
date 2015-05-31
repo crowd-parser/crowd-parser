@@ -26,7 +26,17 @@
             <div ng-repeat="layer in layersList">
               <div><span class="delete" ng-click="deleteLayer(layer.layerName)">DELETE</span><span class="redo" ng-click="redoLayer(layer.layerName)">REDO</span>{{layer.layerName}}</div>
             </div>
-       </div><div id="admin_tables_display" class="box">
+       </div><div id="admin_keywords_controls" class="box">
+        <input class="form-control" ng-model="keywordName" placeholder="Keyword Name"><button ng-click="addNewKeyword()" class="btn btn-success">Add Keyword</button>
+         <button ng-click="redoKeyword()" class="btn btn-warning">Run Keyword</button><button ng-click="deleteKeyword()" class="btn btn-danger">Delete Keyword</button>
+         <button ng-click="testKeywordSearch()" class="btn btn-danger">Test Keyword</button>
+
+    </div><div id="admin_layers_controls" class="box">
+        <input type="text" class="form-control" ng-model="layerName" placeholder="Layer Name"><button ng-click="addNewLayer()" class="btn btn-success">Add Layer</button><button ng-click="redoLayer()" class="btn btn-warning">Run Layer</button>
+        <button ng-click="deleteLayer()" class="btn btn-danger">Delete Layer</button>
+
+
+    </div><div id="admin_tables_display" class="box">
            <div class="adminSubSection"><button class="btn btn-info" ng-click="getTables()">Refresh Tables</button></div>
           <div ng-repeat="table in dbtables" class="extendX">
             <button class="btn btn-primary"  ng-click="selectTable(table[0])">{{table}}</button>
@@ -40,15 +50,7 @@
 
 
 
-  <div id="admin_layers_controls" class="box">
-        <input type="text" class="form-control" ng-model="layerName" placeholder="Layer Name"><button ng-click="addNewLayer()" class="btn btn-success">Add Layer</button><button ng-click="redoLayer()" class="btn btn-warning">Run Layer</button>
-        <button ng-click="deleteLayer()" class="btn btn-danger">Delete Layer</button>
 
-    </div><div id="admin_keywords_controls" class="box">
-        <input class="form-control" ng-model="keywordName" placeholder="Keyword Name"><button ng-click="addNewKeyword()" class="btn btn-success">Add Keyword</button>
-         <button ng-click="redoKeyword()" class="btn btn-warning">Run Keyword</button><button ng-click="deleteKeyword()" class="btn btn-danger">Delete Keyword</button>
-
-    </div>
 
     <div id="admin_stream_display" class="box">
 

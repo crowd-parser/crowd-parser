@@ -266,6 +266,8 @@ describe('ADMIN PANEL FUNCTIONS', function() {
 
   it('should add new keywords to the keywords table', function(done) {
 
+    this.timeout(3000);
+
     db.currDB = 'randomcreateddatabase';
 
     db.changeToDatabase(db.currDB, function(err, response) {
@@ -285,6 +287,6 @@ describe('ADMIN PANEL FUNCTIONS', function() {
 
   // it('should create a new keyword table', function(done) {
 
-    
+
   // });
 });

@@ -94,7 +94,6 @@ var connectionLoop = function(){
          }
       });
 
-
       exports.db.on('error', function(err) {
          console.log("MYSQL ERROR CONNECTION", err);
          if(err.code === 'PROTOCOL_CONNECTION_LOST') {
@@ -149,7 +148,12 @@ exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callbac
         chunk = Math.min(chunk, length - i);
          exports.db.query("SELECT tweet_id FROM " + tableName + " WHERE id BETWEEN " + i + " AND " + (i+chunk-1) , function(err, rows){
           console.log("PULL 100 KEYWORD MATCHES");
-          exports.packageTweetsToSendToClient(rows, exports.errCB, keyword, clientID);
+          console.log("AN ID",rows[0]);
+          var finalArr = [];
+          for(var i = 0; i < rows.length; i++){
+            finalArr.push(rows[i]["tweet_id"]);
+          }
+          exports.packageTweetsToSendToClient(finalArr, exports.errCB, keyword, clientID);
         });
       }
 
@@ -166,6 +170,7 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
   var tweetPackages = {}
   var idList = _idList.join(",");
 
+
   for(var i = 0; i < _idList.length; i++){
     var obj = {tweet:null, layers:{}};
     if(!previouslyFilteredByThisKeyword && typeof previouslyFilteredByThisKeyword === "string"){
@@ -180,10 +185,15 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
 
 
   var getTweetsObjects = function(cb){
-    console.log("IDLIST:", idList)
+
     exports.db.query('SELECT * FROM tweets WHERE id IN (' + idList + ')', function(err, rows, fields){
       //now we have the tweets
-      console.log("ROWS");
+      if(err){
+        console.log(err);
+      }else{
+        //console.log(rows);
+      }
+
       for(var i = 0; i < rows.length; i++){
         tweetPackages[rows[i].id]["tweet"] = rows[i];
       }
@@ -193,8 +203,16 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
 
   var getResultObjectForLayer = function(layerName, cb){
     var layerTableName = "layer_"+layerName;
+
     exports.db.query('SELECT * FROM ' + layerTableName + ' WHERE tweet_id IN (' + idList + ')', function(err, rows, fields){
       //this is now the rows for all the tweets in this table
+      var finalArr = [];
+
+      if(err){
+        console.log(err);
+      }else{
+
+      }
       for(var i = 0; i < rows.length; i++){
         tweetPackages[rows[i].tweet_id]["layers"][layerName] = rows[i];
       }
@@ -225,13 +243,11 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
 
         exports.io.sockets.in(ifSoAlsoClientID).emit('tweet keyword response', tweetPackages);
 
-        console.log("<<<<=====KEYWORD EMIT " + clientID +"==============>>>");
+        console.log("<<<<=====KEYWORD EMIT " + ifSoAlsoClientID +"==============>>>");
       }else{
         exports.socket.emit('tweet added', tweetPackages);
         console.log("<<<<=============ADDED EMIT==============>>>");
       }
-
-
 
       if(finalCB){
         finalCB(false, true);;
@@ -466,8 +482,12 @@ exports.getLayerNames = function(cb){
     cb(theCache.layerList);
   }else{
     this.db.query("SELECT layerName FROM layers", function(err, rows){
-      theCache.layerList = rows;
-      cb(rows);
+      var finalArr = [];
+      for(var i = 0; i < rows.length; i++){
+        finalArr.push(rows[i]["layerName"]);
+      }
+      theCache.layerList = finalArr;
+      cb(finalArr);
     });
   }
 };

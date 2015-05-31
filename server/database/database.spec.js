@@ -247,21 +247,5 @@ describe('ADMIN PANEL FUNCTIONS', function() {
     });
   });
 
-  it('should get the table size', function(done) {
-
-    db.currDB = 'randomcreateddatabase';
-
-    db.changeToDatabase(db.currDB, function(err, response) {
-
-      // db.genericDropTable('zztesttable', function(err, response) {
-
-        db.genericDropTable('zztesttable', {prop1: 'Property 1', prop2: 'Property 2'}, function(err, rows, fields) {
-
-          console.log(err, rows, fields);
-          done();
-        });
-      // });
-
-    });
-  });
+  
 })

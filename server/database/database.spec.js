@@ -208,3 +208,60 @@ describe('MANAGING DATABASES', function() {
     done();
   });
 });
+
+describe('ADMIN PANEL FUNCTIONS', function() {
+
+  afterEach(function(done) {
+    db.currDB = 'dev';
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      done();
+    });
+  })
+
+  it('should return tables with columns', function(done) {
+
+    db.currDB = 'randomcreateddatabase';
+
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      db.returnTablesWithColumns(function(err, tables) {
+        expect(tables[0][0]).to.equal('keywords');
+        expect(tables[1][0]).to.equal('layers');
+        expect(tables[2][0]).to.equal('tweets');
+        done();
+      });
+    });
+  });
+
+  it('should get the current database name', function(done) {
+
+    db.currDB = 'randomcreateddatabase';
+
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      db.getCurrentDatabaseName(function(currentDB) {
+        expect(currentDB).to.equal('randomcreateddatabase');
+        done();
+      });
+    });
+  });
+
+  it('should get the table size', function(done) {
+
+    db.currDB = 'randomcreateddatabase';
+
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      // db.genericDropTable('zztesttable', function(err, response) {
+
+        db.genericDropTable('zztesttable', {prop1: 'Property 1', prop2: 'Property 2'}, function(err, rows, fields) {
+
+          console.log(err, rows, fields);
+          done();
+        });
+      // });
+
+    });
+  });
+})

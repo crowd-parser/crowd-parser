@@ -209,6 +209,18 @@ angular.module('parserApp')
       });
     };
 
+    $scope.testKeyword = function(name) {
+      name = name || $scope.keywordName;
+      $http.post('/auth/adminlogin/testKeyword', {name: name})
+      .success(function(data) {
+        console.log("DONE with test: ", data);
+
+      })
+      .error(function(data){
+        console.log("ERR test");
+      });
+    };
+
     $scope.createDatabase = function(name) {
 
       name = name || $scope.databaseName;

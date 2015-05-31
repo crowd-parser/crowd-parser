@@ -127,6 +127,9 @@ exports.userRequestCache = {}; //TODO implement active and canceled status for u
 
 
 exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callback){
+  if(typeof clientID === "number"){
+    clientID = clientID.toString();
+  }
   exports.getKeywordNames(function(keywords){
     if(keywords.indexOf(keyword) < 0){
       callback(true, false);
@@ -164,7 +167,7 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
   for(var i = 0; i < _idList.length; i++){
     var obj = {tweet:null, layers:{}};
     if(!previouslyFilteredByThisKeyword && typeof previouslyFilteredByThisKeyword === "string"){
-      if(typeof ifSoAlsoClientID !== "number"){
+      if(typeof ifSoAlsoClientID !== "string"){
         console.log("ERROR: MISMATCHED ARGUMENTS PASSED TO PACKAGE CREATOR");
         return;
       }
@@ -447,8 +450,8 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
 exports.convertToUnicode = require('../sentiment/emoticonLayer/emojiConverter.js').convertEmojisInTweet;
 exports.restoreFromUnicode = require('../sentiment/emoticonLayer/emojiConverter.js').restoreEmojisInTweet;
 
-exports.layer_Base_Function = require('../sentiment/baseWordsLayer/baseWordsLayerAnalysis.js').tweetObject;
-exports.layer_Emoticons_Function = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js').tweetObject;
+exports.layer_Base_Function = require('../sentiment/baseWordsLayer/baseWordsLayerAnalysis.js');
+exports.layer_Emoticons_Function = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js');
 exports.layer_Random_Function = function(){return {score: Math.random(), someStuff: "stuff", otherStuff:"moreStuff"}};
 exports.layer_Test_Function = function(){return {score:0, testArray12345: [1,2,3,4,5]}};
 

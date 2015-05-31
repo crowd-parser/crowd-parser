@@ -131,6 +131,20 @@ router.post('/deleteKeyword', function(req, res, next) {
   });
 });
 
+router.post('/testKeyword', function(req, res, next) {
+  var name = req.body.name;
+  db.sendTweetPackagesForKeywordToClient(name, "FAKEID", function(err, rows) {
+    if(err){
+      console.log(err);
+      res.send(false);
+      return;
+    }
+      res.send(true);
+  });
+});
+
+
+
 router.post('/addNewLayer', function(req, res, next) {
   var name = req.body.name;
   db.addNewLayer(name, function(err, rows) {

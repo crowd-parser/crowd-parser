@@ -266,7 +266,7 @@ describe('ADMIN PANEL FUNCTIONS', function() {
 
   it('should add new keywords to the keywords table', function(done) {
 
-    this.timeout(3000);
+    this.timeout(6000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -285,8 +285,35 @@ describe('ADMIN PANEL FUNCTIONS', function() {
     });
   });
 
-  // it('should create a new keyword table', function(done) {
+  it('should create a new keyword table', function(done) {
 
+    this.timeout(6000);
+
+    db.currDB = 'randomcreateddatabase';
+
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      db.deleteKeyword('zztestKeyword', function(err, rows) {
+
+        db.addNewKeyword('zztestKeyword', function(err, rows) {
+
+          db.db.query('SHOW TABLES;', function(err, rows) {
+
+            var contains = false;
+            rows.forEach(function(item) {
+              if (item["Tables_in_randomcreateddatabase"] === 'tweets_containing_zztestKeyword') {
+                contains = true;
+              }
+            });
+            expect(contains).to.equal(true);
+            done();
+          })
+        });
+      });
+    });
+  });
+
+  // it('should redo a keyword table, filtering all tweets again', function(done) {
 
   // });
 });

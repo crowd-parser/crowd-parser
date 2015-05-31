@@ -247,5 +247,44 @@ describe('ADMIN PANEL FUNCTIONS', function() {
     });
   });
 
-  
-})
+  it('should describe a table', function(done) {
+
+    db.currDB = 'randomcreateddatabase';
+
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      db.genericDescribeTable('keywords', function(err, rows) {
+
+        expect(rows[0].Field).to.equal('id');
+        expect(rows[1].Field).to.equal('tableName');
+        expect(rows[2].Field).to.equal('keyword');
+        expect(rows[3].Field).to.equal('lastHighestIndexed');
+        done();
+      });
+    });
+  });
+
+  it('should add new keywords to the keywords table', function(done) {
+
+    db.currDB = 'randomcreateddatabase';
+
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      db.deleteKeyword('zztestKeyword', function(err, rows) {
+
+        db.addNewKeyword('zztestKeyword', function(err, rows) {
+
+          db.db.query('SELECT * FROM keywords WHERE keyword="zztestKeyword"', function(err, rows) {
+            expect(rows[0].keyword).to.equal('zztestKeyword');
+            done();
+          })
+        });
+      });
+    });
+  });
+
+  // it('should create a new keyword table', function(done) {
+
+    
+  // });
+});

@@ -16,6 +16,20 @@ We created our own sentiment library based on word lists from renowned social me
 
 [sentimentjs](https://github.com/crowd-parser/sentimentjs)
 
+
+### Sentiment "Layers"
+
+One thing that makes our sentiment library unique is the concept of "layers." Most of the other sentiment libraries out there tend to merely analyze whether specific words are positive or negative, which misses many other factors related to sentiment analysis.
+
+Currently, our app utilizes four different layers for sentiment analysis:
+
+1. Base common words layer
+1. Emoticon layer
+1. Slang layer
+1. Negation layer
+
+Each layer performs a specific tasks, and our app allows users to view each layer individually or in different combinations to see what is added by each other and how the aggregation of these layers improves the overall sentiment analysis.
+
 Here is one paper written by Hu and Liu:
 
 > Minqing Hu and Bing Liu. "Mining and Summarizing Customer Reviews." Proceedings of the ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD-2004), Aug 22-25, 2004, Seattle, Washington, USA

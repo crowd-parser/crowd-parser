@@ -375,12 +375,9 @@ describe('ADMIN PANEL FUNCTIONS', function() {
 
             expect(rows.length).to.equal(1);
 
-            setTimeout(function() {
+            db.deleteKeyword('obama', function(err, response) {
 
-              db.deleteKeyword('obama', function(err, response) {
-
-                done();
-              });
+              done();
             });
           });
         });
@@ -390,6 +387,8 @@ describe('ADMIN PANEL FUNCTIONS', function() {
   });
 
   it('should add a new layer', function(done) {
+
+    this.timeout(10000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -401,8 +400,19 @@ describe('ADMIN PANEL FUNCTIONS', function() {
 
           db.db.query('SHOW TABLES', function(err, response) {
 
-            console.log(err, response);
-            done();
+            var contains = false;
+
+            response.forEach(function(item) {
+              if (item["Tables_in_randomcreateddatabase"] === 'layer_Base') {
+                contains = true;
+              }
+            });
+            expect(contains).to.equal(true);
+
+            db.deleteLayer('Base', function(err, response) {
+
+              done();
+            });
           });
         });
       });
@@ -419,16 +429,27 @@ describe('ADMIN PANEL FUNCTIONS', function() {
 
       db.db.query('DELETE FROM tweets WHERE id > 0 LIMIT 5', function(err, response) {
 
-        db.ADDTHEFIVETESTTWEETS(function(){},function(err, response) {
-console.log(err, response)
-          db.db.query('SELECT * FROM tweets', function(err, rows) {
+        db.addNewKeyword('obama', function(err, response) {
 
-            expect(rows.length).to.equal(5);
-            done();
+          db.ADDTHEFIVETESTTWEETS(function(err, response) {
+
+            setTimeout(function() {
+
+              db.db.query('SELECT * FROM tweets', function(err, rows) {
+
+                expect(rows.length).to.equal(5);
+
+                db.db.query('SELECT * FROM tweets_containing_obama', function(err, response) {
+
+                  expect(response.length).to.equal(1);
+                  done();
+                });
+              });
+            }, 3000);
           });
         });
-      });
 
+      });
     });
   });
 });

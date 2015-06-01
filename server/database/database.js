@@ -265,7 +265,7 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
       }
 
       if(finalCB){
-        finalCB(false, true);;
+        finalCB(false, true);
       }
 
       // if(tweetPackages[0]){
@@ -1229,7 +1229,7 @@ exports.ADDALLTHETWEETS = function(callback){
 
 
 exports.ADDTHEFIVETESTTWEETS = function(callback, finalCB){
-  finalCB = finalCB || exports.errCB;
+  finalCB = finalCB || function(){console.log("FINISH ADD FIVE")};
   this.getCurrentDatabaseName(function(name){
       if(name === 'production'){
         console.log("can't use test data on production database");
@@ -1240,19 +1240,11 @@ exports.ADDTHEFIVETESTTWEETS = function(callback, finalCB){
         for(var i = 1; i < 6; i++){
           var eye = i;
           //[{tweet: tweetObj, layers:[layer1resultObj, layer2resultObj}]
-          setTimeout(function(_cb,i){
-            console.log("CB FUNC",_cb);
-          this.executeFullChainForIncomingTweets([this["testTweet" + i]], function(cb, err, status, fields) {
-              if (err) {
-                console.log(err);
-                cb(err, status);
-                return;
-              } else {
-                console.log("SENT TWEET TO CLIENT ID", status);
-                cb(err, status)
-                // exports.packageTweetsToSendToClient(ids);
-              }
-           }.bind(this, _cb));
+
+          setTimeout(function(finalCB, i){
+
+            this.executeFullChainForIncomingTweets([this["testTweet" + i]],finalCB );
+
         }.bind(exports, finalCB ,eye),0);
       }
     }

@@ -86,6 +86,7 @@ var connectionLoop = function(){
       exports.db._protocol._delegateError = function(err, sequence){
         if(err.fatal) {
           console.trace('fatal error: ' + err.message);
+          setTimeout(connectionLoop, 500);
         }
         return del.call(this, err, sequence);
       };
@@ -1191,12 +1192,12 @@ exports.ADDALLTHETWEETS = function(callback){
         var eye = i;
           //[{tweet: tweetObj, layers:[layer1resultObj, layer2resultObj}]
           setTimeout(function(i){
-          this.executeFullChainForIncomingTweets(ALL_THE_TEST_TWEETS[i], function(err, ids, fields) {
+          this.executeFullChainForIncomingTweets(ALL_THE_TEST_TWEETS[i], function(err, status, fields) {
               if (err) {
                 console.log(err);
                 return;
               } else {
-                console.log("SEND TWEET TO CLIENT ID", ids);
+                console.log("SEND TWEET TO CLIENT ID", status);
                 // exports.packageTweetsToSendToClient(ids);
                 //now this is just returning ids that were added
                 //now we use the function that passes tweet with layer data to the client
@@ -1227,12 +1228,12 @@ exports.ADDTHEFIVETESTTWEETS = function(callback){
           var eye = i;
           //[{tweet: tweetObj, layers:[layer1resultObj, layer2resultObj}]
           setTimeout(function(i){
-          this.executeFullChainForIncomingTweets([this["testTweet" + i]], function(err, ids, fields) {
+          this.executeFullChainForIncomingTweets([this["testTweet" + i]], function(err, status, fields) {
               if (err) {
                 console.log(err);
                 return;
               } else {
-                console.log("SENT TWEET TO CLIENT ID", ids);
+                console.log("SENT TWEET TO CLIENT ID", status);
                 // exports.packageTweetsToSendToClient(ids);
 
 

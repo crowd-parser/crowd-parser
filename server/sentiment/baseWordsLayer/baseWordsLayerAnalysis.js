@@ -3,7 +3,7 @@ var sentimentPositive = sentimentWords.sentimentPositive;
 var sentimentNegative = sentimentWords.sentimentNegative;
 
 module.exports = function(string) {
-  
+
   if (typeof string !== 'string') {
     string = string.text;
   }

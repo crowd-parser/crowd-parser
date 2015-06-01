@@ -211,13 +211,15 @@ describe('MANAGING DATABASES', function() {
 
 describe('ADMIN PANEL FUNCTIONS', function() {
 
-  afterEach(function(done) {
-    db.currDB = 'dev';
-    db.changeToDatabase(db.currDB, function(err, response) {
+  // afterEach(function(done) {
+  //   this.timeout(6000);
 
-      done();
-    });
-  })
+  //   db.currDB = 'dev';
+  //   db.changeToDatabase(db.currDB, function(err, response) {
+
+  //     done();
+  //   });
+  // });
 
   it('should return tables with columns', function(done) {
 
@@ -266,7 +268,7 @@ describe('ADMIN PANEL FUNCTIONS', function() {
 
   it('should add new keywords to the keywords table', function(done) {
 
-    this.timeout(6000);
+    this.timeout(10000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -313,7 +315,90 @@ describe('ADMIN PANEL FUNCTIONS', function() {
     });
   });
 
-  // it('should redo a keyword table, filtering all tweets again', function(done) {
+  it('should delete a keyword table', function(done) {
 
+    this.timeout(5000);
+
+    db.currDB = 'randomcreateddatabase';
+
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      db.addNewKeyword('zzztestKeyword', function(err, response) {
+
+        db.deleteKeyword('zzztestKeyword', function(err, response) {
+
+          db.db.query('SHOW TABLES;', function(err, rows) {
+
+            var contains = false;
+            rows.forEach(function(item) {
+              if (item["Tables_in_randomcreateddatabase"] === 'tweets_containing_zzztestKeyword') {
+                contains = true;
+              }
+            });
+            expect(contains).to.equal(false);
+            done();
+          });
+        });
+      });
+
+    });
+  });
+
+  it('should redo a keyword table, filtering all tweets again', function(done) {
+
+    this.timeout(10000);
+
+    db.currDB = 'randomcreateddatabase';
+
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      db.addNewKeyword('obama', function(err, response) {
+
+        db.db.query('SELECT * FROM tweets_containing_obama', function(err, response) {
+
+          expect(response.length).to.equal(1);
+
+          setTimeout(function() {
+
+            db.deleteKeyword('obama', function(err, response) {
+
+              done();
+            });
+          },500);
+        });
+      });
+    });
+  });
+
+  // it('should add a new layer', function(done) {
+
+    
   // });
+
+  it('should add the five test tweets and do everything', function(done) {
+
+    this.timeout(10000);
+
+    db.currDB = 'randomcreateddatabase';
+
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      db.db.query('DELETE FROM tweets WHERE id > 0 LIMIT 5', function(err, response) {
+
+        db.ADDTHEFIVETESTTWEETS(function(err, response) {
+
+          setTimeout(function() {
+
+            db.db.query('SELECT * FROM tweets', function(err, rows) {
+
+              expect(rows.length).to.equal(5);
+              done();
+            });
+
+          }, 3000);
+        });
+      });
+
+    });
+  });
 });

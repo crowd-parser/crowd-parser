@@ -597,7 +597,7 @@ var layerTableName = "layer_"+layerName;
             var thisFunc = function(exports, chunkNumber, i,cb){
                 console.log("NEW CHUNK: ",chunkNumber);
                  exports.db.query('SELECT * FROM tweets WHERE id BETWEEN ' + i + " AND " + (i+chunkNumber), function(err, rows, fields){
-
+console.log(err, rows)
                     var thisHighest = rows[0];
                     if(thisHighest > lastHighestIndexed){
                       lastHighestIndexed = thisHighest;

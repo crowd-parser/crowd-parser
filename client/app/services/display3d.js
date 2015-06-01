@@ -560,7 +560,11 @@ angular.module('parserApp.display3dService', [])
   var showLayer = function (layerIndex) {
     // show tweets
     layers[layerIndex].tweetMaterialNeg.opacity = 0.5;
-    layers[layerIndex].tweetMaterialNeutral.opacity = 0.5;
+    if (layersSeparated) {
+      layers[layerIndex].tweetMaterialNeutral.opacity = 0.5;
+    } else {
+      layers[layerIndex].tweetMaterialNeutral.opacity = 0;
+    }
     layers[layerIndex].tweetMaterialPos.opacity = 0.5;
     layers[layerIndex].tweets.forEach(function (tweet) {
       if (tweet.el) {

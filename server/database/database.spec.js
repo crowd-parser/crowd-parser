@@ -431,24 +431,38 @@ describe('ADMIN PANEL FUNCTIONS', function() {
 
         db.addNewKeyword('obama', function(err, response) {
 
-          db.ADDTHEFIVETESTTWEETS(function(err, response) {
+          db.addNewLayer('Base', function(err, response) {
 
-            setTimeout(function() {
+            db.ADDTHEFIVETESTTWEETS(function(err, response) {
 
-              db.db.query('SELECT * FROM tweets', function(err, rows) {
+              setTimeout(function() {
 
-                expect(rows.length).to.equal(5);
+                db.db.query('SELECT * FROM tweets', function(err, rows) {
 
-                db.db.query('SELECT * FROM tweets_containing_obama', function(err, response) {
+                  expect(rows.length).to.equal(5);
 
-                  expect(response.length).to.equal(1);
-                  done();
+                  db.db.query('SELECT * FROM tweets_containing_obama', function(err, response) {
+
+                    expect(response.length).to.equal(1);
+                    
+                    db.db.query('SELECT COUNT(*) FROM layer_Base', function(err, response) {
+
+                      expect(response[0]["COUNT(*)"]).to.equal(5);
+                      
+                      db.deleteKeyword('obama', function(err, response) {
+
+                        db.deleteLayer('Base', function(err, response) {
+
+                          done();
+                        });
+                      });
+                    });
+                  });
                 });
-              });
-            }, 3000);
+              }, 3000);
+            });
           });
         });
-
       });
     });
   });

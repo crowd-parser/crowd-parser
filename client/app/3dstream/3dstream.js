@@ -214,10 +214,15 @@ angular.module('parserApp')
           tweetFormatted.text = tweetObj.tweet.text;
           tweetFormatted.username = tweetObj.tweet.user_name;
           tweetFormatted.baseLayerResults = tweetObj.layers.Base;
-          tweetFormatted.baseLayerResults.negativeWords = JSON.parse(tweetObj.layers.Base.negativeWords);
-          console.log(tweetFormatted.baseLayerResults.negativeWords);
-          tweetFormatted.baseLayerResults.positiveWords = JSON.parse(tweetObj.layers.Base.positiveWords);
-          tweetFormatted.emoticonLayerResults = {};
+          if (tweetObj.layers.Base) {
+            tweetFormatted.baseLayerResults.negativeWords = JSON.parse(tweetObj.layers.Base.negativeWords);
+            tweetFormatted.baseLayerResults.positiveWords = JSON.parse(tweetObj.layers.Base.positiveWords);
+          }
+          tweetFormatted.emoticonLayerResults = tweetObj.layers.Emoticons;
+          if (tweetObj.layers.Emoticons) {
+            tweetFormatted.emoticonLayerResults.negativeWords = JSON.parse(tweetObj.layers.Emoticons.negativeWords);
+            tweetFormatted.emoticonLayerResults.positiveWords = JSON.parse(tweetObj.layers.Emoticons.positiveWords);
+          }
         }
 
         $scope.tweetData.push(tweetFormatted);

@@ -24,6 +24,7 @@ module.exports = function(config) {
       'client/app/**/*.js',
       'client/components/**/*.js',
       'client/app/**/*.html',
+      'client/lib/*.js',
       'client/components/**/*.html',
       'e2e/lib/socket.js'
     ],

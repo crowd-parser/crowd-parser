@@ -332,9 +332,14 @@ exports.filterTweetObjectsForLayer = function(tweetObj, layerName, callback){
     for(var i = 0; i < tweetObj.length; i++){
       var rowObj = exports["layer_"+layerName+"_Function"](tweetObj[i]);
       rowObj.tweet_id = tweetObj.id;
-      //console.log(rowObj);
+      console.log("FILTERING " + tweetObj[i].id + " FOR LAYER: " + layerName);
       //hmm
-      exports.genericAddToTable("layer_"+layerName,[rowObj],callback, null);
+      if(i === tweetObj.length - 1){
+        exports.genericAddToTable("layer_"+layerName,[rowObj],exports.errCB, callback);
+      }else{
+        exports.genericAddToTable("layer_"+layerName,[rowObj],exports.errCB, null);
+      }
+
     }
   }else{
     var rowObj = exports["layer_"+layerName+"_Function"](tweetObj);
@@ -354,12 +359,13 @@ exports.filterTweetObjectsForLayer = function(tweetObj, layerName, callback){
 exports.queueLength = 0;
 exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
-  if(exports.queueLength > 0 && exports.queueLength % 100 === 0){
+  if(exports.queueLength > 0 && exports.queueLength % 500 === 0){
     console.log("++++++++++++++QUEUE LENGTH+++++++",exports.queueLength);
   }
 
   if(exports.queueLength > 1000){
     //abandon all hope, start dropping tweets
+    callback();
     return;
   }
 
@@ -577,7 +583,7 @@ var layerTableName = "layer_"+layerName;
         exports.db.query('SELECT COUNT(*) FROM tweets', function(err, rows) {
           length = rows[0]["COUNT(*)"];
           console.log("TWEETS TO FILTER: ", length);
-          var chunkNumber = 1000;
+          var chunkNumber = 100;
 
           var setLastIndexedOnLayerTable = function(val){
             exports.db.query("UPDATE layers SET lastHighestIndexed="+val+" WHERE layerName="+layerName);
@@ -618,7 +624,7 @@ var layerTableName = "layer_"+layerName;
 
           var finalCB = _finalCB || exports.errCB;
           //var funcList = [function(){}];
-          exports.asyncMap(funcList,finalCB );
+          exports.asyncChain(funcList,finalCB );
 
         });
     });
@@ -909,18 +915,24 @@ exports.asyncChain = function(funcs, finalCB){
   }
 
   var cb = function(index, err, results){
+    if(index < finalResults.length){
+      console.log("WARNING: ATTEMPTING TO CALL CB ALREADY COMPLETED IN ASYNC CHAIN");
+      return;
+    }
     finalResults[index] = results;
     if(index < funcs.length){
-      funcs[i+1](cb.bind(exports,i+1));
+      var delayFunc = function(){
+        funcs[index+1](cb.bind(exports,index+1));
+      };
+      setTimeout(delayFunc,1);
     }else{
       finalCB(null, finalResults,null);
     }
   };
 
+  funcs[0](cb.bind(exports,0));
 
-    funcs[i](cb.bind(exports,i));
-
-}
+};
 
 exports.asyncMap = function(funcs, finalCB){
   var count = funcs.length;
@@ -1081,6 +1093,7 @@ exports.genericDropTable = function(tableName, callback){
     }else if(tableName === "keywords"){
       theCache.keywordList = null;
     }
+    console.log("DELETING TABLE: " + tableName);
     exports.db.query("DROP TABLE IF EXISTS " + tableName, callback);
   });
 
@@ -1215,8 +1228,8 @@ exports.ADDALLTHETWEETS = function(callback){
 };
 
 
-exports.ADDTHEFIVETESTTWEETS = function(callback){
-
+exports.ADDTHEFIVETESTTWEETS = function(callback, finalCB){
+  finalCB = finalCB || exports.errCB;
   this.getCurrentDatabaseName(function(name){
       if(name === 'production'){
         console.log("can't use test data on production database");
@@ -1227,22 +1240,20 @@ exports.ADDTHEFIVETESTTWEETS = function(callback){
         for(var i = 1; i < 6; i++){
           var eye = i;
           //[{tweet: tweetObj, layers:[layer1resultObj, layer2resultObj}]
-          setTimeout(function(i){
-          this.executeFullChainForIncomingTweets([this["testTweet" + i]], function(err, status, fields) {
+          setTimeout(function(_cb,i){
+            console.log("CB FUNC",_cb);
+          this.executeFullChainForIncomingTweets([this["testTweet" + i]], function(cb, err, status, fields) {
               if (err) {
                 console.log(err);
+                cb(err, status);
                 return;
               } else {
                 console.log("SENT TWEET TO CLIENT ID", status);
+                cb(err, status)
                 // exports.packageTweetsToSendToClient(ids);
-
-
-
-
-
               }
-           });
-        }.bind(exports,eye),0);
+           }.bind(this, _cb));
+        }.bind(exports, finalCB ,eye),0);
       }
     }
   });

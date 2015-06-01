@@ -19,7 +19,12 @@ angular.module('parserApp.display3dService', [])
   var makeLoResMesh = function (layersSeparated, elData, layerObj) {
     var loGeo = new THREE.PlaneBufferGeometry(140, 140);
     var loMesh;
-    var score = +elData.score.split(': ')[1]
+    var score = elData.score.split(': ')[1];
+    if (score === 'N/A') {
+      score = 0;
+    } else {
+      score = +score;
+    }
     if (score > 0) {
       loMesh = new THREE.Mesh(loGeo, layerObj.tweetMaterialPos);
     } else if (score < 0) {
@@ -74,7 +79,7 @@ angular.module('parserApp.display3dService', [])
       score.textContent = elData.score;
       tweet.appendChild( score );
 
-      if (+elData.score.split(': ')[1] === 0) {
+      if (+elData.score.split(': ')[1] === 0 || elData.score.split(': ')[1] === 'N/A') {
         tweetText.className = 'tweetText';
         score.className = 'score';
         username.className = 'username';
@@ -110,7 +115,7 @@ angular.module('parserApp.display3dService', [])
     if (score > 0) {
       bgRGBA = '0,20,190,' + (0.25 + score/10);
     }
-    if (score === 0) {
+    if (score === 0 || score === undefined) {
       bgRGBA = '225,225,225,0.8';
     }
     return bgRGBA;
@@ -194,7 +199,7 @@ angular.module('parserApp.display3dService', [])
     }
   };
 
-  var flattenLayers = function (layers, frontLayerZ, layerSpacing, rows, sceneGL) {
+  var flattenLayers = function (layers, frontLayerZ, layerSpacing, rows, sceneGL, allLayers) {
 
     for (var i = 0; i < layers.length; i++) {
       new TWEEN.Tween( layers[i].tweetMaterialNeutral )
@@ -239,9 +244,14 @@ angular.module('parserApp.display3dService', [])
         var combinedMaterial = new THREE.MeshBasicMaterial( { color: 'rgb(0,150,210)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
         combinedMaterial.transparent = true;
         combinedMaterial.opacity = 0;
-        var combinedTextGeom = new THREE.TextGeometry( layers.map(function (item) {
-                  return item.title;
-                }).join(' + ') + ' layers',
+        var layerNames = [];
+        layers.forEach(function (item) {
+          if (allLayers[item.title].visible) {
+            layerNames.push(item.title);
+          }
+        });
+        
+        var combinedTextGeom = new THREE.TextGeometry( layerNames.join(' + ') + ' layers',
           {
             size: (12*rows),
             font: 'droid sans', // Must be lowercase!
@@ -321,20 +331,30 @@ angular.module('parserApp.display3dService', [])
   var updateLayers = function (layersVisible) {
     // uiLayer is a layer title
     for (var uiLayer in layersVisible) {
+      console.log(uiLayer + ' viz: ' + layersVisible[uiLayer].viz);
       // if there is a hidden layer that should be visible,
       // toggle on visible and put it in layers
       if (layersVisible[uiLayer].viz && !allLayers[uiLayer].visible) {
+        console.log('toggle on ' + uiLayer);
         allLayers[uiLayer].visible = true;
-        layers.push(allLayers[uiLayer].layer);
-        showLayer(layers.length-1);
+        //layers.push(allLayers[uiLayer].layer);
+        layers.forEach(function (layer, i) {
+          if (layer.title === uiLayer) {
+            console.log('showing ' + uiLayer);
+            showLayer(i);
+            //layers.splice(i, 1);
+          }
+        });
       } else if (!layersVisible[uiLayer].viz && allLayers[uiLayer].visible) {
+        console.log('toggle off ' + uiLayer);
       // if there is a visible layer that should be hidden,
       // toggle off visible and splice it out of layers
         allLayers[uiLayer].visible = false;
         layers.forEach(function (layer, i) {
           if (layer.title === uiLayer) {
+            console.log('hiding ' + uiLayer);
             hideLayer(i);
-            layers.splice(i, 1);
+            //layers.splice(i, 1);
           }
         });
       }
@@ -390,25 +410,40 @@ angular.module('parserApp.display3dService', [])
     layers.forEach(function(layerObj) {
 
       var elData = {};
-      
-      var bgRGBA = displayHelpers.calculateColorFromScore(rawTweet[layerObj.resultsName].score);
+      var bgRGBA;
 
       var text = rawTweet.text;
-      if (layerObj.resultsName === 'baseLayerResults' || layerObj.resultsName === 'slangLayerResults' ||
-            layerObj.resultsName === 'negationLayerResults') {
-        rawTweet[layerObj.resultsName].positiveWords.forEach( function (posWord) {
-          text = text.replace(posWord[0], '<span class="positive-word">' + posWord[0] + '</span>');
-        });
-        rawTweet[layerObj.resultsName].negativeWords.forEach( function (negWord) {
-          text = text.replace(negWord[0], '<span class="negative-word">' + negWord[0] + '</span>');
-        });
-      }
 
+      // if the layer data is in the data from the server
+      if (rawTweet[layerObj.resultsName]) {
+        bgRGBA = displayHelpers.calculateColorFromScore(rawTweet[layerObj.resultsName].score);
+
+        // add into tweet text pos-word/neg-word color spans for relevant layers
+        if (layerObj.resultsName === 'baseLayerResults' || layerObj.resultsName === 'slangLayerResults' ||
+              layerObj.resultsName === 'negationLayerResults') {
+          rawTweet[layerObj.resultsName].positiveWords.forEach( function (posWord) {
+            text = text.replace(posWord[0], '<span class="positive-word">' + posWord[0] + '</span>');
+          });
+          rawTweet[layerObj.resultsName].negativeWords.forEach( function (negWord) {
+            text = text.replace(negWord[0], '<span class="negative-word">' + negWord[0] + '</span>');
+          });
+        }
+
+        // more properties that won't be available if DB didn't send data for this layer
+        elData.score = layerObj.title + ' score: ' + rawTweet[layerObj.resultsName].score;
+
+      } else {
+        // some backup values if it doesn't have layer data
+        bgRGBA = displayHelpers.calculateColorFromScore();
+        elData.score = 'N/A';
+      }
+      
+      // calculate BG color values from score
       elData.baseBGColor = 'rgba(' + bgRGBA + ')';
       elData.baseBGColorRGB = 'rgb(' + bgRGBA.split(',').slice(0,3).join(',') + ')';
-      elData.username = rawTweet.username;
+
       elData.text = text;
-      elData.score = layerObj.title + ' score: ' + rawTweet[layerObj.resultsName].score;
+      elData.username = rawTweet.username;
 
       var x = xStart + Math.floor(index / rows) * xSpacing;
       var y = yStart - (index % rows) * ySpacing;
@@ -719,7 +754,7 @@ angular.module('parserApp.display3dService', [])
 
     addButtonEvent('flatten-3d', 'click', function() {
       if (layersSeparated) {
-        displayHelpers.flattenLayers(layers, frontLayerZ, layerSpacing, rows, sceneGL);
+        displayHelpers.flattenLayers(layers, frontLayerZ, layerSpacing, rows, sceneGL, allLayers);
         layersSeparated = false;
       }
     });

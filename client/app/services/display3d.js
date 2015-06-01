@@ -321,20 +321,30 @@ angular.module('parserApp.display3dService', [])
   var updateLayers = function (layersVisible) {
     // uiLayer is a layer title
     for (var uiLayer in layersVisible) {
+      console.log(uiLayer + ' viz: ' + layersVisible[uiLayer].viz);
       // if there is a hidden layer that should be visible,
       // toggle on visible and put it in layers
       if (layersVisible[uiLayer].viz && !allLayers[uiLayer].visible) {
+        console.log('toggle on ' + uiLayer);
         allLayers[uiLayer].visible = true;
-        layers.push(allLayers[uiLayer].layer);
-        showLayer(layers.length-1);
+        //layers.push(allLayers[uiLayer].layer);
+        layers.forEach(function (layer, i) {
+          if (layer.title === uiLayer) {
+            console.log('showing ' + uiLayer);
+            showLayer(i);
+            //layers.splice(i, 1);
+          }
+        });
       } else if (!layersVisible[uiLayer].viz && allLayers[uiLayer].visible) {
+        console.log('toggle off ' + uiLayer);
       // if there is a visible layer that should be hidden,
       // toggle off visible and splice it out of layers
         allLayers[uiLayer].visible = false;
         layers.forEach(function (layer, i) {
           if (layer.title === uiLayer) {
+            console.log('hiding ' + uiLayer);
             hideLayer(i);
-            layers.splice(i, 1);
+            //layers.splice(i, 1);
           }
         });
       }

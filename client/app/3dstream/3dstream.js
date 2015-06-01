@@ -123,7 +123,7 @@ angular.module('parserApp')
 
     $scope.toggleLayerMenu = function () {
       $scope.showLayerMenu = !$scope.showLayerMenu;
-    }
+    };
 
     // $scope.streamFakeTweets = function () {
     //   // stop any existing stream

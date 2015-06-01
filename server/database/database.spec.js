@@ -2,7 +2,7 @@ var expect = require('chai').expect;
 
 var db = require('./database');
 
-describe('DATABASE INITIALIZATION', function() {
+describe('=== DATABASE INITIALIZATION===', function() {
 
   it('should talk to dev database on initialization', function(done) {
 
@@ -11,7 +11,7 @@ describe('DATABASE INITIALIZATION', function() {
   });
 });
 
-describe('MACRO FUNCTIONS - SEARCHING AND FILTERING TWEETS BY KEYWORDS AND LAYERS', function() {
+describe('=== MACRO FUNCTIONS - SEARCHING AND FILTERING TWEETS BY KEYWORDS AND LAYERS ===', function() {
 
   it('should have a **getAllTweets** function that gets all million tweets', function(done) {
 
@@ -51,7 +51,7 @@ describe('MACRO FUNCTIONS - SEARCHING AND FILTERING TWEETS BY KEYWORDS AND LAYER
     done();
   });
 
-describe('MANAGING LAYERS', function() {
+describe('=== MANAGING LAYERS ===', function() {
 
   it('should have a **layer_Emoticons_Function** function that is imported from the baseEmoticonLayerAnalysis.js file', function(done) {
 
@@ -84,7 +84,7 @@ describe('MANAGING LAYERS', function() {
   });
 });
 
-describe('MANAGING KEYWORDS', function() {
+describe('=== MANAGING KEYWORDS ===', function() {
 
   it('should have a addNewKeyword function that adds the keyword to the keywords table and searches for all tweets containing that keyword, adding them to the appropriate keyword table with a foreign key pointing to the appropriate tweet in the "tweets" table', function(done) {
 
@@ -111,7 +111,7 @@ describe('MANAGING KEYWORDS', function() {
   });
 });
 
-describe('MANAGING TABLES', function() {
+describe('=== MANAGING TABLES ===', function() {
 
   it('should have a genericGetAll function that retrieves all rows from a given table', function(done) {
 
@@ -187,7 +187,7 @@ describe('MANAGING TABLES', function() {
 });
 
 
-describe('MANAGING DATABASES', function() {
+describe('=== MANAGING DATABASES ===', function() {
 
   it('should have a createDatabase function that creates a new database', function(done) {
 
@@ -209,8 +209,10 @@ describe('MANAGING DATABASES', function() {
   });
 });
 
-describe('ADMIN PANEL FUNCTIONS', function() {
+describe('=== ADMIN PANEL FUNCTIONS ===', function() {
 
+  // Just for safety, change back to 'dev' database at the end of each test
+  // Probably not necessary, just being paranoid
   afterEach(function(done) {
     this.timeout(6000);
 
@@ -250,6 +252,9 @@ describe('ADMIN PANEL FUNCTIONS', function() {
       });
     });
   });
+});
+
+describe('=== GETTING INFORMATION FUNCTIONS ===', function() {
 
   it('should get the current database name', function(done) {
 
@@ -280,6 +285,9 @@ describe('ADMIN PANEL FUNCTIONS', function() {
       });
     });
   });
+});
+
+describe('=== KEYWORDS FUNCTIONS ===', function() {
 
   it('should add new keywords to the keywords table', function(done) {
 
@@ -385,7 +393,10 @@ describe('ADMIN PANEL FUNCTIONS', function() {
       });
     });
   });
+});
 
+describe('=== LAYERS FUNCTIONS ===', function() {
+  
   it('should add a new layer', function(done) {
 
     this.timeout(10000);
@@ -407,21 +418,48 @@ describe('ADMIN PANEL FUNCTIONS', function() {
                 contains = true;
               }
             });
+            
             expect(contains).to.equal(true);
-
-            db.deleteLayer('Base', function(err, response) {
-
-              done();
-            });
+            done();
           });
         });
       });
     });
   });
 
+  it('should delete a layer', function(done) {
+
+    this.timeout(10000);
+
+    db.currDB = 'randomcreateddatabase';
+
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      db.deleteLayer('Base', function(err, response) {
+
+        db.db.query('SHOW TABLES', function(err, response) {
+
+          var contains = false;
+
+          response.forEach(function(item) {
+            if (item["Tables_in_randomcreateddatabase"] === 'layer_Base') {
+              contains = true;
+            }
+          });
+          
+          expect(contains).to.equal(false);
+          done();
+        });
+      });
+    });
+  });
+});
+
+describe('=== FULL PIPELINE FUNCTION ===', function() {
+
   it('should add the five test tweets and do everything', function(done) {
 
-    this.timeout(15000);
+    this.timeout(20000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -431,24 +469,38 @@ describe('ADMIN PANEL FUNCTIONS', function() {
 
         db.addNewKeyword('obama', function(err, response) {
 
-          db.ADDTHEFIVETESTTWEETS(function(err, response) {
+          db.addNewLayer('Base', function(err, response) {
 
-            setTimeout(function() {
+            db.ADDTHEFIVETESTTWEETS(function(err, response) {
 
-              db.db.query('SELECT * FROM tweets', function(err, rows) {
+              setTimeout(function() {
 
-                expect(rows.length).to.equal(5);
+                db.db.query('SELECT * FROM tweets', function(err, rows) {
 
-                db.db.query('SELECT * FROM tweets_containing_obama', function(err, response) {
+                  expect(rows.length).to.equal(5);
 
-                  expect(response.length).to.equal(1);
-                  done();
+                  db.db.query('SELECT * FROM tweets_containing_obama', function(err, response) {
+
+                    expect(response.length).to.equal(1);
+                    
+                    db.db.query('SELECT COUNT(*) FROM layer_Base', function(err, response) {
+
+                      expect(response[0]["COUNT(*)"]).to.equal(5);
+                      
+                      db.deleteKeyword('obama', function(err, response) {
+
+                        db.deleteLayer('Base', function(err, response) {
+
+                          done();
+                        });
+                      });
+                    });
+                  });
                 });
-              });
-            }, 3000);
+              }, 3000);
+            });
           });
         });
-
       });
     });
   });

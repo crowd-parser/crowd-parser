@@ -211,15 +211,15 @@ describe('MANAGING DATABASES', function() {
 
 describe('ADMIN PANEL FUNCTIONS', function() {
 
-  // afterEach(function(done) {
-  //   this.timeout(6000);
+  afterEach(function(done) {
+    this.timeout(6000);
 
-  //   db.currDB = 'dev';
-  //   db.changeToDatabase(db.currDB, function(err, response) {
+    db.currDB = 'dev';
+    db.changeToDatabase(db.currDB, function(err, response) {
 
-  //     done();
-  //   });
-  // });
+      done();
+    });
+  });
 
   it('should return tables with columns', function(done) {
 
@@ -228,9 +228,24 @@ describe('ADMIN PANEL FUNCTIONS', function() {
     db.changeToDatabase(db.currDB, function(err, response) {
 
       db.returnTablesWithColumns(function(err, tables) {
-        expect(tables[0][0]).to.equal('keywords');
-        expect(tables[1][0]).to.equal('layers');
-        expect(tables[2][0]).to.equal('tweets');
+        var keywords = false;
+        var layers = false;
+        var tweets = false;
+
+        tables.forEach(function(item) {
+          if (item[0] === 'keywords') {
+            keywords = true;
+          }
+          if (item[0] === 'layers') {
+            layers = true;
+          }
+          if (item[0] === 'tweets') {
+            tweets = true;
+          }
+        })
+        expect(keywords).to.equal(true);
+        expect(layers).to.equal(true);
+        expect(tweets).to.equal(true);
         done();
       });
     });
@@ -354,30 +369,49 @@ describe('ADMIN PANEL FUNCTIONS', function() {
 
       db.addNewKeyword('obama', function(err, response) {
 
-        db.db.query('SELECT * FROM tweets_containing_obama', function(err, response) {
+        db.redoKeyword('obama', function(){}, function(err, response) {
 
-          expect(response.length).to.equal(1);
+          db.db.query('SELECT * FROM tweets_containing_obama', function(err, rows) {
 
-          setTimeout(function() {
+            expect(rows.length).to.equal(1);
 
-            db.deleteKeyword('obama', function(err, response) {
+            setTimeout(function() {
 
-              done();
+              db.deleteKeyword('obama', function(err, response) {
+
+                done();
+              });
             });
-          },500);
+          });
+        });
+
+      });
+    });
+  });
+
+  it('should add a new layer', function(done) {
+
+    db.currDB = 'randomcreateddatabase';
+
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      db.deleteLayer('Base', function(err, response) {
+
+        db.addNewLayer('Base', function(err, response) {
+
+          db.db.query('SHOW TABLES', function(err, response) {
+
+            console.log(err, response);
+            done();
+          });
         });
       });
     });
   });
 
-  // it('should add a new layer', function(done) {
-
-    
-  // });
-
   it('should add the five test tweets and do everything', function(done) {
 
-    this.timeout(10000);
+    this.timeout(15000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -385,17 +419,13 @@ describe('ADMIN PANEL FUNCTIONS', function() {
 
       db.db.query('DELETE FROM tweets WHERE id > 0 LIMIT 5', function(err, response) {
 
-        db.ADDTHEFIVETESTTWEETS(function(err, response) {
+        db.ADDTHEFIVETESTTWEETS(function(){},function(err, response) {
+console.log(err, response)
+          db.db.query('SELECT * FROM tweets', function(err, rows) {
 
-          setTimeout(function() {
-
-            db.db.query('SELECT * FROM tweets', function(err, rows) {
-
-              expect(rows.length).to.equal(5);
-              done();
-            });
-
-          }, 3000);
+            expect(rows.length).to.equal(5);
+            done();
+          });
         });
       });
 

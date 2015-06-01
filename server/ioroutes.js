@@ -152,7 +152,7 @@ module.exports = function(io, T) {
             if(!db || !db.isLive){
               console.log("WAITING FOR DB");
               return;
-          }
+            }
             db.executeFullChainForIncomingTweets(tweet, function(err, container, fields) {
               if (err) {
                 console.log(err);

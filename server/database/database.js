@@ -1,5 +1,8 @@
 //TODO
 
+//ensure that multiple tweets in pipeline arrays still works correctly
+  //the main pipeline currently does single tweets for stability.
+
 //cache keyword search results for x number of seconds and reuse them
 
 //change all keyword requests to a constant stream, like that
@@ -31,7 +34,8 @@
 
 //add loop until feedback system for UI visuals
 
-//ensure that multiple tweets in pipeline arrays still works correctly
+
+//add kill all process to admin panel and database.js
 
 
 /*============= DATABASE MODULE WRAPPER for SQL commands =========*/
@@ -75,7 +79,7 @@ var connectionLoop = function(){
   exports.db.connect(function(err){
     if(err){
       console.log("==============ERROR connecting mysql ", err.stack);
-      setTimout(connectionLoop, 1000);
+      setTimeout(connectionLoop, 1000);
     }else{
       console.log("==============CONNECTED as ID ", exports.db.threadId);
       exports.isLive = true;
@@ -311,14 +315,24 @@ exports.processSingleTweetIDForKeyword = function(id, keyword, callback){
 };
 
 
-exports.filterSingleTweetObjectForLayer = function(tweetObj, layerName, callback){
+exports.filterTweetObjectsForLayer = function(tweetObj, layerName, callback){
 //hmm
-  console.log(layerName);
-  var rowObj = exports["layer_"+layerName+"_Function"](tweetObj);
-  rowObj.tweet_id = tweetObj.id;
-  console.log(rowObj);
-  //hmm
-  exports.genericAddToTable("layer_"+layerName,[rowObj],callback, null);
+  if(Array.isArray(tweetObj)){
+    for(var i = 0; i < tweetObj.length; i++){
+      var rowObj = exports["layer_"+layerName+"_Function"](tweetObj);
+      rowObj.tweet_id = tweetObj.id;
+      //console.log(rowObj);
+      //hmm
+      exports.genericAddToTable("layer_"+layerName,[rowObj],callback, null);
+    }
+  }else{
+    var rowObj = exports["layer_"+layerName+"_Function"](tweetObj);
+    rowObj.tweet_id = tweetObj.id;
+    //console.log(rowObj);
+    //hmm
+    exports.genericAddToTable("layer_"+layerName,[rowObj],callback, null);
+  }
+
 };
 
 
@@ -329,7 +343,7 @@ exports.filterSingleTweetObjectForLayer = function(tweetObj, layerName, callback
 exports.queueLength = 0;
 exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
-  if(exports.queueLength % 100 === 0){
+  if(exports.queueLength > 0 && exports.queueLength % 100 === 0){
     console.log("++++++++++++++QUEUE LENGTH+++++++",exports.queueLength);
   }
 
@@ -339,14 +353,11 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
   }
 
   if(exports.queueLength > 50){
-    setTimeout(exports.executeFullChainForIncomingTweets.bind(exports,tweets, callback), 1000);
+    setTimeout(exports.executeFullChainForIncomingTweets.bind(exports,tweets, callback), exports.queueLength);
     return;
   }
 
   exports.queueLength++;
-
-
-
 
   var finalCallback = callback;
   if(!Array.isArray(tweets)){
@@ -430,7 +441,7 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
               for(var j = 0; j < theCache.layerList.length; j++){
                 console.log("PROCESSING LAYER: ", theCache.layerList[j]);
-                funcList.push(exports.filterSingleTweetObjectForLayer.bind(exports,tweetObj,theCache.layerList[j]));
+                funcList.push(exports.filterTweetObjectsForLayer.bind(exports,tweetObj,theCache.layerList[j]));
               }
 
               count--;
@@ -555,7 +566,7 @@ var layerTableName = "layer_"+layerName;
         exports.db.query('SELECT COUNT(*) FROM tweets', function(err, rows) {
           length = rows[0]["COUNT(*)"];
           console.log("TWEETS TO FILTER: ", length);
-          var chunkNumber = 50;
+          var chunkNumber = 1000;
 
           var setLastIndexedOnLayerTable = function(val){
             exports.db.query("UPDATE layers SET lastHighestIndexed="+val+" WHERE layerName="+layerName);
@@ -576,12 +587,17 @@ var layerTableName = "layer_"+layerName;
                       setLastIndexedOnLayerTable(lastHighestIndexed);
                     }
 
-                    for(var i = 0; i < rows.length; i++){
+                    //this was async
+                    exports.filterTweetObjectsForLayer(rows,layerName, cb);
+
+                  /*  for(var i = 0; i < rows.length; i++){
                       if(i%10===0){
                         console.log("PULLING TWEET OBJECTS: ",i );
                       }
-                      setTimeout(exports.filterSingleTweetObjectForLayer.bind(exports, rows[i], layerName, function(tweets){cb(null,tweets.length);}.bind(exports, rows),i*5));
-                    }
+                      //this was the original but failing line
+                      //setTimeout(exports.filterTweetObjectsForLayer.bind(exports, rows[i], layerName, function(tweets){cb(null,tweets.length);}.bind(exports, rows),1));
+
+                    }*/
                });
 
             }.bind(exports, exports, chunkNumber, eye);
@@ -864,6 +880,36 @@ exports.rearchitectArrWithDeepObjects = function(arr){
     return newArr;
 };
 
+exports.asyncChain = function(funcs, finalCB){
+
+  var finalResults = [];
+
+  if(!funcs){
+    console.log("ASYNCCHAIN NO FUNCS PASSED");
+  }
+
+  if(!finalCB){
+    console.log("ASYNCCHAIN NO FINALCB PASSED");
+  }
+
+  if(funcs.length === 0){
+    finalCB(null, ["No Data"], null);
+    return;
+  }
+
+  var cb = function(index, err, results){
+    finalResults[index] = results;
+    if(index < funcs.length){
+      funcs[i+1](cb.bind(exports,i+1));
+    }else{
+      finalCB(null, finalResults,null);
+    }
+  };
+
+
+    funcs[i](cb.bind(exports,i));
+
+}
 
 exports.asyncMap = function(funcs, finalCB){
   var count = funcs.length;

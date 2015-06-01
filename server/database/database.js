@@ -81,6 +81,14 @@ var connectionLoop = function(){
       console.log("==============ERROR connecting mysql ", err.stack);
       setTimeout(connectionLoop, 1000);
     }else{
+      var del = exports.db._protocol._delegateError;
+      //it's possible this could prevent callbacks to routes if I don't understand this
+      exports.db._protocol._delegateError = function(err, sequence){
+        if(err.fatal) {
+          console.trace('fatal error: ' + err.message);
+        }
+        return del.call(this, err, sequence);
+      };
       console.log("==============CONNECTED as ID ", exports.db.threadId);
       exports.isLive = true;
 
@@ -114,6 +122,8 @@ var connectionLoop = function(){
 };
 
 connectionLoop();
+
+
 
 
 /*==================================================================*/
@@ -152,7 +162,7 @@ exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callbac
         chunk = Math.min(chunk, length - i);
          exports.db.query("SELECT tweet_id FROM " + tableName + " WHERE id BETWEEN " + i + " AND " + (i+chunk-1) , function(err, rows){
           console.log("PULL 100 KEYWORD MATCHES");
-          console.log("AN ID",rows[0]);
+          console.log("AN ID SAMPLE",rows[0]);
           var finalArr = [];
           for(var i = 0; i < rows.length; i++){
             finalArr.push(rows[i]["tweet_id"]);

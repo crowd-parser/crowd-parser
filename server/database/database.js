@@ -329,7 +329,7 @@ exports.filterTweetObjectsForLayer = function(tweetObj, layerName, callback){
 //hmm
   if(Array.isArray(tweetObj)){
     for(var i = 0; i < tweetObj.length; i++){
-      var rowObj = exports["layer_"+layerName+"_Function"](tweetObj);
+      var rowObj = exports["layer_"+layerName+"_Function"](tweetObj[i]);
       rowObj.tweet_id = tweetObj.id;
       //console.log(rowObj);
       //hmm

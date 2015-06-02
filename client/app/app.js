@@ -3,6 +3,7 @@
 angular.module('parserApp', [
   'parserApp.headerService',
   'parserApp.twitterService',
+  'parserApp.emojiService',
   'parserApp.display3dService',
   'parserApp.authService',
   'ngCookies',

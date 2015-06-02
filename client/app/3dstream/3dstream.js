@@ -14,6 +14,7 @@ angular.module('parserApp')
     $scope.layers = [];
     $scope.radio = {};
     $scope.layersVisible = {};
+    var liveStreamStarted = false;
     var runFakeTweets = false;
     var intervalID;
 
@@ -197,40 +198,54 @@ angular.module('parserApp')
       } else {
         $scope.receivingTweets = 'OFF';
       }
-    };
 
-    // receive live stream
-    socket.on('tweet added', function (tweetsFromDB) {
-      if ($scope.receivingTweets === 'ON') {
-        console.log('received tweet');
-        console.log(tweetsFromDB);
+      // receive live stream
+      if (liveStreamStarted === false) {
+        liveStreamStarted = true;
+      
+        socket.on('tweet added', function (tweetsFromDB) {
+          if ($scope.receivingTweets === 'ON') {
+            console.log('received tweet');
+            console.log(tweetsFromDB);
 
-        var tweetIDs = Object.keys(tweetsFromDB);
-        var tweetFormatted = {};
-        tweetIDs.sort();
-        for (var i = 0; i < tweetIDs.length; i++) {
-          tweetFormatted = {};
-          var tweetObj = tweetsFromDB[tweetIDs[i]];
-          tweetFormatted.text = tweetObj.tweet.text;
-          tweetFormatted.username = tweetObj.tweet.user_name;
-          tweetFormatted.baseLayerResults = tweetObj.layers.Base;
-          if (tweetObj.layers.Base) {
-            tweetFormatted.baseLayerResults.negativeWords = JSON.parse(tweetObj.layers.Base.negativeWords);
-            tweetFormatted.baseLayerResults.positiveWords = JSON.parse(tweetObj.layers.Base.positiveWords);
+            var tweetIDs = Object.keys(tweetsFromDB);
+            var tweetFormatted = {};
+            tweetIDs.sort();
+            for (var i = 0; i < tweetIDs.length; i++) {
+              tweetFormatted = {};
+              var tweetObj = tweetsFromDB[tweetIDs[i]];
+              tweetFormatted.text = tweetObj.tweet.text;
+              tweetFormatted.username = tweetObj.tweet.user_name;
+              tweetFormatted.baseLayerResults = tweetObj.layers.Base;
+              if (tweetObj.layers.Base) {
+                tweetFormatted.baseLayerResults.negativeWords = JSON.parse(tweetObj.layers.Base.negativeWords);
+                tweetFormatted.baseLayerResults.positiveWords = JSON.parse(tweetObj.layers.Base.positiveWords);
+              }
+              tweetFormatted.emoticonLayerResults = tweetObj.layers.Emoticons;
+              if (tweetObj.layers.Emoticons) {
+                tweetFormatted.emoticonLayerResults.negativeWords = JSON.parse(tweetObj.layers.Emoticons.negativeWords);
+                tweetFormatted.emoticonLayerResults.positiveWords = JSON.parse(tweetObj.layers.Emoticons.positiveWords);
+              }
+              tweetFormatted.slangLayerResults = tweetObj.layers.Slang;
+              if (tweetObj.layers.Slang) {
+                tweetFormatted.slangLayerResults.negativeWords = JSON.parse(tweetObj.layers.Slang.negativeWords);
+                tweetFormatted.slangLayerResults.positiveWords = JSON.parse(tweetObj.layers.Slang.positiveWords);
+              }
+              tweetFormatted.negationLayerResults = tweetObj.layers.Negation;
+              if (tweetObj.layers.Negation) {
+                tweetFormatted.negationLayerResults.negativeWords = JSON.parse(tweetObj.layers.Negation.negativeWords);
+                tweetFormatted.negationLayerResults.positiveWords = JSON.parse(tweetObj.layers.Negation.positiveWords);
+              }
+            }
+
+            $scope.tweetData.push(tweetFormatted);
+
+            Display3d.addTweet(tweetFormatted, $scope.tweetCount);
+            $scope.tweetCount++;
           }
-          tweetFormatted.emoticonLayerResults = tweetObj.layers.Emoticons;
-          if (tweetObj.layers.Emoticons) {
-            tweetFormatted.emoticonLayerResults.negativeWords = JSON.parse(tweetObj.layers.Emoticons.negativeWords);
-            tweetFormatted.emoticonLayerResults.positiveWords = JSON.parse(tweetObj.layers.Emoticons.positiveWords);
-          }
-        }
-
-        $scope.tweetData.push(tweetFormatted);
-
-        Display3d.addTweet(tweetFormatted, $scope.tweetCount);
-        $scope.tweetCount++;
+        });
       }
-    });
+    };
 
     $scope.requestTweetsByKeyword = function (keyword) {
       socketWithRoom(function () {

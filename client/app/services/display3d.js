@@ -290,7 +290,7 @@ angular.module('parserApp.display3dService', [])
   };
 }])
 
-.factory('Display3d', ['$document', '$window', 'displayHelpers', function($document, $window, displayHelpers) {
+.factory('Display3d', ['$document', '$window', 'displayHelpers', 'Emoji', function($document, $window, displayHelpers, Emoji) {
 
   // TODO
   // - make text go away when zoomed out past a certain distance
@@ -412,7 +412,7 @@ angular.module('parserApp.display3dService', [])
       var elData = {};
       var bgRGBA;
 
-      var text = rawTweet.text;
+      var text = Emoji.restoreEmojisInTweet(rawTweet.text);
 
       // if the layer data is in the data from the server
       if (rawTweet[layerObj.resultsName]) {
@@ -443,7 +443,9 @@ angular.module('parserApp.display3dService', [])
       elData.baseBGColorRGB = 'rgb(' + bgRGBA.split(',').slice(0,3).join(',') + ')';
 
       elData.text = text;
-      elData.username = rawTweet.username;
+      var oldUsername = rawTweet.username;
+      elData.username = Emoji.restoreEmojisInTweet(rawTweet.username);
+      console.log(oldUsername, elData.username);
 
       var x = xStart + Math.floor(index / rows) * xSpacing;
       var y = yStart - (index % rows) * ySpacing;
@@ -560,7 +562,11 @@ angular.module('parserApp.display3dService', [])
   var showLayer = function (layerIndex) {
     // show tweets
     layers[layerIndex].tweetMaterialNeg.opacity = 0.5;
-    layers[layerIndex].tweetMaterialNeutral.opacity = 0.5;
+    if (layersSeparated) {
+      layers[layerIndex].tweetMaterialNeutral.opacity = 0.5;
+    } else {
+      layers[layerIndex].tweetMaterialNeutral.opacity = 0;
+    }
     layers[layerIndex].tweetMaterialPos.opacity = 0.5;
     layers[layerIndex].tweets.forEach(function (tweet) {
       if (tweet.el) {

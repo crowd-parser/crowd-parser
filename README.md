@@ -1,5 +1,4 @@
 [![Circle CI](https://circleci.com/gh/crowd-parser/crowd-parser/tree/master.svg?style=svg)](https://circleci.com/gh/crowd-parser/crowd-parser/tree/master)
-
 # Crowd Parser
 
 > A tool for analyzing Twitter sentiment that seeks to improve upon other natural language processing algorithms

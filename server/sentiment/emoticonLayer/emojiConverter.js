@@ -50,7 +50,7 @@ exports.convertEmojisInTweet = function(text) {
 
 exports.restoreEmojisInTweet = function(text) {
 
-  var matchedUnicodesArray = text.match(/<%-.....%>/g);
+  var matchedUnicodesArray = text.match(/<%-.+?%>/g);
 
   if (matchedUnicodesArray) {
     matchedUnicodesArray.forEach(function(item) {

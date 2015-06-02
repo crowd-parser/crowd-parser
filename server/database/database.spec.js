@@ -229,7 +229,7 @@ describe('=== ADMIN PANEL FUNCTIONS ===', function() {
     });
   });
 
-  it('should return tables with columns', function(done) {
+  xit('should return tables with columns', function(done) {
 
     db.currDB = 'randomcreateddatabase';
 
@@ -244,15 +244,15 @@ describe('=== ADMIN PANEL FUNCTIONS ===', function() {
           if (item[0] === 'keywords') {
             keywords = true;
           }
-          // if (item[0] === 'layers') {
-          //   layers = true;
-          // }
+          if (item[0] === 'layers') {
+            layers = true;
+          }
           if (item[0] === 'tweets') {
             tweets = true;
           }
         })
         expect(keywords).to.equal(true);
-        // expect(layers).to.equal(true);
+        expect(layers).to.equal(true);
         expect(tweets).to.equal(true);
         done();
       });

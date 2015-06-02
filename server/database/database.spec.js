@@ -4,7 +4,7 @@ var db = require('./database');
 
 before(function(done) {
 
-  this.timeout(10000);
+  this.timeout(18000);
 
   db.genericDropDatabase('randomcreateddatabase', function(err, response) {
   
@@ -305,7 +305,7 @@ describe('=== KEYWORDS FUNCTIONS ===', function() {
 
   it('should add new keywords to the keywords table', function(done) {
 
-    this.timeout(10000);
+    this.timeout(18000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -326,7 +326,7 @@ describe('=== KEYWORDS FUNCTIONS ===', function() {
 
   it('should create a new keyword table', function(done) {
 
-    this.timeout(10000);
+    this.timeout(18000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -354,7 +354,7 @@ describe('=== KEYWORDS FUNCTIONS ===', function() {
 
   it('should delete a keyword table', function(done) {
 
-    this.timeout(10000);
+    this.timeout(18000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -383,7 +383,7 @@ describe('=== KEYWORDS FUNCTIONS ===', function() {
 
   it('should redo a keyword table, filtering all tweets again', function(done) {
 
-    this.timeout(10000);
+    this.timeout(18000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -412,7 +412,7 @@ describe('=== LAYERS FUNCTIONS ===', function() {
   
   it('should add a new layer', function(done) {
 
-    this.timeout(10000);
+    this.timeout(18000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -442,7 +442,7 @@ describe('=== LAYERS FUNCTIONS ===', function() {
 
   it('should delete a layer', function(done) {
 
-    this.timeout(10000);
+    this.timeout(18000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -469,7 +469,7 @@ describe('=== LAYERS FUNCTIONS ===', function() {
 
   xit('should redo a layer', function(done) {
 
-    this.timeout(10000);
+    this.timeout(18000);
 
     db.currDB = 'randomcreateddatabase';
 

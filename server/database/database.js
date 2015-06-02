@@ -503,8 +503,8 @@ exports.layer_Base_Function = require('../sentiment/baseWordsLayer/baseWordsLaye
 exports.layer_Emoticons_Function = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js');
 exports.layer_Random_Function = function(){return {score: Math.random(), someStuff: "stuff", otherStuff:"moreStuff"}};
 exports.layer_Test_Function = function(){return {score:0, testArray12345: [1,2,3,4,5]}};
-exports.layer_Slang_Negation = require('../sentiment/slangLayer/slangLayerAnalysis');
-exports.layer_Negation = require('../sentiment/negationLayer/negationLayerAnalysis');
+exports.layer_Slang_Function = require('../sentiment/slangLayer/slangLayerAnalysis');
+exports.layer_Negation_Function = require('../sentiment/negationLayer/negationLayerAnalysis');
 
 
 exports.currentValidLayerNames = {"Base":true, "Emoticons":true, "Random":true, "Test": true, "Negation": true, "Slang": true};

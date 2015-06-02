@@ -24,7 +24,10 @@ module.exports = function(config) {
       'client/app/**/*.js',
       'client/components/**/*.js',
       'client/app/**/*.html',
-      'client/lib/*.js',
+      'client/lib/three.min.js',
+      'client/lib/CSS3DRenderer.js',
+      'client/lib/ModifiedTrackballControls.js',
+      'client/lib/tween.min.js',
       'client/components/**/*.html',
       'e2e/lib/socket.js'
     ],

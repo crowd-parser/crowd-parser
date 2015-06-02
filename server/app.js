@@ -15,7 +15,14 @@ var server = require('http').createServer(app);
 
 // Set up socket.io
 var io = require('socket.io')(server);
-var T = require('./config/twitter-config');
+
+try {
+  var T = require('./config/twitter-config');
+} catch (e) {
+  console.log(e);
+  var T = {};
+}
+
 require('./ioroutes')(io, T);
 
 require('./config/express')(app);

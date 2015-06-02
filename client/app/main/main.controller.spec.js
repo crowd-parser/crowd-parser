@@ -6,10 +6,10 @@ describe('Controller: MainCtrl', function () {
   beforeEach(module('parserApp'));
 
   beforeEach( inject( function ( _$state_ ) {
-          state = _$state_;
-          spyOn( state, 'go' );
-          spyOn( state, 'transitionTo' );
-      } ) );
+      state = _$state_;
+      spyOn( state, 'go' );
+      spyOn( state, 'transitionTo' );
+  } ) );
 
   var MainCtrl,
       scope,
@@ -20,8 +20,8 @@ describe('Controller: MainCtrl', function () {
   beforeEach(inject(function (_$httpBackend_, $controller, $rootScope, _$http_) {
     $httpBackend = _$httpBackend_;
 
-    $httpBackend.expectGET('/database/getTweetsForKeyword')
-      .respond('tweets');
+    // $httpBackend.expectGET('/database/getTweetsForKeyword')
+    //   .respond('tweets');
 
     scope = $rootScope.$new();
     MainCtrl = $controller('MainCtrl', {
@@ -33,6 +33,6 @@ describe('Controller: MainCtrl', function () {
   it('should retrieve tweets for a keyword on main page load', function() {
     // $httpBackend.flush();
     // expect(scope.tweetsForKeyword).toBe('tweets');
-    expect(4).to.equal(4);
+    expect(4).toBe(4);
   })
 });

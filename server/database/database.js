@@ -70,7 +70,7 @@ var mysql = require('mysql');
 
 //TODO CHANGE THIS TO PROD WHEN LIVE
 //OR FIGURE OUT HOW TO USE LIVE VESUS DEV DEPLOY
-exports.currDB = 'dev';
+exports.currDB = 'production';
 
 
 //establishes connection to persistent database previously configured
@@ -503,8 +503,8 @@ exports.layer_Base_Function = require('../sentiment/baseWordsLayer/baseWordsLaye
 exports.layer_Emoticons_Function = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js');
 exports.layer_Random_Function = function(){return {score: Math.random(), someStuff: "stuff", otherStuff:"moreStuff"}};
 exports.layer_Test_Function = function(){return {score:0, testArray12345: [1,2,3,4,5]}};
-exports.slangLayerAnalysis = require('../sentiment/slangLayer/slangLayerAnalysis');
-exports.negationLayerAnalysis = require('../sentiment/negationLayer/negationLayerAnalysis');
+exports.layer_Slang_Negation = require('../sentiment/slangLayer/slangLayerAnalysis');
+exports.layer_Negation = require('../sentiment/negationLayer/negationLayerAnalysis');
 
 
 exports.currentValidLayerNames = {"Base":true, "Emoticons":true, "Random":true, "Test": true, "Negation": true, "Slang": true};
@@ -636,7 +636,13 @@ var layerTableName = "layer_"+layerName;
 
 exports.deleteLayer = function(layerName, cb){
   theCache.layerList = null;
-  exports.db.query("DELETE FROM layers WHERE layerName = ?", [layerName], function(){});
+
+  //exports.db.query("DELETE FROM layers WHERE layerName = ?", [layerName], function(){});
+  exports.db.query("DELETE FROM layers WHERE layerName = ?", ["layer"+layerName], function(err, something){
+    if(err){
+      console.log(err);
+    }
+  });
   exports.genericDropTable("layer_"+layerName, cb);
 };
 
@@ -707,8 +713,28 @@ exports.redoKeyword = function(keyword, callback, _finalCB){
 exports.deleteKeyword = function(keyword, callback){
   //keyword = exports.db.escapeId(keyword); //TOdo
   theCache.keywordList = null;
-  this.db.query("DELETE FROM keywords WHERE keyword = ?", [keyword], function(){});
-  this.genericDropTable("tweets_containing_"+keyword, callback);
+
+
+
+  console.log("DB KW HERE: ", keyword);
+  // keyword = this.db.escapeId(keyword);
+  // console.log("DB KW AFTER: ", keyword);
+
+  var str = this.db.escapeId('@potus');
+  var tableName = 'tweets_containing_'+str;
+
+
+  var tableName = '';
+
+  //str = this.db.escapeId('tweets_containing_'+keyword);
+  //this.db.query("DELETE FROM keywords WHERE keyword = ?", [keyword], function(){});
+  //this.genericDropTable(str, callback);
+
+  var str = this.db.escapeId("DROP TABLE tweets_containing_@potus");
+
+  exports.db.query(str, function(err, status, fields){
+      console.log(err);
+    });
 }
 
 exports.getKeywordNames = function(cb){
@@ -1086,18 +1112,25 @@ exports.genericDropTable = function(tableName, callback){
 
   exports.getCurrentDatabaseName( function(dbName){
 
-    if(tableName === "tweets" && dbName === 'production'){
-      console.log("ERROR: ATTEMPTED TO DROP TWEETS TABLE ON PRODUCTION, NOT ALLOWED");
-      callback();
-      return;
+    if(dbName === 'production'){
+      if(tableName === "tweets" || tableName === "layers" || tableName === "keywords"  ){
+        console.log("ERROR: ATTEMPTED TO DROP PROTECTED TABLE ON PRODUCTION, NOT ALLOWED");
+        callback();
+        return;
+      }
     }
     if(tableName === "layers"){
       theCache.layerList = null;
     }else if(tableName === "keywords"){
       theCache.keywordList = null;
     }
-    console.log("DELETING TABLE: " + tableName);
-    exports.db.query("DROP TABLE IF EXISTS " + tableName, callback);
+
+
+    callback();
+
+    exports.db.query("DROP TABLE ?", [tableName], function(err, status, fields){
+      console.log(err);
+    });
   });
 
 };

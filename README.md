@@ -3,7 +3,7 @@
 
 > A tool for analyzing Twitter sentiment that seeks to improve upon other natural language processing algorithms
 
-<img src="client/assets/images/logo.png">
+<img src="client/assets/images/crowdparserlogo.png">
 
 [Roadmap for upcoming plans/features](https://github.com/voyage-and-bay/voyage-and-bay)
 

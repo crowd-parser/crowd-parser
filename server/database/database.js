@@ -503,8 +503,11 @@ exports.layer_Base_Function = require('../sentiment/baseWordsLayer/baseWordsLaye
 exports.layer_Emoticons_Function = require('../sentiment/emoticonLayer/emoticonLayerAnalysis.js');
 exports.layer_Random_Function = function(){return {score: Math.random(), someStuff: "stuff", otherStuff:"moreStuff"}};
 exports.layer_Test_Function = function(){return {score:0, testArray12345: [1,2,3,4,5]}};
+exports.slangLayerAnalysis = require('../sentiment/slangLayer/slangLayerAnalysis');
+exports.negationLayerAnalysis = require('../sentiment/negationLayer/negationLayerAnalysis');
 
-exports.currentValidLayerNames = {"Base":true, "Emoticons":true, "Random":true, "Test": true};
+
+exports.currentValidLayerNames = {"Base":true, "Emoticons":true, "Random":true, "Test": true, "Negation": true, "Slang": true};
 
 exports.getLayerNames = function(cb){
   if(theCache.layerList){
@@ -569,7 +572,7 @@ exports.addNewLayer = function(layerName, finalCB){
   });
 };
 
-//this works in some way the first time, but not the second time
+
 exports.redoLayer = function(layerName, callback, _finalCB){
 theCache.layerList = null;
 

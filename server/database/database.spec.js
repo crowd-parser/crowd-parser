@@ -2,6 +2,14 @@ var expect = require('chai').expect;
 
 var db = require('./database');
 
+db.createDatabase('dev', function(err, response) {
+
+});
+
+db.createDatabase('randomcreateddatabase', function(err, response) {
+
+});
+
 describe('=== DATABASE INITIALIZATION===', function() {
 
   it('should talk to dev database on initialization', function(done) {

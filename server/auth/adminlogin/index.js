@@ -6,7 +6,13 @@ var router = express.Router();
 var bcrypt = require('bcrypt-nodejs');
 var db = require('../../database/database');
 var jwt = require('jwt-simple');
-var secret = require('./adminloginsecret');
+
+try {
+  var secret = require('./adminloginsecret');
+} catch (e) {
+  console.log(e);
+  var secret = 'secret';
+}
 
 router.post('/', function(req, res, next) {
 

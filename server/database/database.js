@@ -70,7 +70,7 @@ var mysql = require('mysql');
 
 //TODO CHANGE THIS TO PROD WHEN LIVE
 //OR FIGURE OUT HOW TO USE LIVE VESUS DEV DEPLOY
-exports.currDB = 'production';
+exports.currDB = 'dev';
 
 
 //establishes connection to persistent database previously configured
@@ -254,14 +254,16 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
         console.log("ERROR: NO SOCKET ON DATABASE WRAPPER");
         return;
       }
+
+
       if(typeof previouslyFilteredByThisKeyword === "string"){
 
         exports.io.sockets.in(ifSoAlsoClientID).emit('tweet keyword response', tweetPackages);
 
-        console.log("<<<<=====KEYWORD EMIT " + ifSoAlsoClientID +"==============>>>");
+        console.log("=====KEYWORD EMIT " + ifSoAlsoClientID +"==============");
       }else{
         exports.socket.emit('tweet added', tweetPackages);
-        console.log("<<<<=============ADDED EMIT==============>>>");
+        console.log("=============ADDED EMIT==============");
       }
 
       if(finalCB){
@@ -506,8 +508,10 @@ exports.layer_Test_Function = function(){return {score:0, testArray12345: [1,2,3
 exports.layer_Slang_Function = require('../sentiment/slangLayer/slangLayerAnalysis');
 exports.layer_Negation_Function = require('../sentiment/negationLayer/negationLayerAnalysis');
 
+exports.layer_Donottouch_Function = function(){return {score:0, Donottouch: [1,2,3,4,5]}};
 
-exports.currentValidLayerNames = {"Base":true, "Emoticons":true, "Random":true, "Test": true, "Negation": true, "Slang": true};
+
+exports.currentValidLayerNames = {"Base":true, "Emoticons":true, "Random":true, "Test": true, "Negation": true, "Slang": true, "Donottouch": true};
 
 exports.getLayerNames = function(cb){
   if(theCache.layerList){
@@ -638,11 +642,12 @@ exports.deleteLayer = function(layerName, cb){
   theCache.layerList = null;
 
   //exports.db.query("DELETE FROM layers WHERE layerName = ?", [layerName], function(){});
-  exports.db.query("DELETE FROM layers WHERE layerName = ?", ["layer"+layerName], function(err, something){
+  exports.db.query("DELETE FROM layers WHERE layerName = '" + layerName + "'", function(err, something){
     if(err){
       console.log(err);
     }
   });
+
   exports.genericDropTable("layer_"+layerName, cb);
 };
 
@@ -714,27 +719,15 @@ exports.deleteKeyword = function(keyword, callback){
   //keyword = exports.db.escapeId(keyword); //TOdo
   theCache.keywordList = null;
 
+   exports.db.query("DELETE FROM keywords WHERE keyword = '" + keyword + "'", function(err, something){
+    if(err){
+      console.log();
+    }
+  });
 
+  var tableName = 'tweets_containing_' + keyword;
+  this.genericDropTable(tableName, callback);
 
-  console.log("DB KW HERE: ", keyword);
-  // keyword = this.db.escapeId(keyword);
-  // console.log("DB KW AFTER: ", keyword);
-
-  var str = this.db.escapeId('@potus');
-  var tableName = 'tweets_containing_'+str;
-
-
-  var tableName = '';
-
-  //str = this.db.escapeId('tweets_containing_'+keyword);
-  //this.db.query("DELETE FROM keywords WHERE keyword = ?", [keyword], function(){});
-  //this.genericDropTable(str, callback);
-
-  var str = this.db.escapeId("DROP TABLE tweets_containing_@potus");
-
-  exports.db.query(str, function(err, status, fields){
-      console.log(err);
-    });
 }
 
 exports.getKeywordNames = function(cb){
@@ -859,7 +852,7 @@ exports.genericCreateTable = function(tableName, exampleObject, callback){
       if(!err){
         //console.log("made table", response);
       }else{
-        console.log(err);
+        console.log();
       }
       callback(err, response);
     });
@@ -1062,7 +1055,7 @@ if(!Array.isArray(_listOfObjects)){
         exports.db.query(queryStr, function(err, rows, fields){
           //this returns ids of added object, not the whole object
           if(err){
-            console.log(err);
+            console.log();
           }else{
             console.log("SUCCESS: ADDING: ", rows.insertId)
           }
@@ -1128,7 +1121,7 @@ exports.genericDropTable = function(tableName, callback){
 
     callback();
 
-    exports.db.query("DROP TABLE ?", [tableName], function(err, status, fields){
+    exports.db.query("DROP TABLE " + tableName, function(err, status, fields){
       console.log(err);
     });
   });

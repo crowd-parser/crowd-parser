@@ -4,7 +4,13 @@ var express = require('express');
 var router = express.Router();
 
 var jwt = require('jwt-simple');
-var secret = require('../adminlogin/adminloginsecret');
+
+try {
+  var secret = require('../adminlogin/adminloginsecret');
+} catch (e) {
+  console.log(e);
+  var secret = 'secret';
+}
 
 router.post('/', function(req, res, next) {
 

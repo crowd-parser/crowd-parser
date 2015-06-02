@@ -1,8 +1,35 @@
-.about {
-    height: 280px;
-    padding: 80px 0;
+.about-container {
+  background: #FFF;
+  background: rgba(255,255,255,.9);
+  text-align: center;
+  font-size: 18px;
+  margin-top: 90px;
+  padding: 20px 30px 40px 30px;
+  border-radius: 15px;
+}
+
+.basic-info {
+  width: 80%;
+  margin: 0 auto;
+  margin-bottom: 28px
 }
 
 .about-container img {
-    width: 150px;
+  width: 150px;
+}
+
+.profile {
+  float: left;
+  display: inline-block;
+  width: 33%;
+}
+
+.profile img {
+  display: block;
+  margin: 0 auto;
+  margin-bottom: 15px;
+}
+
+.profile ul {
+  text-align: left;
 }

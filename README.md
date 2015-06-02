@@ -3,7 +3,7 @@
 
 > A tool for analyzing Twitter sentiment that seeks to improve upon other natural language processing algorithms
 
-<img src="client/assets/images/crowdparserlogogh.png">
+<img src="client/assets/images/crowdparserlogoghSoftware Engineer.png">
 
 [Roadmap for upcoming plans/features](https://github.com/voyage-and-bay/voyage-and-bay)
 
@@ -116,7 +116,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 ## Team
 
-1. Michael Cheng - Product Manager
-1. Cooper Buckingham - Scrum Master
-1. Christina Holland - Technical Lead
+1. Michael Cheng - Software Engineer
+1. Cooper Buckingham - Software Engineer
+1. Christina Holland - Software Engineer
 1. Kenny Tran - Software Engineer

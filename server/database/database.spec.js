@@ -326,7 +326,7 @@ describe('=== KEYWORDS FUNCTIONS ===', function() {
 
   it('should create a new keyword table', function(done) {
 
-    this.timeout(6000);
+    this.timeout(10000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -394,7 +394,7 @@ describe('=== KEYWORDS FUNCTIONS ===', function() {
         db.redoKeyword('obama', function(){}, function(err, response) {
 
           db.db.query('SELECT * FROM tweets_containing_obama', function(err, rows) {
-  console.log('TEST ***', rows);
+
             expect(rows.length).to.equal(1);
 
             db.deleteKeyword('obama', function(err, response) {
@@ -462,6 +462,36 @@ describe('=== LAYERS FUNCTIONS ===', function() {
           
           expect(contains).to.equal(false);
           done();
+        });
+      });
+    });
+  });
+
+  xit('should redo a layer', function(done) {
+
+    this.timeout(10000);
+
+    db.currDB = 'randomcreateddatabase';
+
+    db.changeToDatabase(db.currDB, function(err, response) {
+
+      db.genericAddToTable('tweets', db.testTweet2, function(err, response) {
+
+        db.redoLayer('Base', function(err, response) {
+
+          setTimeout(function() {
+
+            db.db.query('SELECT * FROM layer_Base', function(err, rows) {
+
+              expect(rows.length).to.equal(2);
+
+              db.deleteLayer('Base', function(err, response) {
+
+                done();
+              });
+            }); 
+          }, 3000);
+
         });
       });
     });

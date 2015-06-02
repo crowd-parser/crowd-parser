@@ -10,7 +10,7 @@ angular.module('parserApp')
   });
 
   $scope.goToDisplay = function () {
-    $('.tweets-cube').remove();
+    $('#tweets-cube').remove();
     $location.path('/3dstream');
   };
 

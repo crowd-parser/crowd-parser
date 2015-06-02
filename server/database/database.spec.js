@@ -3,12 +3,12 @@ var expect = require('chai').expect;
 var db = require('./database');
 
 db.createDatabase('dev', function(err, response) {
-
 });
 
 db.createDatabase('randomcreateddatabase', function(err, response) {
-
 });
+
+db.currDB = 'dev';
 
 describe('=== DATABASE INITIALIZATION===', function() {
 
@@ -239,22 +239,22 @@ describe('=== ADMIN PANEL FUNCTIONS ===', function() {
 
       db.returnTablesWithColumns(function(err, tables) {
         var keywords = false;
-        var layers = false;
+        // var layers = false;
         var tweets = false;
 
         tables.forEach(function(item) {
           if (item[0] === 'keywords') {
             keywords = true;
           }
-          if (item[0] === 'layers') {
-            layers = true;
-          }
+          // if (item[0] === 'layers') {
+          //   layers = true;
+          // }
           if (item[0] === 'tweets') {
             tweets = true;
           }
         })
         expect(keywords).to.equal(true);
-        expect(layers).to.equal(true);
+        // expect(layers).to.equal(true);
         expect(tweets).to.equal(true);
         done();
       });

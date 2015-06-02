@@ -2,15 +2,23 @@ var expect = require('chai').expect;
 
 var db = require('./database');
 
-db.createDatabase('dev', function(err, response) {
-});
+before(function(done) {
 
-db.createDatabase('randomcreateddatabase', function(err, response) {
+  this.timeout(10000);
+
+  db.genericDropDatabase('randomcreateddatabase', function(err, response) {
+  
+    db.createDatabase('randomcreateddatabase', function(err, response) {
+
+      db.currDB = 'dev';
+      done();
+    });
+  });
 });
 
 describe('=== DATABASE INITIALIZATION===', function() {
 
-  xit('should talk to dev database on initialization', function(done) {
+  it('should talk to dev database on initialization', function(done) {
 
     expect(db.currDB).to.equal('dev');
     done();
@@ -229,7 +237,7 @@ describe('=== ADMIN PANEL FUNCTIONS ===', function() {
     });
   });
 
-  xit('should return tables with columns', function(done) {
+  it('should return tables with columns', function(done) {
 
     db.currDB = 'randomcreateddatabase';
 
@@ -237,7 +245,7 @@ describe('=== ADMIN PANEL FUNCTIONS ===', function() {
 
       db.returnTablesWithColumns(function(err, tables) {
         var keywords = false;
-        // var layers = false;
+        var layers = false;
         var tweets = false;
 
         tables.forEach(function(item) {
@@ -346,7 +354,7 @@ describe('=== KEYWORDS FUNCTIONS ===', function() {
 
   it('should delete a keyword table', function(done) {
 
-    this.timeout(5000);
+    this.timeout(10000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -373,7 +381,7 @@ describe('=== KEYWORDS FUNCTIONS ===', function() {
     });
   });
 
-  xit('should redo a keyword table, filtering all tweets again', function(done) {
+  it('should redo a keyword table, filtering all tweets again', function(done) {
 
     this.timeout(10000);
 
@@ -381,12 +389,12 @@ describe('=== KEYWORDS FUNCTIONS ===', function() {
 
     db.changeToDatabase(db.currDB, function(err, response) {
 
-      db.addNewKeyword('obama', function(err, response) {
+      db.genericAddToTable('tweets', db.testTweet1, function(err, response) {
 
         db.redoKeyword('obama', function(){}, function(err, response) {
 
           db.db.query('SELECT * FROM tweets_containing_obama', function(err, rows) {
-
+  console.log('TEST ***', rows);
             expect(rows.length).to.equal(1);
 
             db.deleteKeyword('obama', function(err, response) {
@@ -395,7 +403,6 @@ describe('=== KEYWORDS FUNCTIONS ===', function() {
             });
           });
         });
-
       });
     });
   });
@@ -503,7 +510,7 @@ describe('=== FULL PIPELINE FUNCTION ===', function() {
                     });
                   });
                 });
-              }, 3000);
+              }, 4000);
             });
           });
         });

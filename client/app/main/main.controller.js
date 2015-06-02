@@ -3,8 +3,11 @@
 angular.module('parserApp')
   .controller('MainCtrl', function ($scope, $location, Landing) {
 
-  // Makes the header rotate in 3D
-  Landing.init();
+  $(function() {
+
+    // Makes the header rotate in 3D
+    Landing.init();
+  });
 
   $scope.goToDisplay = function () {
     $('.tweets-cube').remove();
@@ -15,6 +18,6 @@ angular.module('parserApp')
 
   socket.on('tweet added', function(data) {
     console.log(data);
-  })
+  });
 
 });

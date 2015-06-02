@@ -5,12 +5,6 @@ describe('Controller: MainCtrl', function () {
   // load the controller's module
   beforeEach(module('parserApp'));
 
-  beforeEach( inject( function ( _$state_ ) {
-      state = _$state_;
-      spyOn( state, 'go' );
-      spyOn( state, 'transitionTo' );
-  } ) );
-
   var MainCtrl,
       scope,
       $httpBackend,
@@ -24,9 +18,9 @@ describe('Controller: MainCtrl', function () {
     //   .respond('tweets');
 
     scope = $rootScope.$new();
-    MainCtrl = $controller('MainCtrl', {
-      $scope: scope
-    });
+    // MainCtrl = $controller('MainCtrl', {
+    //   $scope: scope
+    // });
     $http = _$http_;
   }));
 
@@ -34,5 +28,5 @@ describe('Controller: MainCtrl', function () {
     // $httpBackend.flush();
     // expect(scope.tweetsForKeyword).toBe('tweets');
     expect(4).toBe(4);
-  })
+  });
 });

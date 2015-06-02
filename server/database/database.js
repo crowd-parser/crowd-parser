@@ -901,7 +901,7 @@ exports.rearchitectArrWithDeepObjects = function(arr){
 };
 
 exports.asyncChain = function(funcs, finalCB){
-
+console.log('FUNCS', funcs[0]);
   var finalResults = [];
 
   if(!funcs){

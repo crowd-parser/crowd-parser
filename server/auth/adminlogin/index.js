@@ -128,8 +128,8 @@ router.post('/redoKeyword', function(req, res, next) {
 router.post('/deleteKeyword', function(req, res, next) {
   var name = req.body.name;
   db.deleteKeyword(name, function(err, rows) {
+    console.log("AFTER KW DEL");
     if(err){
-      console.log(err);
       res.send(false);
       return;
     }

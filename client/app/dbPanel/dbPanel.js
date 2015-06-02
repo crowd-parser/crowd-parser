@@ -198,7 +198,9 @@ angular.module('parserApp')
     };
 
     $scope.deleteKeyword = function(name) {
+
       name = name || $scope.keywordName;
+      console.log("TO DELETE: ", name);
       $http.post('/auth/adminlogin/deleteKeyword', {name: name})
       .success(function(data) {
         console.log("DONE with delete: ", data);
@@ -207,7 +209,7 @@ angular.module('parserApp')
 
       })
       .error(function(data){
-
+        console.log("DONE with delete: ", data);
       });
     };
 

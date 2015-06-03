@@ -124,9 +124,15 @@ module.exports = function(io, T) {
 
 
     socket.on('tweet keyword', function(keyword, clientID){
-       db.sendTweetPackagesForKeywordToClient(keyword, clientID, function(err, result){
+
+      if(keyword === undefined || clientID === undefined){
+        console.log("ERR: server requires both a keyword and a clientID to be sent on socket");
+        return;
+      }
+
+       db.sendTweetPackagesForKeywordToClient(keyword, clientID, function(err, result){});
       //callback will either return error, or the name of the keyword if it exists
-      });
+
     });
 
     //TODO add a cancel request, and only allow one keyword request per client

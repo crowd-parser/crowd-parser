@@ -4,7 +4,7 @@ var db = require('./database');
 
 before(function(done) {
 
-  this.timeout(10000);
+  this.timeout(18000);
 
   db.genericDropDatabase('randomcreateddatabase', function(err, response) {
   
@@ -305,7 +305,7 @@ describe('=== KEYWORDS FUNCTIONS ===', function() {
 
   it('should add new keywords to the keywords table', function(done) {
 
-    this.timeout(10000);
+    this.timeout(18000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -326,7 +326,7 @@ describe('=== KEYWORDS FUNCTIONS ===', function() {
 
   it('should create a new keyword table', function(done) {
 
-    this.timeout(10000);
+    this.timeout(18000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -354,7 +354,7 @@ describe('=== KEYWORDS FUNCTIONS ===', function() {
 
   it('should delete a keyword table', function(done) {
 
-    this.timeout(10000);
+    this.timeout(18000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -364,17 +364,19 @@ describe('=== KEYWORDS FUNCTIONS ===', function() {
 
         db.deleteKeyword('zzztestKeyword', function(err, response) {
 
-          db.db.query('SHOW TABLES;', function(err, rows) {
+          setTimeout(function() {
+            db.db.query('SHOW TABLES;', function(err, rows) {
 
-            var contains = false;
-            rows.forEach(function(item) {
-              if (item["Tables_in_randomcreateddatabase"] === 'tweets_containing_zzztestKeyword') {
-                contains = true;
-              }
+              var contains = false;
+              rows.forEach(function(item) {
+                if (item["Tables_in_randomcreateddatabase"] === 'tweets_containing_zzztestKeyword') {
+                  contains = true;
+                }
+              });
+              expect(contains).to.equal(false);
+              done();
             });
-            expect(contains).to.equal(false);
-            done();
-          });
+          }, 3000);
         });
       });
 
@@ -383,7 +385,7 @@ describe('=== KEYWORDS FUNCTIONS ===', function() {
 
   it('should redo a keyword table, filtering all tweets again', function(done) {
 
-    this.timeout(10000);
+    this.timeout(18000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -412,7 +414,7 @@ describe('=== LAYERS FUNCTIONS ===', function() {
   
   it('should add a new layer', function(done) {
 
-    this.timeout(10000);
+    this.timeout(18000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -442,7 +444,7 @@ describe('=== LAYERS FUNCTIONS ===', function() {
 
   it('should delete a layer', function(done) {
 
-    this.timeout(10000);
+    this.timeout(18000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -450,26 +452,29 @@ describe('=== LAYERS FUNCTIONS ===', function() {
 
       db.deleteLayer('Base', function(err, response) {
 
-        db.db.query('SHOW TABLES', function(err, response) {
+        setTimeout(function() {
 
-          var contains = false;
+          db.db.query('SHOW TABLES', function(err, response) {
 
-          response.forEach(function(item) {
-            if (item["Tables_in_randomcreateddatabase"] === 'layer_Base') {
-              contains = true;
-            }
+            var contains = false;
+
+            response.forEach(function(item) {
+              if (item["Tables_in_randomcreateddatabase"] === 'layer_Base') {
+                contains = true;
+              }
+            });
+            
+            expect(contains).to.equal(false);
+            done();
           });
-          
-          expect(contains).to.equal(false);
-          done();
-        });
+        }, 3000);
       });
     });
   });
 
   xit('should redo a layer', function(done) {
 
-    this.timeout(10000);
+    this.timeout(30000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -490,7 +495,7 @@ describe('=== LAYERS FUNCTIONS ===', function() {
                 done();
               });
             }); 
-          }, 3000);
+          }, 6000);
 
         });
       });
@@ -540,7 +545,7 @@ describe('=== FULL PIPELINE FUNCTION ===', function() {
                     });
                   });
                 });
-              }, 4000);
+              }, 7000);
             });
           });
         });

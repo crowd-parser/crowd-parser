@@ -771,27 +771,28 @@ angular.module('parserApp.display3dService', [])
     // addButtonEvent('left-3d', 'mouseover', function() {
     //   leftHover = true;
     // });
-    addButtonEvent('left-3d', 'mousedown', function() {
-      leftHover = true;
-    });
     // addButtonEvent('left-3d', 'mouseleave', function() {
     //   leftHover = false;
     // });
-    addButtonEvent('left-3d', 'mouseup', function() {
-      leftHover = false;
-    });
     // addButtonEvent('right-3d', 'mouseover', function() {
     //   rightHover = true;
     // });
-    addButtonEvent('right-3d', 'mousedown', function() {
-      rightHover = true;
-    });
     // addButtonEvent('right-3d', 'mouseleave', function() {
     //   rightHover = false;
     // });
-    addButtonEvent('right-3d', 'mouseup', function() {
-      rightHover = false;
-    });
+
+    // addButtonEvent('left-3d', 'mousedown', function() {
+    //   leftHover = true;
+    // });
+    // addButtonEvent('left-3d', 'mouseup', function() {
+    //   leftHover = false;
+    // });
+    // addButtonEvent('right-3d', 'mousedown', function() {
+    //   rightHover = true;
+    // });
+    // addButtonEvent('right-3d', 'mouseup', function() {
+    //   rightHover = false;
+    // });
 
     prevCameraPosition = new THREE.Vector3();
     prevCameraPosition.copy(camera.position);

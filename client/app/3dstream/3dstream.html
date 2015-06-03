@@ -13,9 +13,11 @@
         <button class="button-3d" type="notSubmit" ng-click="startLiveStream()">Live Stream: {{receivingTweets}}</button>
 <!--         <button class="button-3d" type="notSubmit" ng-click="socketTest()">Socket Test</button> -->
       <!--       <button class="button-3d" type="notSubmit" ng-click="streamFakeTweets()">Stream Fake Tweets</button> -->
-        <button class="button-3d" type="notSubmit" ng-click="autoScrollToggle()">Autoscroll: {{autoScroll}}</button>
       </form>
     </div>
+  </div>
+<!--   <div id="side-menu-3d">
+    <button class="button-3d" type="notSubmit" ng-click="autoScrollToggle()">Autoscroll: {{autoScroll}}</button>
     <div class="layer-menu">
       <table>
       <tr class="layer-menu-title" ng-click="toggleLayerMenu()"> <td colspan="3">Show/Hide Layers</td> </tr>
@@ -26,16 +28,16 @@
         <td><input type="checkbox" ng-model=layersVisible[layer.title].solo ng-change="soloLayer(layer.title)"></td></tr>
       </table>
     </div>
-  </div>
-  <div class="arrow-3d" id="leftarrow-3d">
+  </div> -->
+<!--   <div class="arrow-3d" id="leftarrow-3d">
     <button class="button-3d" id="left-3d"><span>&lt;</span></button>
   </div>
   <div class="arrow-3d" id="rightarrow-3d">
     <button class="button-3d" id="right-3d"><span>&gt;</span></button>
-  </div>
+  </div> -->
   <div id="menu-3d">
     <button class="button-3d" id="flatten-3d">Flatten Layers</button>
     <button class="button-3d" id="separate-3d">Separate Layers</button>
-    <button ng-click="stopTweets()" class="button-3d" id="stop-3d">Stop Adding Tweets</button>
+<!--     <button ng-click="stopTweets()" class="button-3d" id="stop-3d">Stop Adding Tweets</button> -->
   </div>
 </div>

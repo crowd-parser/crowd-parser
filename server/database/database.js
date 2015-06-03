@@ -322,7 +322,7 @@ exports.filterALLTweetsByKeyword = function(keyword, callback){
 
           console.log("highest: ", maxRows[0]["MAX(id)"]);
           console.log(maxRows);
-          exports._setLastIndexedOnKeywordTable(keyword, maxRows[0]["MAX(id"]);
+          exports._setLastIndexedOnKeywordTable(keyword, maxRows[0]["MAX(id)"]);
           callback(err, rows, fields);
         });
 
@@ -589,7 +589,7 @@ exports.addNewLayer = function(layerName, finalCB){
 };
 
 exports._setLastIndexedOnLayerTable = function(layerName, val){
-   if(!layerName){
+   if(!layerName || !val){
     console.log("ERR NO layername");
     return;
   }
@@ -603,13 +603,14 @@ exports._setLastIndexedOnLayerTable = function(layerName, val){
 };
 
 exports._setLastIndexedOnKeywordTable = function(keyword, val){
-  if(!keyword){
+  if(!keyword || !val){
     console.log("ERR NO KEYWORD");
     return;
   }
   console.log(keyword + " set highest index " + val);
-  exports.db.query("UPDATE keywords SET lastHighestIndexed = ? WHERE keyword = ?", [val, keyword], function(err){
+  exports.db.query("UPDATE keywords SET lastHighestIndexed = ? WHERE keyword = ?", [val, keyword], function(err, rows){
     console.log("highest val set");
+    console.log("a val: ", rows);
   });
 };
 
@@ -632,14 +633,15 @@ var layerTableName = "layer_"+layerName;
 
           var funcList = [];
 
-          for(var i = 1; i <= length; i+=chunkNumber){
+          //this is now infinite looping
+          for(var i = 0; i <= length; i+=chunkNumber){
             chunkNumber = Math.min(chunkNumber, length - i);
             var eye = i;
             var thisFunc = function(exports, chunkNumber, i,cb){
                 console.log("NEW CHUNK: ",chunkNumber);
                  exports.db.query('SELECT * FROM tweets WHERE id BETWEEN ' + i + " AND " + (i+chunkNumber), function(err, rows, fields){
 
-                    var thisHighest = i;
+                    var thisHighest = i+chunkNumber;
                     if(thisHighest > lastHighestIndexed){
                       lastHighestIndexed = thisHighest;
                       setLastIndexedOnLayerTable(lastHighestIndexed);
@@ -661,6 +663,9 @@ var layerTableName = "layer_"+layerName;
             }.bind(exports, exports, chunkNumber, eye);
 
             funcList.push(thisFunc);
+            if(chunkNumber <= 0){
+              break;
+            }
           }
 
           var finalCB = _finalCB || exports.errCB;

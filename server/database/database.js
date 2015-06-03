@@ -128,7 +128,37 @@ exports.getTableLength = function(tableName, callback){
 
 exports.userRequestCache = {}; //TODO implement active and canceled status for user requests
 
+exports.restreamExistingTweets = function(startId, stopId,callback, finalCB){
+  callback();
+  startId = startId || 1;
 
+  exports.getTableLength("tweets", function(err, total){
+    stopId = stopId || total;
+
+      var chunk = 100;
+
+      console.log("TOTAL TWEETS TO PROCESS", stopId - startId);
+
+
+      for(var i = startId - 1; i < stopId; i+=chunk){
+        chunk = Math.min(chunk, length - i);
+         exports.db.query("SELECT id FROM tweets WHERE id BETWEEN " + (i + 1) + " AND " + (i+chunk) , function(err, rows){
+          console.log("PULL 100 MATCHES");
+          console.log("AN ID SAMPLE",rows[0]);
+          var finalArr = [];
+          for(var j = 0; j < rows.length; j++){
+            finalArr.push(rows[j]["tweet_id"]);
+          }
+          if(i >= stopId){
+            finalCB();
+          }
+
+          exports.packageTweetsToSendToClient(finalArr, exports.errCB);
+        });
+      }
+
+    }.bind(exports));
+};
 
 exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callback){
   if(typeof clientID === "number"){
@@ -333,7 +363,7 @@ exports.filterTweetObjectsForLayer = function(tweetObj, layerName, callback){
   if(Array.isArray(tweetObj)){
     for(var i = 0; i < tweetObj.length; i++){
       var rowObj = exports["layer_"+layerName+"_Function"](tweetObj[i]);
-      rowObj.tweet_id = tweetObj.id;
+      rowObj.tweet_id = tweetObj[i].id;
       console.log("FILTERING " + tweetObj[i].id + " FOR LAYER: " + layerName);
       //hmm
       if(i === tweetObj.length - 1){
@@ -553,8 +583,6 @@ exports.addNewLayer = function(layerName, finalCB){
 
     var result = exports.exampleObjectForLayerResults(layerName);
       exports.genericAddToTable("layers", {layerName: layerName}, function(err, rows, fields){
-
-
 
         exports.genericCreateTable(layerTableName,result, function(err,rows){
           if(err){

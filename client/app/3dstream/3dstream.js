@@ -14,10 +14,15 @@ angular.module('parserApp')
     $scope.layers = [];
     $scope.radio = {};
     $scope.layersVisible = {};
+    $scope.gettingKeywordTweets = false;
     var liveStreamStarted = false;
     var expectedKeywordTweets = 0;
     var runFakeTweets = false;
     var intervalID;
+
+    $scope.grayedOut = function () {
+      return $scope.gettingKeywordTweets;
+    };
 
     $scope.editTweet = Modal.confirm.editTweet(function(x) { console.log(x); });
 

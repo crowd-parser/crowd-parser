@@ -1,5 +1,7 @@
 //TODO
 
+//off by 1 error per 50 tweets
+
 //ensure that multiple tweets in pipeline arrays still works correctly
   //the main pipeline currently does single tweets for stability.
 
@@ -268,7 +270,6 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
         return;
       }
 
-
       if(typeof previouslyFilteredByThisKeyword === "string"){
 
         exports.io.sockets.in(ifSoAlsoClientID).emit('tweet keyword response', tweetPackages);
@@ -282,14 +283,6 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
       if(finalCB){
         finalCB(false, true);
       }
-
-      // if(tweetPackages[0]){
-      //   console.log("TWEET FINAL: STR", tweetPackages[0].tweet.id_str);
-      //   console.log("TWEET FINAL: TEXT", tweetPackages[0].tweet.text);
-      //   console.log("TWEET FINAL: LAYERS", tweetPackages[0].layers["Test"]);
-      // }
-
-
 
     }.bind(exports, finalCB, tweetPackages));
 
@@ -309,7 +302,6 @@ exports.getTweetForId = function(id, callback){
 };
 
 
-
 exports.searchForTweetsWithKeyword = function(keyword, callback){
   this.genericGetItemsWithTextColumnContaining(null, "tweets", "text", keyword, callback);
 };
@@ -318,15 +310,22 @@ exports.filterALLTweetsByKeyword = function(keyword, callback){
   callback = callback || exports.errCB;
   console.log("FILTERING FOR KEYWORD: ",keyword);
 
-  this.db.query("INSERT INTO tweets_containing_" + keyword + " (tweet_id) SELECT id FROM tweets WHERE text LIKE '%" + keyword + "%'", function(err, rows, fields){
+  exports.db.query("INSERT INTO tweets_containing_" + keyword + " (tweet_id) SELECT id FROM tweets WHERE text LIKE '%" + keyword + "%'", function(err, rows, fields){
     if(err){
       console.log(err);
       callback(err, rows);
       return;
     }
         //TODO: this needs to set last highest index on keyword table
+        //get highest tweet id and set it as last indexed
+        exports.db.query("SELECT MAX(id) FROM tweets", function(maxErr, maxRows){
 
-    callback(err, rows, fields);
+          console.log("highest: ", maxRows[0]["MAX(id)"]);
+          console.log(maxRows);
+          exports._setLastIndexedOnKeywordTable(keyword, maxRows[0]["MAX(id)"]);
+          callback(err, rows, fields);
+        });
+
   });
 }
 
@@ -589,6 +588,31 @@ exports.addNewLayer = function(layerName, finalCB){
   });
 };
 
+exports._setLastIndexedOnLayerTable = function(layerName, val){
+   if(!layerName || !val){
+    console.log("ERR NO layername");
+    return;
+  }
+  exports.db.query("UPDATE layers SET lastHighestIndexed = ? WHERE layerName = ?", [val, layerName], function(err){
+    if(err){
+      console.log(err);
+    }else{
+      console.log("layer highest value set");
+    }
+  });
+};
+
+exports._setLastIndexedOnKeywordTable = function(keyword, val){
+  if(!keyword || !val){
+    console.log("ERR NO KEYWORD");
+    return;
+  }
+  console.log(keyword + " set highest index " + val);
+  exports.db.query("UPDATE keywords SET lastHighestIndexed = ? WHERE keyword = ?", [val, keyword], function(err, rows){
+    console.log("highest val set");
+    console.log("a val: ", rows);
+  });
+};
 
 exports.redoLayer = function(layerName, callback, _finalCB){
 theCache.layerList = null;
@@ -605,20 +629,19 @@ var layerTableName = "layer_"+layerName;
           console.log("TWEETS TO FILTER: ", length);
           var chunkNumber = 100;
 
-          var setLastIndexedOnLayerTable = function(val){
-            exports.db.query("UPDATE layers SET lastHighestIndexed="+val+" WHERE layerName="+layerName);
-          };
+          var setLastIndexedOnLayerTable = exports._setLastIndexedOnLayerTable.bind(exports, layerName);
 
           var funcList = [];
 
-          for(var i = 0; i < length; i+=chunkNumber){
+          //this is now infinite looping
+          for(var i = 0; i <= length; i+=chunkNumber){
             chunkNumber = Math.min(chunkNumber, length - i);
             var eye = i;
             var thisFunc = function(exports, chunkNumber, i,cb){
                 console.log("NEW CHUNK: ",chunkNumber);
                  exports.db.query('SELECT * FROM tweets WHERE id BETWEEN ' + i + " AND " + (i+chunkNumber), function(err, rows, fields){
 
-                    var thisHighest = rows[0];
+                    var thisHighest = i+chunkNumber;
                     if(thisHighest > lastHighestIndexed){
                       lastHighestIndexed = thisHighest;
                       setLastIndexedOnLayerTable(lastHighestIndexed);
@@ -640,6 +663,9 @@ var layerTableName = "layer_"+layerName;
             }.bind(exports, exports, chunkNumber, eye);
 
             funcList.push(thisFunc);
+            if(chunkNumber <= 0){
+              break;
+            }
           }
 
           var finalCB = _finalCB || exports.errCB;
@@ -955,7 +981,7 @@ console.log('FUNCS', funcs[0]);
       return;
     }
     finalResults[index] = results;
-    if(index < funcs.length){
+    if(index < funcs.length - 1){
       var delayFunc = function(){
         funcs[index+1](cb.bind(exports,index+1));
       };

@@ -122,6 +122,8 @@ router.post('/redoKeyword', function(req, res, next) {
       return;
     }
       res.send(true);
+  }, function(){
+    console.log("redo keyword finished");
   });
 });
 
@@ -146,6 +148,8 @@ router.post('/testKeywordSearch', function(req, res, next) {
       return;
     }
       res.send(name);
+  }, function(){
+    console.log("test keyword search done");
   });
 });
 
@@ -154,6 +158,7 @@ router.post('/testKeywordSearch', function(req, res, next) {
 router.post('/addNewLayer', function(req, res, next) {
   var name = req.body.name;
   db.addNewLayer(name, function(err, rows) {
+    console.log("add new layer finished");
     if(err){
       console.log(err);
       res.send(false);
@@ -166,18 +171,23 @@ router.post('/addNewLayer', function(req, res, next) {
 router.post('/redoLayer', function(req, res, next) {
   var name = req.body.name;
   db.redoLayer(name, function(err, rows) {
+
+
     if(err){
       console.log(err);
       res.send(false);
       return;
     }
       res.send(true);
-  });
+  },function(){
+      console.log("redo layer finished");
+    });
 });
 
 router.post('/deleteLayer', function(req, res, next) {
   var name = req.body.name;
   db.deleteLayer(name, function(err, rows) {
+    console.log("delete layer finished");
     if(err){
       console.log(err);
       res.send(false);
@@ -190,7 +200,7 @@ router.post('/deleteLayer', function(req, res, next) {
 router.post('/createDatabase', function(req, res, next) {
   var name = req.body.name;
   db.createDatabase(name, function(err, name, fields) {
-      console.log("CREATE DB:");
+      console.log("CREATE DB finished");
     if(err){
       res.send(false);
       return;
@@ -244,6 +254,8 @@ router.post('/ADDALLTHETWEETS', function(req, res, next) {
     }
       //container is {tweet: obj, layers:[obj,obj]}
       res.send(container);
+  }, function(){
+    console.log("Add 1000 done");
   });
 });
 

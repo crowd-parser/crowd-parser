@@ -364,17 +364,19 @@ describe('=== KEYWORDS FUNCTIONS ===', function() {
 
         db.deleteKeyword('zzztestKeyword', function(err, response) {
 
-          db.db.query('SHOW TABLES;', function(err, rows) {
+          setTimeout(function() {
+            db.db.query('SHOW TABLES;', function(err, rows) {
 
-            var contains = false;
-            rows.forEach(function(item) {
-              if (item["Tables_in_randomcreateddatabase"] === 'tweets_containing_zzztestKeyword') {
-                contains = true;
-              }
+              var contains = false;
+              rows.forEach(function(item) {
+                if (item["Tables_in_randomcreateddatabase"] === 'tweets_containing_zzztestKeyword') {
+                  contains = true;
+                }
+              });
+              expect(contains).to.equal(false);
+              done();
             });
-            expect(contains).to.equal(false);
-            done();
-          });
+          }, 3000);
         });
       });
 
@@ -450,26 +452,29 @@ describe('=== LAYERS FUNCTIONS ===', function() {
 
       db.deleteLayer('Base', function(err, response) {
 
-        db.db.query('SHOW TABLES', function(err, response) {
+        setTimeout(function() {
 
-          var contains = false;
+          db.db.query('SHOW TABLES', function(err, response) {
 
-          response.forEach(function(item) {
-            if (item["Tables_in_randomcreateddatabase"] === 'layer_Base') {
-              contains = true;
-            }
+            var contains = false;
+
+            response.forEach(function(item) {
+              if (item["Tables_in_randomcreateddatabase"] === 'layer_Base') {
+                contains = true;
+              }
+            });
+            
+            expect(contains).to.equal(false);
+            done();
           });
-          
-          expect(contains).to.equal(false);
-          done();
-        });
+        }, 3000);
       });
     });
   });
 
   xit('should redo a layer', function(done) {
 
-    this.timeout(18000);
+    this.timeout(30000);
 
     db.currDB = 'randomcreateddatabase';
 
@@ -490,7 +495,7 @@ describe('=== LAYERS FUNCTIONS ===', function() {
                 done();
               });
             }); 
-          }, 3000);
+          }, 6000);
 
         });
       });
@@ -540,7 +545,7 @@ describe('=== FULL PIPELINE FUNCTION ===', function() {
                     });
                   });
                 });
-              }, 4000);
+              }, 7000);
             });
           });
         });

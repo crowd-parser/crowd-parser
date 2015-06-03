@@ -292,11 +292,6 @@ angular.module('parserApp.display3dService', [])
 
 .factory('Display3d', ['$document', '$window', 'displayHelpers', 'Emoji', function($document, $window, displayHelpers, Emoji) {
 
-  // TODO
-  // - make text go away when zoomed out past a certain distance
-  // - show more info when zoomed in closer than a certain distance?
-  // - buttons next to each layer name - remove, solo, move fwd, move back
-
   var document = $document[0];
   var THREE = $window.THREE;
   var TWEEN = $window.TWEEN;
@@ -308,6 +303,7 @@ angular.module('parserApp.display3dService', [])
   var allLayers = {};
   var ribbonHeight;
   var scope;
+  var buttons = [];
 
   var frontLayerZ = 300;
   var layerSpacing = 300;
@@ -327,6 +323,22 @@ angular.module('parserApp.display3dService', [])
   var yStart = 300;
   var xSpacing = 320;
   var xStart = -800;
+
+  var makeButton = function (buttonName, buttonEvent, scope) {
+    var button = document.createElement( 'div' );
+    button.className = 'button-3d';
+    button.innerHTML = buttonName;
+
+    if (scope) {
+      button.addEventListener( 'click', buttonEvent, false);
+    }
+
+    var object = new THREE.CSS3DObject( button );
+
+    buttons.push({obj: object, el: button});
+
+    return object;
+  };
 
   var updateLayers = function (layersVisible) {
     // uiLayer is a layer title
@@ -443,7 +455,6 @@ angular.module('parserApp.display3dService', [])
       elData.baseBGColorRGB = 'rgb(' + bgRGBA.split(',').slice(0,3).join(',') + ')';
 
       elData.text = text;
-      var oldUsername = rawTweet.username;
       elData.username = Emoji.restoreEmojisInTweet(rawTweet.username);
 
       var x = xStart + Math.floor(index / rows) * xSpacing;
@@ -674,6 +685,18 @@ angular.module('parserApp.display3dService', [])
     scope.allLayers = allLayers;
   };
 
+  var makeMenu = function (sceneCSS) {
+    var menuObj = new THREE.Object3D();
+
+    var testButton = makeButton('testbutton', function() {console.log('button!');}, scope);
+    testButton.position.x = -200;
+    menuObj.add(testButton);
+
+    sceneCSS.add(menuObj);
+    menuObj.position.y = camera.position.y;
+    menuObj.position.z = camera.position.z - 100;
+  };
+
   var init = function(context, passedScope) {
     scope = passedScope;
     console.log(context);
@@ -749,6 +772,8 @@ angular.module('parserApp.display3dService', [])
     makeLayers();
 
     camera.position.z = camera.position.z + layers.length * layerSpacing;
+
+    makeMenu(sceneCSS);
 
     addButtonEvent('separate-3d', 'click', function() {
       if (!layersSeparated) {

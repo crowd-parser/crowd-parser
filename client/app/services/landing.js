@@ -2,6 +2,8 @@ angular.module('parserApp.headerService', [])
 
 .factory('Landing', function () {
 
+  // threejs code for the rotating cloud cube on the main page
+
   var init = function() {
 
     // ======== PANORAMA ========= //
@@ -66,8 +68,6 @@ angular.module('parserApp.headerService', [])
       document.getElementById('tweets-cube').appendChild( rendererMain.domElement );
       
       document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-      // document.addEventListener( 'touchstart', onDocumentTouchStart, false );
-      // document.addEventListener( 'touchmove', onDocumentTouchMove, false );
       window.addEventListener( 'resize', onWindowResize, false );
 
       $('.click-to-begin').on('click', function() {
@@ -78,8 +78,6 @@ angular.module('parserApp.headerService', [])
         rendererMain = null;
 
         document.removeEventListener( 'mousedown', onDocumentMouseDown, false );
-        document.removeEventListener( 'touchstart', onDocumentTouchStart, false );
-        document.removeEventListener( 'touchmove', onDocumentTouchMove, false );
         window.removeEventListener('resize', onWindowResize, false);
       });
     }
@@ -145,7 +143,3 @@ angular.module('parserApp.headerService', [])
     init: init
   };
 });
-
-// <div style="overflow: hidden; -webkit-transform-style: preserve-3d; transform-style: preserve-3d; width: 670px; height: 486px; -webkit-perspective: 316.683765600413px; perspective: 316.683765600413px;">
-//<div style="-webkit-transform-style: preserve-3d; transform-style: preserve-3d; width: 670px; height: 486px; -webkit-transform: translate3d(0px, 0px, 316.683765600413px) matrix3d(-1, 0, 0, 0, 0, -0.99619472026825, -0.087155744433403, 0, 0, 0.087155744433403, -0.99619472026825, 0, 0, 0, 0, 1) translate3d(335px, 243px, 0px); transform: translate3d(0px, 0px, 316.683765600413px) matrix3d(-1, 0, 0, 0, 0, -0.99619472026825, -0.087155744433403, 0, 0, 0.087155744433403, -0.99619472026825, 0, 0, 0, 0, 1) translate3d(335px, 243px, 0px);">
-//<img class="tweets-cube" width="1024" src="../../assets/images/cloudscube4.jpg" style="position: absolute; -webkit-transform: translate3d(-50%, -50%, 0px) matrix3d(0, 0, -1, 0, 0, -1, 0, 0, 1, 0, 0, 0, -512, 0, 0, 1); transform: translate3d(-50%, -50%, 0px) matrix3d(0, 0, -1, 0, 0, -1, 0, 0, 1, 0, 0, 0, -512, 0, 0, 1);"><img class="tweets-cube" width="1024" src="../../assets/images/cloudscube2.jpg" style="position: absolute; -webkit-transform: translate3d(-50%, -50%, 0px) matrix3d(0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 512, 0, 0, 1); transform: translate3d(-50%, -50%, 0px) matrix3d(0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, 0, 512, 0, 0, 1);"><img class="tweets-cube" width="1024" src="../../assets/images/cloudscube1.jpg" style="position: absolute; -webkit-transform: translate3d(-50%, -50%, 0px) matrix3d(-1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 512, 0, 1); transform: translate3d(-50%, -50%, 0px) matrix3d(-1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 512, 0, 1);"><img class="tweets-cube" width="1024" src="../../assets/images/cloudscube6.jpg" style="position: absolute; -webkit-transform: translate3d(-50%, -50%, 0px) matrix3d(-1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, -512, 0, 1); transform: translate3d(-50%, -50%, 0px) matrix3d(-1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, -512, 0, 1);"><img class="tweets-cube" width="1024" src="../../assets/images/cloudscube3.jpg" style="position: absolute; -webkit-transform: translate3d(-50%, -50%, 0px) matrix3d(-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 512, 1); transform: translate3d(-50%, -50%, 0px) matrix3d(-1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 512, 1);"><img class="tweets-cube" width="1024" src="../../assets/images/cloudscube5.jpg" style="position: absolute; -webkit-transform: translate3d(-50%, -50%, 0px) matrix3d(1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, -512, 1); transform: translate3d(-50%, -50%, 0px) matrix3d(1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, -512, 1);"></div></div>

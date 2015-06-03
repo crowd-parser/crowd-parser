@@ -80,6 +80,17 @@ angular.module('parserApp.headerService', [])
         document.removeEventListener( 'mousedown', onDocumentMouseDown, false );
         window.removeEventListener('resize', onWindowResize, false);
       });
+
+      $('.learn-more').on('click', function() {
+        // cancelAnimationFrame(mainAnimationFrame);
+        $('.tweets-cube').remove();
+        cameraMain = null;
+        sceneMain = null;
+        rendererMain = null;
+
+        document.removeEventListener( 'mousedown', onDocumentMouseDown, false );
+        window.removeEventListener('resize', onWindowResize, false);
+      });
     }
     function onWindowResize() {
       cameraMain.aspect = window.innerWidth / window.innerHeight;
@@ -132,6 +143,11 @@ angular.module('parserApp.headerService', [])
       rendererMain.render( sceneMain, cameraMain );
 
       $('.click-to-begin').on('click', function() {
+        cancelAnimationFrame(mainAnimationFrame);
+        $('.tweets-cube').remove();
+      });
+
+      $('.learn-more').on('click', function() {
         cancelAnimationFrame(mainAnimationFrame);
         $('.tweets-cube').remove();
       });

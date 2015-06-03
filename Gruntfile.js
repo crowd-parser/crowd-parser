@@ -76,8 +76,7 @@ module.exports = function (grunt) {
       jsTest: {
         files: [
           '<%= yeoman.client %>/{app,components}/**/*.spec.js',
-          '<%= yeoman.client %>/{app,components}/**/*.mock.js',
-          'client/app/dbPanel/dbPanel.spec.js'
+          '<%= yeoman.client %>/{app,components}/**/*.mock.js'
         ],
         tasks: [/*'newer:jshint:all', */'karma']
       },

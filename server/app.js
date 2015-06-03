@@ -4,6 +4,11 @@
 
 'use strict';
 
+// Log any unhandled errors
+process.on('uncaughtException', function(err){
+  fs.appendFile(__dirname + '/server/server.log', new Date() + '  |  ' + err + '\n');
+});
+
 // Set default node environment to development
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 

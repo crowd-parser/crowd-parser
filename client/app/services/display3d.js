@@ -435,7 +435,7 @@ angular.module('parserApp.display3dService', [])
       } else {
         // some backup values if it doesn't have layer data
         bgRGBA = displayHelpers.calculateColorFromScore();
-        elData.score = 'N/A';
+        elData.score = layerObj.title + ' score: N/A';
       }
       
       // calculate BG color values from score
@@ -445,7 +445,6 @@ angular.module('parserApp.display3dService', [])
       elData.text = text;
       var oldUsername = rawTweet.username;
       elData.username = Emoji.restoreEmojisInTweet(rawTweet.username);
-      console.log(oldUsername, elData.username);
 
       var x = xStart + Math.floor(index / rows) * xSpacing;
       var y = yStart - (index % rows) * ySpacing;

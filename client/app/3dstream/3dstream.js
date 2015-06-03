@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('parserApp')
-  .controller('3dStreamCtrl', function ($scope, $state, $location, Twitter, Display3d, Modal) {
+  .controller('3dStreamCtrl', function ($scope, $state, $location, $timeout, Twitter, Display3d, Modal) {
     var socket = Twitter.socket;
     $scope.tweetData = [];
     $scope.tweetCount = 0;
@@ -14,9 +14,18 @@ angular.module('parserApp')
     $scope.layers = [];
     $scope.radio = {};
     $scope.layersVisible = {};
+    $scope.gettingKeywordTweets = false;
+    $scope.keywordTimeout = false;
     var liveStreamStarted = false;
+    var expectedKeywordTweets = 0;
     var runFakeTweets = false;
     var intervalID;
+    var timeoutPromise;
+
+
+    $scope.grayedOut = function () {
+      return $scope.gettingKeywordTweets;
+    };
 
     $scope.editTweet = Modal.confirm.editTweet(function(x) { console.log(x); });
 
@@ -189,9 +198,55 @@ angular.module('parserApp')
       }
     });
 
+    var formatTweetObject = function(tweetObj, i) {
+      var tweetFormatted = {};
+      tweetFormatted.text = tweetObj.tweet.text;
+      tweetFormatted.username = tweetObj.tweet.user_name;
+      tweetFormatted.timestamp = tweetObj.tweet.timestamp_ms;
+      tweetFormatted.baseLayerResults = tweetObj.layers.Base;
+      if (tweetObj.layers.Base) {
+        tweetFormatted.baseLayerResults.negativeWords = JSON.parse(tweetObj.layers.Base.negativeWords);
+        tweetFormatted.baseLayerResults.positiveWords = JSON.parse(tweetObj.layers.Base.positiveWords);
+      } else {
+        if (i) {
+          console.log('no base layer available for tweetID: ' + i);
+        }
+      }
+      tweetFormatted.emoticonLayerResults = tweetObj.layers.Emoticons;
+      if (tweetObj.layers.Emoticons) {
+        tweetFormatted.emoticonLayerResults.negativeWords = JSON.parse(tweetObj.layers.Emoticons.negativeWords);
+        tweetFormatted.emoticonLayerResults.positiveWords = JSON.parse(tweetObj.layers.Emoticons.positiveWords);
+      } else {
+        if (i) {
+          console.log('no base layer available for tweetID: ' + i);
+        }
+      }
+      tweetFormatted.slangLayerResults = tweetObj.layers.Slang;
+      if (tweetObj.layers.Slang) {
+        tweetFormatted.slangLayerResults.negativeWords = JSON.parse(tweetObj.layers.Slang.negativeWords);
+        tweetFormatted.slangLayerResults.positiveWords = JSON.parse(tweetObj.layers.Slang.positiveWords);
+      } else {
+        if (i) {
+          console.log('no base layer available for tweetID: ' + i);
+        }
+      }
+      tweetFormatted.negationLayerResults = tweetObj.layers.Negation;
+      if (tweetObj.layers.Negation) {
+        tweetFormatted.negationLayerResults.negativeWords = JSON.parse(tweetObj.layers.Negation.negativeWords);
+        tweetFormatted.negationLayerResults.positiveWords = JSON.parse(tweetObj.layers.Negation.positiveWords);
+      } else {
+        if (i) {
+          console.log('no base layer available for tweetID: ' + i);
+        }
+      }
+      return tweetFormatted;
+    };
+
     $scope.startLiveStream = function () {
-      $scope.tweetData = [];
-      $scope.tweetCount = 0;
+      if (liveStreamStarted === false) {
+        $scope.tweetData = [];
+        $scope.tweetCount = 0;
+      }
 
       if ($scope.receivingTweets === 'OFF') {
         $scope.receivingTweets = 'ON';
@@ -209,56 +264,103 @@ angular.module('parserApp')
             console.log(tweetsFromDB);
 
             var tweetIDs = Object.keys(tweetsFromDB);
-            var tweetFormatted = {};
             tweetIDs.sort();
             for (var i = 0; i < tweetIDs.length; i++) {
-              tweetFormatted = {};
               var tweetObj = tweetsFromDB[tweetIDs[i]];
-              tweetFormatted.text = tweetObj.tweet.text;
-              tweetFormatted.username = tweetObj.tweet.user_name;
-              tweetFormatted.baseLayerResults = tweetObj.layers.Base;
-              if (tweetObj.layers.Base) {
-                tweetFormatted.baseLayerResults.negativeWords = JSON.parse(tweetObj.layers.Base.negativeWords);
-                tweetFormatted.baseLayerResults.positiveWords = JSON.parse(tweetObj.layers.Base.positiveWords);
-              }
-              tweetFormatted.emoticonLayerResults = tweetObj.layers.Emoticons;
-              if (tweetObj.layers.Emoticons) {
-                tweetFormatted.emoticonLayerResults.negativeWords = JSON.parse(tweetObj.layers.Emoticons.negativeWords);
-                tweetFormatted.emoticonLayerResults.positiveWords = JSON.parse(tweetObj.layers.Emoticons.positiveWords);
-              }
-              tweetFormatted.slangLayerResults = tweetObj.layers.Slang;
-              if (tweetObj.layers.Slang) {
-                tweetFormatted.slangLayerResults.negativeWords = JSON.parse(tweetObj.layers.Slang.negativeWords);
-                tweetFormatted.slangLayerResults.positiveWords = JSON.parse(tweetObj.layers.Slang.positiveWords);
-              }
-              tweetFormatted.negationLayerResults = tweetObj.layers.Negation;
-              if (tweetObj.layers.Negation) {
-                tweetFormatted.negationLayerResults.negativeWords = JSON.parse(tweetObj.layers.Negation.negativeWords);
-                tweetFormatted.negationLayerResults.positiveWords = JSON.parse(tweetObj.layers.Negation.positiveWords);
-              }
+              var tweetFormatted = formatTweetObject(tweetObj);
+              $scope.tweetData.push(tweetFormatted);
+              Display3d.addTweet(tweetFormatted, $scope.tweetCount);
+              $scope.tweetCount++;
             }
-
-            $scope.tweetData.push(tweetFormatted);
-
-            Display3d.addTweet(tweetFormatted, $scope.tweetCount);
-            $scope.tweetCount++;
           }
         });
       }
     };
 
+    var sortTweetsByDate = function () {
+      $scope.tweetData.sort(function (a,b) {
+        if (a.timestamp < b.timestamp) {
+          return -1;
+        }
+        if (a.timestamp > b.timestamp) {
+          return 1;
+        }
+        return 0;
+      });
+    };
+
     $scope.requestTweetsByKeyword = function (keyword) {
+      liveStreamStarted = false;
+
+      // gray out button until all tweets retrieved
+      $scope.gettingKeywordTweets = true;
+
+      $scope.tweetData = [];
+      $scope.tweetCount = 0;
+
       socketWithRoom(function () {
         socket.emit('tweet keyword', keyword, $scope.clientID);
       });
     };
 
+
     socket.on('tweet keyword response', function (tweetsFromDB) {
       console.log('received tweet');
       console.log(tweetsFromDB);
+
+      // if server is telling how many tweets to expect
+      if (typeof tweetsFromDB !== 'object') {
+        expectedKeywordTweets = +tweetsFromDB;
+      } else {
+        // start a timeout timer (cancel any existing one first)
+        if (timeoutPromise) {
+          console.log('getting new emit, cancelling ' + timeoutPromise);
+          $timeout.cancel(timeoutPromise);
+        }
+        timeoutPromise = $timeout( function() { 
+          console.log('timed out, displaying keyword tweets');
+          $scope.gettingKeywordTweets = false;
+          displayAllTweets();
+         }, 3000);
+        timeoutPromise.then(
+          function() {
+            console.log('timeout promise resolved');
+          },
+          function() {
+            console.log('timeout promise rejected');
+          }
+        );
+        // still getting tweets, store tweets
+        var tweetIDs = Object.keys(tweetsFromDB);
+        console.log(tweetIDs.length);
+        for (var i = 0; i < tweetIDs.length; i++) {
+          var tweetObj = tweetsFromDB[tweetIDs[i]];
+          var tweetFormatted = formatTweetObject(tweetObj, tweetIDs[i]);
+          $scope.tweetData.push(tweetFormatted);
+          $scope.tweetCount++;
+          // Display3d.addTweet(tweetFormatted, $scope.tweetCount);
+        }
+        console.log($scope.tweetCount);
+        // if we got all the tweets we were expecting
+        if ($scope.tweetCount >= expectedKeywordTweets) {
+          // cancel timeout
+          if (timeoutPromise) {
+            console.log('cancelling ' + timeoutPromise);
+            $timeout.cancel(timeoutPromise);
+          }
+          console.log('received all keyword tweets');
+          $scope.gettingKeywordTweets = false;
+          displayAllTweets();
+        }
+      }
     });
 
-    socket.on('')
+    function displayAllTweets() {
+      sortTweetsByDate();
+      $scope.tweetData.forEach(function (tweet, i) {
+        Display3d.addTweet(tweet, i, $scope);
+      });
+    }
 
     // $scope.start3DKeywordStream = function () {
     //   // stop any existing stream

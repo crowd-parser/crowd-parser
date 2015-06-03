@@ -1,13 +1,11 @@
 //TODO
 
-//off by 1 error per 50 tweets
-
 //ensure that multiple tweets in pipeline arrays still works correctly
   //the main pipeline currently does single tweets for stability.
 
 //cache keyword search results for x number of seconds and reuse them
 
-//change all keyword requests to a constant stream, like that
+//change all keyword requests to a constant stream, so that
   //a client can join part way through, and then catch up later, hmm
 
 //add functionality to escape keywords to allow use of @ symbol
@@ -16,15 +14,6 @@
 //add show actual data in tables, or at least a sub sample;
 
 //add delete tweets button
-//test delete database
-
-
-//test delete layer
-//test delete keyword
-
-//test refresh table
-//test refresh layers
-//test refresh keywords
 
 //only allow stream on production eventually
 
@@ -35,7 +24,6 @@
 //restart stream
 
 //add loop until feedback system for UI visuals
-
 
 //add kill all process to admin panel and database.js
 
@@ -170,7 +158,7 @@ exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callbac
 
       for(var i = 0; i < length; i+=chunk){
         chunk = Math.min(chunk, length - i);
-         exports.db.query("SELECT tweet_id FROM " + tableName + " WHERE id BETWEEN " + i + " AND " + (i+chunk-1) , function(err, rows){
+         exports.db.query("SELECT tweet_id FROM " + tableName + " WHERE id BETWEEN " + (i + 1) + " AND " + (i+chunk) , function(err, rows){
           console.log("PULL 100 KEYWORD MATCHES");
           console.log("AN ID SAMPLE",rows[0]);
           var finalArr = [];

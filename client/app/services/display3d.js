@@ -685,10 +685,10 @@ angular.module('parserApp.display3dService', [])
     scope.allLayers = allLayers;
   };
 
-  var makeMenu = function (sceneCSS) {
+  var makeMenu = function (sceneCSS, scope) {
     var menuObj = new THREE.Object3D();
 
-    var testButton = makeButton('testbutton', function() {console.log('button!');}, scope);
+    var testButton = makeButton('Get {{numTweetsToGet}} Tweets', function() { scope.getRestTweets(); }, scope);
     testButton.position.x = -200;
     menuObj.add(testButton);
 
@@ -773,7 +773,7 @@ angular.module('parserApp.display3dService', [])
 
     camera.position.z = camera.position.z + layers.length * layerSpacing;
 
-    makeMenu(sceneCSS);
+    makeMenu(sceneCSS, scope);
 
     addButtonEvent('separate-3d', 'click', function() {
       if (!layersSeparated) {

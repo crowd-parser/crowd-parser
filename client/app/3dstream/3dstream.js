@@ -16,12 +16,19 @@ angular.module('parserApp')
     $scope.layersVisible = {};
     $scope.gettingKeywordTweets = false;
     $scope.keywordTimeout = false;
+    $scope.scopetest = 'test';
     var liveStreamStarted = false;
     var expectedKeywordTweets = 0;
     //var runFakeTweets = false;
     //var intervalID;
     var timeoutPromise;
 
+
+    $scope.scopeTestF = function () {
+      $scope.$apply(function () {
+        $scope.scopetest = 'something new';
+      });
+    };
 
     // Gray out button when waiting for keyword tweets to come in from DB
     $scope.grayedOut = function () {

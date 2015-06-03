@@ -156,11 +156,15 @@ exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callbac
 
     var tableName = "tweets_containing_"+keyword;
 
-    exports.getTableLength(tableName, function(err, length){
+    exports.getTableLength(tableName, function(clientID, err, length){
       var chunk = 100;
 
       //send length:
-      exports.io.sockets.in(clientId).emit('tweet keyword response', length);
+      if(clientID === undefined){
+        console.log("ERR: clientID is undefined, using 1 by default for testing");
+        clientID = "1";
+      }
+      exports.io.sockets.in(clientID).emit('tweet keyword response', length);
 
       for(var i = 0; i < length; i+=chunk){
         chunk = Math.min(chunk, length - i);
@@ -176,7 +180,7 @@ exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callbac
         });
       }
 
-    });
+    }.bind(exports, clientID));
 
   });
 };

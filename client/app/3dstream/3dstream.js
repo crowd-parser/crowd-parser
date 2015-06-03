@@ -20,6 +20,8 @@ angular.module('parserApp')
     var expectedKeywordTweets = 0;
     var runFakeTweets = false;
     var intervalID;
+    var timeoutPromise;
+
 
     $scope.grayedOut = function () {
       return $scope.gettingKeywordTweets;
@@ -196,7 +198,7 @@ angular.module('parserApp')
       }
     });
 
-    var formatTweetObject = function(tweetObj) {
+    var formatTweetObject = function(tweetObj, i) {
       var tweetFormatted = {};
       tweetFormatted.text = tweetObj.tweet.text;
       tweetFormatted.username = tweetObj.tweet.user_name;
@@ -205,21 +207,37 @@ angular.module('parserApp')
       if (tweetObj.layers.Base) {
         tweetFormatted.baseLayerResults.negativeWords = JSON.parse(tweetObj.layers.Base.negativeWords);
         tweetFormatted.baseLayerResults.positiveWords = JSON.parse(tweetObj.layers.Base.positiveWords);
+      } else {
+        if (i) {
+          console.log('no base layer available for tweetID: ' + i);
+        }
       }
       tweetFormatted.emoticonLayerResults = tweetObj.layers.Emoticons;
       if (tweetObj.layers.Emoticons) {
         tweetFormatted.emoticonLayerResults.negativeWords = JSON.parse(tweetObj.layers.Emoticons.negativeWords);
         tweetFormatted.emoticonLayerResults.positiveWords = JSON.parse(tweetObj.layers.Emoticons.positiveWords);
+      } else {
+        if (i) {
+          console.log('no base layer available for tweetID: ' + i);
+        }
       }
       tweetFormatted.slangLayerResults = tweetObj.layers.Slang;
       if (tweetObj.layers.Slang) {
         tweetFormatted.slangLayerResults.negativeWords = JSON.parse(tweetObj.layers.Slang.negativeWords);
         tweetFormatted.slangLayerResults.positiveWords = JSON.parse(tweetObj.layers.Slang.positiveWords);
+      } else {
+        if (i) {
+          console.log('no base layer available for tweetID: ' + i);
+        }
       }
       tweetFormatted.negationLayerResults = tweetObj.layers.Negation;
       if (tweetObj.layers.Negation) {
         tweetFormatted.negationLayerResults.negativeWords = JSON.parse(tweetObj.layers.Negation.negativeWords);
         tweetFormatted.negationLayerResults.positiveWords = JSON.parse(tweetObj.layers.Negation.positiveWords);
+      } else {
+        if (i) {
+          console.log('no base layer available for tweetID: ' + i);
+        }
       }
       return tweetFormatted;
     };
@@ -285,10 +303,10 @@ angular.module('parserApp')
       });
     };
 
+
     socket.on('tweet keyword response', function (tweetsFromDB) {
       console.log('received tweet');
       console.log(tweetsFromDB);
-      var timeoutPromise;
 
       // if server is telling how many tweets to expect
       if (typeof tweetsFromDB !== 'object') {
@@ -296,6 +314,7 @@ angular.module('parserApp')
       } else {
         // start a timeout timer (cancel any existing one first)
         if (timeoutPromise) {
+          console.log('getting new emit, cancelling ' + timeoutPromise);
           $timeout.cancel(timeoutPromise);
         }
         timeoutPromise = $timeout( function() { 
@@ -303,12 +322,20 @@ angular.module('parserApp')
           $scope.gettingKeywordTweets = false;
           displayAllTweets();
          }, 3000);
+        timeoutPromise.then(
+          function() {
+            console.log('timeout promise resolved');
+          },
+          function() {
+            console.log('timeout promise rejected');
+          }
+        );
         // still getting tweets, store tweets
         var tweetIDs = Object.keys(tweetsFromDB);
         console.log(tweetIDs.length);
         for (var i = 0; i < tweetIDs.length; i++) {
           var tweetObj = tweetsFromDB[tweetIDs[i]];
-          var tweetFormatted = formatTweetObject(tweetObj);
+          var tweetFormatted = formatTweetObject(tweetObj, tweetIDs[i]);
           $scope.tweetData.push(tweetFormatted);
           $scope.tweetCount++;
           // Display3d.addTweet(tweetFormatted, $scope.tweetCount);
@@ -318,6 +345,7 @@ angular.module('parserApp')
         if ($scope.tweetCount >= expectedKeywordTweets) {
           // cancel timeout
           if (timeoutPromise) {
+            console.log('cancelling ' + timeoutPromise);
             $timeout.cancel(timeoutPromise);
           }
           console.log('received all keyword tweets');

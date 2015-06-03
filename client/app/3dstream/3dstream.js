@@ -286,11 +286,12 @@ angular.module('parserApp')
       console.log(tweetsFromDB);
 
       // if server is telling how many tweets to expect
-      if (typeof tweetsFromDB !== object) {
+      if (typeof tweetsFromDB !== 'object') {
         expectedKeywordTweets = +tweetsFromDB;
       } else {
         // still getting tweets, store tweets
         var tweetIDs = Object.keys(tweetsFromDB);
+        console.log(tweetIDs.length);
         for (var i = 0; i < tweetIDs.length; i++) {
           var tweetObj = tweetsFromDB[tweetIDs[i]];
           var tweetFormatted = formatTweetObject(tweetObj);
@@ -298,9 +299,11 @@ angular.module('parserApp')
           $scope.tweetCount++;
           // Display3d.addTweet(tweetFormatted, $scope.tweetCount);
         }
+        console.log($scope.tweetCount);
         // if we got all the tweets we were expecting
         // TODO: should also have a timeout check
         if ($scope.tweetCount >= expectedKeywordTweets) {
+          console.log('received all keyword tweets');
           $scope.gettingKeywordTweets = false;
           sortTweetsByDate();
           $scope.tweetData.forEach(function (tweet, i) {

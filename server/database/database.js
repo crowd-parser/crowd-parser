@@ -128,7 +128,7 @@ exports.getTableLength = function(tableName, callback){
 
 exports.userRequestCache = {}; //TODO implement active and canceled status for user requests
 
-exports.restreamExistingTweets = function(startId, stopId,callback, finalCB){
+exports.processLayersForExistingTweets = function(startId, stopId,callback, finalCallback){
   callback();
   startId = startId || 1;
 
@@ -137,28 +137,54 @@ exports.restreamExistingTweets = function(startId, stopId,callback, finalCB){
 
       var chunk = 100;
 
-      console.log("TOTAL TWEETS TO PROCESS", stopId - startId);
-
+      total = stopId - startId;
+      console.log("TOTAL TWEETS TO PROCESS", total);
 
       for(var i = startId - 1; i < stopId; i+=chunk){
         chunk = Math.min(chunk, length - i);
-         exports.db.query("SELECT id FROM tweets WHERE id BETWEEN " + (i + 1) + " AND " + (i+chunk) , function(err, rows){
+         exports.db.query("SELECT * FROM tweets WHERE id BETWEEN " + (i + 1) + " AND " + (i+chunk) , function(err, finalArr){
           console.log("PULL 100 MATCHES");
-          console.log("AN ID SAMPLE",rows[0]);
-          var finalArr = [];
-          for(var j = 0; j < rows.length; j++){
-            finalArr.push(rows[j]["tweet_id"]);
-          }
-          if(i >= stopId){
-            finalCB();
-          }
+          console.log("AN ID SAMPLE",finalArr[0]);
 
-          exports.packageTweetsToSendToClient(finalArr, exports.errCB);
-        });
-      }
+          var preBuildForLayerCache = function(finishLayers){
+            exports.genericGetAll('layers', function(err, theLayers, fields){
+             if(err){
+                console.log("BUILD CACHE ERR", err);
+                theLayers = theLayers || [];
+             }
 
-    }.bind(exports));
+            theCache.layerList = [];
+            for(var i = 0; i < theLayers.length; i++){
+              theCache.layerList.push(theLayers[i].layerName);
+            }
+
+            finishLayers();
+            });
+          };
+
+          var finishLayers = function(){
+            var funcList = [];
+              for(var j = 0; j < theCache.layerList.length; j++){
+                console.log("PROCESSING LAYER: ", theCache.layerList[j]);
+                funcList.push(exports.filterTweetObjectsForLayer.bind(exports,finalArr,theCache.layerList[j]));
+              }
+
+              exports.asyncMap(funcList, function(finalCallback,results){
+                  console.log("PAST PROCESSING LAYERS: ID", tweetObj["id"]);
+                  finalCallback();
+               }.bind(exports, finalCallback));
+          };
+
+        if(theCache.layerList === undefined || theCache.layerList === null){
+          preBuildForLayerCache(finishLayers);
+        }else{
+          finishLayers();
+        }
+      });//for loop end
+    }
+  });
 };
+
 
 exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callback){
   if(typeof clientID === "number"){
@@ -357,10 +383,24 @@ exports.processSingleTweetIDForKeyword = function(id, keyword, callback){
   this.db.query("INSERT INTO tweets_containing_" + keyword + " (tweet_id) SELECT id FROM tweets WHERE id = " + id + " AND text LIKE '%" + keyword + "%'", callback);
 };
 
+exports.streamlinedAttemptAtFilterLayers = function(tweetArr, layerName, cb){
+   var finalArr = [];
+    for(var i = 0; i < tweetObj.length; i++){
+      var rowObj = exports["layer_"+layerName+"_Function"](tweetObj[i]);
+      rowObj.tweet_id = tweetObj[i].id;
+      finalArr.push(rowObj);
+      console.log("FILTERING " + tweetObj[i].id + " FOR LAYER: " + layerName);
+    }
+
+    //back here
+
+    exports.genericAddToTable("layer_"+layerName,finalArr,exports.errCB, callback);
+  };
 
 exports.filterTweetObjectsForLayer = function(tweetObj, layerName, callback){
 //hmm
   if(Array.isArray(tweetObj)){
+
     for(var i = 0; i < tweetObj.length; i++){
       var rowObj = exports["layer_"+layerName+"_Function"](tweetObj[i]);
       rowObj.tweet_id = tweetObj[i].id;
@@ -372,7 +412,8 @@ exports.filterTweetObjectsForLayer = function(tweetObj, layerName, callback){
         exports.genericAddToTable("layer_"+layerName,[rowObj],exports.errCB, null);
       }
 
-    }
+
+
   }else{
     var rowObj = exports["layer_"+layerName+"_Function"](tweetObj);
     rowObj.tweet_id = tweetObj.id;
@@ -1044,7 +1085,7 @@ exports.asyncMap = function(funcs, finalCB){
 //=============== ADD STUFF ====================
 var theCache = {cache: true};
 
-exports.genericAddToTable = function(tableName, _listOfObjects, callbackPerAdd, callbackAtEnd){
+exports.genericAddToTable = function(tableName, _listOfObjects, callbackPerAdd, callbackAtEnd, optBulkAdd){
 var listOfObjects;
 if(!Array.isArray(_listOfObjects)){
   listOfObjects = [_listOfObjects];
@@ -1086,6 +1127,7 @@ if(!Array.isArray(_listOfObjects)){
     var temp;
     var count = listOfObjects.length;
     var allIds = [];
+    var bulkQueryString = "";
 
     exports.doAddingMessage(count);
 
@@ -1105,34 +1147,58 @@ if(!Array.isArray(_listOfObjects)){
         queryStr = queryStr.slice(0, -2);
         queryStr = queryStr + ' )';
 
-        queryStr = insertStr + queryStr;
 
-        exports.db.query(queryStr, function(err, rows, fields){
-          //this returns ids of added object, not the whole object
-          if(err){
-            console.log();
+
+        if(!optBulkAdd){
+          queryStr = insertStr + queryStr;
+              exports.db.query(queryStr, function(err, rows, fields){
+                //this returns ids of added object, not the whole object
+                if(err){
+                  console.log();
+                }else{
+                  console.log("SUCCESS: ADDING: ", rows.insertId)
+                }
+                var theseIds = [];
+                if(rows){
+                  theseIds.push(rows.insertId);
+                  allIds.push(rows.insertId);
+                }
+                count--;
+
+                exports.doAddingMessage(count, 25);
+                callbackPerAdd(err, theseIds);
+                if(count <= 0){
+
+                  if(callbackAtEnd){
+                    callbackAtEnd(err, allIds);
+                  }else{
+
+                  }
+                }
+              });
           }else{
-            console.log("SUCCESS: ADDING: ", rows.insertId)
-          }
-          var theseIds = [];
-          if(rows){
-            theseIds.push(rows.insertId);
-            allIds.push(rows.insertId);
-          }
-          count--;
-
-          exports.doAddingMessage(count, 25);
-          callbackPerAdd(err, theseIds);
-          if(count <= 0){
-
-            if(callbackAtEnd){
-              callbackAtEnd(err, allIds);
+            if(i === 0){
+              bulkQueryString += insertStr + queryStr + ",";
+            }else if(i < listOfObjects.length - 1){
+              bulkQueryString += "(" + queryStr + ",";
             }else{
-
+              //last one
+              bulkQueryString += "(" + queryStr;
             }
+
+          }
+      }//for loop done
+      if(optBulkAdd){
+        exports.db.query(bulkQueryString, function(err, rows, fields){
+          callbackAtEnd(err, rows);
+          if(err){
+            console.log("BUILD ADD ERR:", err);
+          }else{
+            console.log("FINISHED CHUNK OF BULK ADD");
           }
         });
       }
+
   };
 };
 

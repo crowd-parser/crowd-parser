@@ -159,15 +159,19 @@ exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callbac
     exports.getTableLength(tableName, function(err, length){
       var chunk = 100;
 
+      //send length:
+      exports.io.sockets.in(clientId).emit('tweet keyword response', length);
+
       for(var i = 0; i < length; i+=chunk){
         chunk = Math.min(chunk, length - i);
          exports.db.query("SELECT tweet_id FROM " + tableName + " WHERE id BETWEEN " + i + " AND " + (i+chunk-1) , function(err, rows){
           console.log("PULL 100 KEYWORD MATCHES");
           console.log("AN ID SAMPLE",rows[0]);
           var finalArr = [];
-          for(var i = 0; i < rows.length; i++){
-            finalArr.push(rows[i]["tweet_id"]);
+          for(var j = 0; j < rows.length; j++){
+            finalArr.push(rows[j]["tweet_id"]);
           }
+
           exports.packageTweetsToSendToClient(finalArr, exports.errCB, keyword, clientID);
         });
       }
@@ -228,8 +232,13 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
       }else{
 
       }
-      for(var i = 0; i < rows.length; i++){
-        tweetPackages[rows[i].tweet_id]["layers"][layerName] = rows[i];
+
+      if(rows){
+        for(var i = 0; i < rows.length; i++){
+          tweetPackages[rows[i].tweet_id]["layers"][layerName] = rows[i];
+        }
+      }else{
+        console.log("WARNING: empty rows object likely means IDs are out of line")
       }
 
       cb(false, true);//no values needed cause we're updating the closed over tweetPackages;
@@ -1229,8 +1238,8 @@ exports.ADDALLTHETWEETS = function(callback){
     }else{
       callback(false, true);//server timeout
       var ALL_THE_TEST_TWEETS = require('./tweets_test.js');
-
-      for(var i = 0; i < ALL_THE_TEST_TWEETS.length; i++){
+      var length = Math.min(ALL_THE_TEST_TWEETS.length, 1000);
+      for(var i = 0; i < length; i++){
         var eye = i;
           //[{tweet: tweetObj, layers:[layer1resultObj, layer2resultObj}]
           setTimeout(function(i){

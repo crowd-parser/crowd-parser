@@ -15,6 +15,7 @@ angular.module('parserApp')
     $scope.radio = {};
     $scope.layersVisible = {};
     var liveStreamStarted = false;
+    var expectedKeywordTweets = 0;
     var runFakeTweets = false;
     var intervalID;
 
@@ -189,6 +190,34 @@ angular.module('parserApp')
       }
     });
 
+    var formatTweetObject = function(tweetObj) {
+      var tweetFormatted = {};
+      tweetFormatted.text = tweetObj.tweet.text;
+      tweetFormatted.username = tweetObj.tweet.user_name;
+      tweetFormatted.timestamp = tweetObj.tweet.timestamp_ms;
+      tweetFormatted.baseLayerResults = tweetObj.layers.Base;
+      if (tweetObj.layers.Base) {
+        tweetFormatted.baseLayerResults.negativeWords = JSON.parse(tweetObj.layers.Base.negativeWords);
+        tweetFormatted.baseLayerResults.positiveWords = JSON.parse(tweetObj.layers.Base.positiveWords);
+      }
+      tweetFormatted.emoticonLayerResults = tweetObj.layers.Emoticons;
+      if (tweetObj.layers.Emoticons) {
+        tweetFormatted.emoticonLayerResults.negativeWords = JSON.parse(tweetObj.layers.Emoticons.negativeWords);
+        tweetFormatted.emoticonLayerResults.positiveWords = JSON.parse(tweetObj.layers.Emoticons.positiveWords);
+      }
+      tweetFormatted.slangLayerResults = tweetObj.layers.Slang;
+      if (tweetObj.layers.Slang) {
+        tweetFormatted.slangLayerResults.negativeWords = JSON.parse(tweetObj.layers.Slang.negativeWords);
+        tweetFormatted.slangLayerResults.positiveWords = JSON.parse(tweetObj.layers.Slang.positiveWords);
+      }
+      tweetFormatted.negationLayerResults = tweetObj.layers.Negation;
+      if (tweetObj.layers.Negation) {
+        tweetFormatted.negationLayerResults.negativeWords = JSON.parse(tweetObj.layers.Negation.negativeWords);
+        tweetFormatted.negationLayerResults.positiveWords = JSON.parse(tweetObj.layers.Negation.positiveWords);
+      }
+      return tweetFormatted;
+    };
+
     $scope.startLiveStream = function () {
       $scope.tweetData = [];
       $scope.tweetCount = 0;
@@ -209,45 +238,39 @@ angular.module('parserApp')
             console.log(tweetsFromDB);
 
             var tweetIDs = Object.keys(tweetsFromDB);
-            var tweetFormatted = {};
             tweetIDs.sort();
             for (var i = 0; i < tweetIDs.length; i++) {
-              tweetFormatted = {};
               var tweetObj = tweetsFromDB[tweetIDs[i]];
-              tweetFormatted.text = tweetObj.tweet.text;
-              tweetFormatted.username = tweetObj.tweet.user_name;
-              tweetFormatted.baseLayerResults = tweetObj.layers.Base;
-              if (tweetObj.layers.Base) {
-                tweetFormatted.baseLayerResults.negativeWords = JSON.parse(tweetObj.layers.Base.negativeWords);
-                tweetFormatted.baseLayerResults.positiveWords = JSON.parse(tweetObj.layers.Base.positiveWords);
-              }
-              tweetFormatted.emoticonLayerResults = tweetObj.layers.Emoticons;
-              if (tweetObj.layers.Emoticons) {
-                tweetFormatted.emoticonLayerResults.negativeWords = JSON.parse(tweetObj.layers.Emoticons.negativeWords);
-                tweetFormatted.emoticonLayerResults.positiveWords = JSON.parse(tweetObj.layers.Emoticons.positiveWords);
-              }
-              tweetFormatted.slangLayerResults = tweetObj.layers.Slang;
-              if (tweetObj.layers.Slang) {
-                tweetFormatted.slangLayerResults.negativeWords = JSON.parse(tweetObj.layers.Slang.negativeWords);
-                tweetFormatted.slangLayerResults.positiveWords = JSON.parse(tweetObj.layers.Slang.positiveWords);
-              }
-              tweetFormatted.negationLayerResults = tweetObj.layers.Negation;
-              if (tweetObj.layers.Negation) {
-                tweetFormatted.negationLayerResults.negativeWords = JSON.parse(tweetObj.layers.Negation.negativeWords);
-                tweetFormatted.negationLayerResults.positiveWords = JSON.parse(tweetObj.layers.Negation.positiveWords);
-              }
+              var tweetFormatted = formatTweetObject(tweetObj);
+              $scope.tweetData.push(tweetFormatted);
+              Display3d.addTweet(tweetFormatted, $scope.tweetCount);
+              $scope.tweetCount++;
             }
-
-            $scope.tweetData.push(tweetFormatted);
-
-            Display3d.addTweet(tweetFormatted, $scope.tweetCount);
-            $scope.tweetCount++;
           }
         });
       }
     };
 
+    var sortTweetsByDate = function () {
+      $scope.tweetData.sort(function (a,b) {
+        if (a.timestamp < b.timestamp) {
+          return -1;
+        }
+        if (a.timestamp > b.timestamp) {
+          return 1;
+        }
+        return 0;
+      });
+    };
+
     $scope.requestTweetsByKeyword = function (keyword) {
+
+      // gray out button until all tweets retrieved
+      $scope.gettingKeywordTweets = true;
+
+      $scope.tweetData = [];
+      $scope.tweetCount = 0;
+
       socketWithRoom(function () {
         socket.emit('tweet keyword', keyword, $scope.clientID);
       });
@@ -256,9 +279,31 @@ angular.module('parserApp')
     socket.on('tweet keyword response', function (tweetsFromDB) {
       console.log('received tweet');
       console.log(tweetsFromDB);
-    });
 
-    socket.on('')
+      // if server is telling how many tweets to expect
+      if (typeof tweetsFromDB !== object) {
+        expectedKeywordTweets = +tweetsFromDB;
+      } else {
+        // still getting tweets, store tweets
+        var tweetIDs = Object.keys(tweetsFromDB);
+        for (var i = 0; i < tweetIDs.length; i++) {
+          var tweetObj = tweetsFromDB[tweetIDs[i]];
+          var tweetFormatted = formatTweetObject(tweetObj);
+          $scope.tweetData.push(tweetFormatted);
+          $scope.tweetCount++;
+          // Display3d.addTweet(tweetFormatted, $scope.tweetCount);
+        }
+        // if we got all the tweets we were expecting
+        // TODO: should also have a timeout check
+        if ($scope.tweetCount >= expectedKeywordTweets) {
+          $scope.gettingKeywordTweets = false;
+          sortTweetsByDate();
+          $scope.tweetData.forEach(function (tweet, i) {
+            Display3d.addTweet(tweet, i, $scope);
+          });
+        }
+      }
+    });
 
     // $scope.start3DKeywordStream = function () {
     //   // stop any existing stream

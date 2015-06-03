@@ -8,7 +8,7 @@
           <input type="text" class="form-control" ng-model="keywordStream">
         </div>
       <!--       <button class="button-3d"  ng-click="start3DKeywordStream()"disabled>Submit</button> -->
-        <button class="button-3d" type="notSubmit" ng-click="requestTweetsByKeyword(keywordStream)">Get Matching DB Tweets</button>
+        <button class="button-3d" ng-class="{ button-3d-disabled: gettingKeywordTweets }" type="notSubmit" ng-click="requestTweetsByKeyword(keywordStream)">Get Matching DB Tweets</button>
         <button class="button-3d" type="notSubmit" ng-click="getRestTweets()">Get {{numTweetsToGet}} Tweets</button>
         <button class="button-3d" type="notSubmit" ng-click="startLiveStream()">Live Stream: {{receivingTweets}}</button>
 <!--         <button class="button-3d" type="notSubmit" ng-click="socketTest()">Socket Test</button> -->

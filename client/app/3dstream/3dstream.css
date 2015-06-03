@@ -233,6 +233,14 @@ canvas {  }
   color: #000000;
   background-color: rgba(0,190,255,0.75);
 }
+.button-3d-disabled {
+  color: rgba(180,180,180,0.75);
+  background: rgba(100,100,100,1);
+}
+.button-3d-disabled:hover, .button-3d-disabled:active {
+  color: rgba(180,180,180,0.75);
+  background: rgba(100,100,100,1);
+}
 .form-holder {
   float: left;
   padding: 0;

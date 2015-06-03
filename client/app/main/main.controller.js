@@ -5,10 +5,11 @@ angular.module('parserApp')
 
   $(function() {
 
-    // Makes the header rotate in 3D
+    // Initializes the cloud cube animation
     Landing.init();
   });
 
+  // Click handler to enter the 3D tweet visualization page
   $scope.goToDisplay = function () {
     $('#tweets-cube').remove();
     $location.path('/3dstream');

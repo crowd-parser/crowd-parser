@@ -632,7 +632,7 @@ var layerTableName = "layer_"+layerName;
 
           var funcList = [];
 
-          for(var i = 0; i < length; i+=chunkNumber){
+          for(var i = 1; i <= length; i+=chunkNumber){
             chunkNumber = Math.min(chunkNumber, length - i);
             var eye = i;
             var thisFunc = function(exports, chunkNumber, i,cb){

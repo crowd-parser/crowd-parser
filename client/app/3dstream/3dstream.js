@@ -6,7 +6,7 @@ angular.module('parserApp')
     $scope.tweetData = [];
     $scope.tweetCount = 0;
     $scope.autoScroll = 'ON';
-    $scope.numTweetsToGet = 1000;
+    $scope.numTweetsToGet = 400;
     $scope.receivingTweets = 'OFF';
     $scope.clientID = undefined;
     $scope.showLayerMenu = false;

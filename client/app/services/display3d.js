@@ -297,6 +297,7 @@ angular.module('parserApp.display3dService', [])
   var TWEEN = $window.TWEEN;
 
   var sceneCSS, sceneGL, camera, rendererCSS, rendererGL, controls, prevCameraPosition;
+  var menuObj;
 
   var layersSeparated;
   var layers; // visible layers
@@ -323,22 +324,6 @@ angular.module('parserApp.display3dService', [])
   var yStart = 300;
   var xSpacing = 320;
   var xStart = -800;
-
-  var makeButton = function (buttonName, buttonEvent, scope) {
-    var button = document.createElement( 'div' );
-    button.className = 'button-3d';
-    button.innerHTML = buttonName;
-
-    if (scope) {
-      button.addEventListener( 'click', buttonEvent, false);
-    }
-
-    var object = new THREE.CSS3DObject( button );
-
-    buttons.push({obj: object, el: button});
-
-    return object;
-  };
 
   var updateLayers = function (layersVisible) {
     // uiLayer is a layer title
@@ -685,16 +670,53 @@ angular.module('parserApp.display3dService', [])
     scope.allLayers = allLayers;
   };
 
-  var makeMenu = function (sceneCSS, scope) {
-    var menuObj = new THREE.Object3D();
+  var makeButton = function (buttonName, buttonEvent, scope) {
+    var button = document.createElement( 'div' );
+    button.className = 'button-3d';
+    button.innerHTML = buttonName;
 
-    var testButton = makeButton('Get {{numTweetsToGet}} Tweets', function() { scope.getRestTweets(); }, scope);
-    testButton.position.x = -200;
-    menuObj.add(testButton);
+    if (scope) {
+      button.addEventListener( 'click', buttonEvent, false);
+    }
 
-    sceneCSS.add(menuObj);
+    var object = new THREE.CSS3DObject( button );
+
+    return {obj: object, el: button};
+  };
+
+
+  var makeMenu = function (sceneCSS, scope, camera) {
+    menuObj = new THREE.Object3D();
+
+    //<input type="text" class="form-control" ng-model="keywordStream">
+    var keywordForm = document.createElement('form');
+
+    var keywordInput = document.createElement('input');
+    keywordInput.type = 'text';
+    keywordInput.className = 'form-control keyword-input';
+    keywordInput.setAttribute('ng-model', 'keywordStream');
+    keywordInput.setAttribute('placeholder', 'enter a keyword');
+
+    keywordForm.appendChild(keywordInput);
+
+    var keywordObj = new THREE.CSS3DObject(keywordForm);
+    keywordObj.position.x = -370;
+    menuObj.add(keywordObj);
+
+    var keywordButton = makeButton('Get Tweets For Keyword', function() { scope.requestTweetsByKeyword(keywordStream); }, scope);
+    keywordButton.obj.position.x = -200;
+    menuObj.add(keywordButton.obj);
+
+    var restButton = makeButton('Get 400 Tweets', function() { scope.getRestTweets(); }, scope);
+    // this won't work until it is rendered
+    // restButton.obj.position.x = startPosition+totalWidth + restButton.el.clientWidth/2;
+    // totalWidth += restButton.el.clientWidth;
+    restButton.obj.position.x = -50;
+    menuObj.add(restButton.obj);
+
+    camera.add(menuObj);
     menuObj.position.y = camera.position.y;
-    menuObj.position.z = camera.position.z - 100;
+    menuObj.position.z = camera.position.z - 200;
   };
 
   var init = function(context, passedScope) {
@@ -730,6 +752,12 @@ angular.module('parserApp.display3dService', [])
     sceneCSS = new THREE.Scene();
     sceneGL = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, document.getElementById(containerID).clientWidth / height, 10, 10000 );
+
+    // makeMenu(sceneCSS, scope, camera);
+
+    // sceneCSS.add(camera);
+    // camera.add(menuObj);
+
     camera.position.z = cameraZ !== undefined ? cameraZ : 1000;
     camera.position.y = cameraY !== undefined ? cameraY : 200;
 
@@ -747,6 +775,9 @@ angular.module('parserApp.display3dService', [])
     document.getElementById( containerID ).appendChild( rendererGL.domElement );
     document.getElementById( containerID ).appendChild( rendererCSS.domElement );
 
+    camera.aspect = document.getElementById(containerID).clientWidth/document.getElementById(containerID).clientHeight;
+    camera.updateProjectionMatrix();
+
     rendererCSS.setSize( document.getElementById(containerID).clientWidth, document.getElementById(containerID).clientHeight );
     rendererGL.setSize( document.getElementById(containerID).clientWidth, document.getElementById(containerID).clientHeight - 1 );
     // rendererGL.domElement.style.width = document.getElementById(containerID).clientWidth + 'px';
@@ -755,6 +786,9 @@ angular.module('parserApp.display3dService', [])
     window.onresize = function () {
       rendererCSS.setSize( document.getElementById(containerID).clientWidth, document.getElementById(containerID).clientHeight );
       rendererGL.setSize( document.getElementById(containerID).clientWidth, document.getElementById(containerID).clientHeight - 1 );
+
+      camera.aspect = document.getElementById(containerID).clientWidth/document.getElementById(containerID).clientHeight;
+      camera.updateProjectionMatrix();
       // rendererGL.domElement.style.width = document.getElementById(containerID).clientWidth + 'px';
       // rendererGL.domElement.style.height = (document.getElementById(containerID).clientHeight - 1) + 'px';
     };
@@ -772,8 +806,6 @@ angular.module('parserApp.display3dService', [])
     makeLayers();
 
     camera.position.z = camera.position.z + layers.length * layerSpacing;
-
-    makeMenu(sceneCSS, scope);
 
     addButtonEvent('separate-3d', 'click', function() {
       if (!layersSeparated) {

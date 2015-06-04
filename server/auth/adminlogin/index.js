@@ -187,7 +187,7 @@ router.post('/redoLayer', function(req, res, next) {
 
 
 router.post('/processLayersForExistingTweets', function(req, res, next) {
-  db.processLayersForExistingTweets(null,null, function(err, rows) {
+  db.processLayersForExistingTweets(null,null,null, function(err, rows) {
 
 
     if(err){
@@ -197,11 +197,27 @@ router.post('/processLayersForExistingTweets', function(req, res, next) {
     }
       res.send(true);
   },function(){
-    console.log("DONE REDOING ALL LAYERS");
+    console.log("DONE REDOING 1 LAYER");
 
   });
 });
 
+
+
+router.post('/setUniqueTweetIdOnAll', function(req, res, next) {
+  db.setUniqueTweetIdOnAll(function(err, rows, fields) {
+      console.log("setUniqueTweetIdOnAll finished");
+    if(err){
+      res.send(false);
+      return;
+    }
+
+      res.send(true);
+
+  }, function(err, stuff){
+    console.log("DONE UNIQUE TO ALL");
+  });
+});
 
 router.post('/deleteLayer', function(req, res, next) {
   var name = req.body.name;

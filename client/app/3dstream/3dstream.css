@@ -256,6 +256,7 @@ canvas {  }
   padding: 0;
 }
 .layer-menu {
+  display: inline-block;
   box-sizing: border-box;
   margin-top: 10px;
 /*  float: left;*/

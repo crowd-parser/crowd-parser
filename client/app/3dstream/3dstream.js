@@ -16,7 +16,7 @@ angular.module('parserApp')
     $scope.layersVisible = {};
     $scope.gettingKeywordTweets = false;
     $scope.keywordTimeout = false;
-    $scope.scopetest = 'test';
+    $scope.flattenText = 'Flatten';
     var liveStreamStarted = false;
     var expectedKeywordTweets = 0;
     //var runFakeTweets = false;
@@ -24,16 +24,18 @@ angular.module('parserApp')
     var timeoutPromise;
 
 
-    $scope.scopeTestF = function () {
-      $scope.$apply(function () {
-        $scope.scopetest = 'something new';
-      });
-    };
-
     // Gray out button when waiting for keyword tweets to come in from DB
     $scope.grayedOut = function () {
       return $scope.gettingKeywordTweets;
     };
+
+    $scope.toggleFlatten = function () {
+      if ($scope.flattenText === 'Flatten') {
+        $scope.flattenText = 'Separate';
+      } else {
+        $scope.flattenText = 'Flatten';
+      }
+    }
 
     // Popup modal for editing tweet (currently just a display)
     $scope.editTweet = Modal.confirm.editTweet(function(x) { console.log(x); });

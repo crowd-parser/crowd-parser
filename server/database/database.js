@@ -61,6 +61,7 @@ var mysql = require('mysql');
 //TODO CHANGE THIS TO PROD WHEN LIVE
 //OR FIGURE OUT HOW TO USE LIVE VESUS DEV DEPLOY
 exports.currDB = 'dev';
+exports.automatically_start_tweet_stream_on_production = false;
 
 
 //establishes connection to persistent database previously configured
@@ -89,12 +90,42 @@ var connectionLoop = function(){
           console.log(err);
          }
 
+         //this sets an interval to ping the database with
+
+         //restart stream in io.routes automatically
+
+         exports.startStayAlive();
+
+           var testIO = function(_exports){
+             exports = exports || _exports;
+             if(!exports.io){
+               setTimeout(testIO, 150);
+               return;
+             }
+             if(exports.automatically_start_tweet_stream_on_production && exports.currDB === "production"){
+                 exports.startTweetDownload();
+             }
+             console.log("=====DATABASE CONNECTED TO IO=========");
+           }.bind(exports);
+
+           testIO();
+
+
          if(this.notifiersForLive){
             for(var i = 0; i < this.notifiersForLive.length; i++){
              this.notifiersForLive[i]();
            }
            this.notifiersForLive = null;
          }
+      });
+
+      exports.db.on('close', function(err) {
+        if(err) {
+          console.log("DATABASE CONN CLOSED ERR:", err);
+          connectionLoop();
+        } else {
+          console.log('MANUAL DB CONNECTION CLOSED');
+        }
       });
 
       exports.db.on('error', function(err) {
@@ -114,7 +145,22 @@ var connectionLoop = function(){
 
 connectionLoop();
 
+exports.startStayAlive = function(){
+  if(exports.stayAliveId){
+    clearInterval(exports.stayAliveId);
+  }
 
+  exports.stayAliveId = setTimeout(function(){
+    exports.db.query("SELECT 1", function(err){
+      if(err){
+        console.log(err);
+        connectionLoop();
+      }else{
+        exports.startStayAlive();
+      }
+    }, 5000);
+  });
+};
 
 
 /*==================================================================*/
@@ -141,10 +187,10 @@ exports.processLayersForExistingTweets = function(startId, stopId,callback, fina
       console.log("TOTAL TWEETS TO PROCESS", total);
 
       for(var i = startId - 1; i < stopId; i+=chunk){
-        chunk = Math.min(chunk, length - i);
+        chunk = Math.min(chunk, stopId - i);
          exports.db.query("SELECT * FROM tweets WHERE id BETWEEN " + (i + 1) + " AND " + (i+chunk) , function(err, finalArr){
           console.log("PULL 100 MATCHES");
-          console.log("AN ID SAMPLE",finalArr[0]);
+          console.log("AN ID SAMPLE",finalArr[0]["id"]);
 
           var preBuildForLayerCache = function(finishLayers){
             exports.genericGetAll('layers', function(err, theLayers, fields){
@@ -166,11 +212,11 @@ exports.processLayersForExistingTweets = function(startId, stopId,callback, fina
             var funcList = [];
               for(var j = 0; j < theCache.layerList.length; j++){
                 console.log("PROCESSING LAYER: ", theCache.layerList[j]);
-                funcList.push(exports.filterTweetObjectsForLayer.bind(exports,finalArr,theCache.layerList[j]));
+                funcList.push(exports.streamlinedAttemptAtFilterLayers.bind(exports,finalArr,theCache.layerList[j]));
               }
 
               exports.asyncMap(funcList, function(finalCallback,results){
-                  console.log("PAST PROCESSING LAYERS: ID", tweetObj["id"]);
+                  console.log("STREAMLINE PAST PROCESSING LAYERS");
                   finalCallback();
                }.bind(exports, finalCallback));
           };
@@ -384,17 +430,18 @@ exports.processSingleTweetIDForKeyword = function(id, keyword, callback){
 };
 
 exports.streamlinedAttemptAtFilterLayers = function(tweetArr, layerName, cb){
+  setTimeout(function(){
    var finalArr = [];
-    for(var i = 0; i < tweetObj.length; i++){
-      var rowObj = exports["layer_"+layerName+"_Function"](tweetObj[i]);
-      rowObj.tweet_id = tweetObj[i].id;
+    for(var i = 0; i < tweetArr.length; i++){
+      var rowObj = exports["layer_"+layerName+"_Function"](tweetArr[i]);
+      rowObj.tweet_id = tweetArr[i].id;
       finalArr.push(rowObj);
-      console.log("FILTERING " + tweetObj[i].id + " FOR LAYER: " + layerName);
+      console.log("STREAMLINE FILTERING " + tweetArr[i].id + " FOR LAYER: " + layerName);
     }
 
-    //back here
+    exports.genericAddToTable("layer_"+layerName,finalArr,exports.errCB, cb, true);
+  },20);
 
-    exports.genericAddToTable("layer_"+layerName,finalArr,exports.errCB, callback);
   };
 
 exports.filterTweetObjectsForLayer = function(tweetObj, layerName, callback){
@@ -411,7 +458,7 @@ exports.filterTweetObjectsForLayer = function(tweetObj, layerName, callback){
       }else{
         exports.genericAddToTable("layer_"+layerName,[rowObj],exports.errCB, null);
       }
-
+    }
 
 
   }else{
@@ -422,6 +469,26 @@ exports.filterTweetObjectsForLayer = function(tweetObj, layerName, callback){
     exports.genericAddToTable("layer_"+layerName,[rowObj],callback, null);
   }
 
+};
+
+exports.setUniqueTweetIdOnAll = function(cb, finalcb){
+  cb();
+  exports.getKeywordNames(function(list){
+    var funcList = [];
+    for(var i = 0; i < list.length; i++){
+      funcList.push(exports.setColumnToUnique.bind(exports, "tweets_containing_"+list[i], "tweet_id"));
+    }
+    exports.asyncMap(funcList, function(){
+      exports.getLayerNames(function(list){
+       for(var i = 0; i < list.length; i++){
+          funcList.push(exports.setColumnToUnique.bind(exports, "layer_"+list[i], "tweet_id"));
+        }
+        exports.asyncMap(funcList, function(){
+          finalcb();
+        })
+      });
+    });
+  });
 };
 
 
@@ -603,6 +670,7 @@ exports.addLayerTable = function(callback){
   theCache.layerList = null;
   this.genericCreateTable("layers",{layerName: "layers", lastHighestIndexed: 0}, function(){
     exports.setColumnToUnique("layers","layerName", function(){
+
       callback();
     });
   });
@@ -634,9 +702,12 @@ exports.addNewLayer = function(layerName, finalCB){
             if(err){
               console.log(err);
             }
-
-            exports.setColumnToUnique(layerTableName,"tweet_id", function(){
-              finalCB(null, layerName); //calling here to avoid server timeout
+            console.log("ADD U: lT", layerTableName);
+            exports.setColumnToUnique(layerTableName,"tweet_id", function(err){
+              if(err){
+                console.log(err);
+              }
+              finalCB(null, layerName);
 
           });
         });
@@ -920,7 +991,8 @@ exports.addForeignKey = function(thisTable, thisTableColumn, thatTable, thatTabl
 };
 
 exports.setColumnToUnique = function(tableName, columnName, callback){
-  this.db.query("ALTER IGNORE TABLE " + tableName + " ADD UNIQUE (" + columnName + ")", callback);
+
+  this.db.query("ALTER IGNORE TABLE "+ tableName+" ADD UNIQUE INDEX un_cn (" +columnName+ ")", callback);
 };
 
 

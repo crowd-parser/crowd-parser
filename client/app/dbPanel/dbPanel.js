@@ -160,6 +160,17 @@ angular.module('parserApp')
       });
     };
 
+    $scope.REDOALLLAYERS = function(){
+
+       $http.post('/auth/adminlogin/processLayersForExistingTweets', {})
+      .success(function(data) {
+
+      })
+      .error(function(data){
+
+      });
+    }
+
     $scope.deleteLayer = function(name) {
       name = name || $scope.layerName;
       $http.post('/auth/adminlogin/deleteLayer', {name: name})
@@ -289,11 +300,11 @@ angular.module('parserApp')
     $scope.changeToDatabase = function(name) {
 
       name = name || $scope.databaseName;
-      if(name === $scope.currDB){
-        $scope.setRightStatus(3000,"ERROR: provide valid name.");
-        $scope.setLeftStatus(3000);
-        return;
-      }
+      // if(name === $scope.currDB){
+      //   $scope.setRightStatus(3000,"ERROR: provide valid name.");
+      //   $scope.setLeftStatus(3000);
+      //   return;
+      // }
       $scope.setLeftStatus(null,"CLIENT: CHANGE DB: " + name);
       if(!name){
         $scope.setRightStatus(3000,"ERROR: provide valid name.");

@@ -184,6 +184,25 @@ router.post('/redoLayer', function(req, res, next) {
     });
 });
 
+
+
+router.post('/processLayersForExistingTweets', function(req, res, next) {
+  db.processLayersForExistingTweets(null,null, function(err, rows) {
+
+
+    if(err){
+      console.log(err);
+      res.send(false);
+      return;
+    }
+      res.send(true);
+  },function(){
+    console.log("DONE REDOING ALL LAYERS");
+
+  });
+});
+
+
 router.post('/deleteLayer', function(req, res, next) {
   var name = req.body.name;
   db.deleteLayer(name, function(err, rows) {

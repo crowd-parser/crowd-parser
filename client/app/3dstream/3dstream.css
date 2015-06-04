@@ -6,7 +6,7 @@ body {
 
 canvas {  }
 
-.3d-display {
+#display-3d {
   background-color: #000;
   position: static;
 }
@@ -36,9 +36,9 @@ canvas {  }
 
 #menu-3d {
   position: absolute;
-  bottom: 20px;
+  top: 10px;
   width: 100%;
-  text-align: center;
+  text-align: left;
 }
 
 #mini-menu-3d {
@@ -74,11 +74,16 @@ canvas {  }
   height: 200px;
 }
 
+#side-menu-3d {
+  position: absolute;
+  bottom: 100px; right: 10px;
+}
+
 .keyword-form-3d {
+  padding-left: 20px;
   background-color: transparent;
   position: absolute;
-  top: 10px;
-  left: 50px;
+  bottom: 10px;
   width: 100%;
   margin: auto;
 }
@@ -100,6 +105,10 @@ canvas {  }
 
 .keyword-form-3d input {
   margin-right: 10px;
+}
+
+.keyword-input {
+  width: 150px;
 }
 
 .ribbon-3d {
@@ -246,12 +255,19 @@ canvas {  }
   float: left;
   padding: 0;
 }
-.layer-menu {
-  box-sizing: border-box;
-  margin-left: 10px;
-  margin-top: 1px;
+.bottom-button {
+  position: relative;
+  margin-left: 5px;
   float: left;
-  width: 200px;
+  bottom: 0;
+}
+.layer-menu {
+  position: relative;
+  box-sizing: border-box;
+  margin-left: 20px;
+  margin-right:5px;
+  float: left;
+  width: 160px;
   color: rgba(127,220,255,0.75);
   background: rgba(0,40,50,0.75);
   outline: 1px solid rgba(0,200,255,0.75);

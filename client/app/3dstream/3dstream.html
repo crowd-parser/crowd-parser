@@ -1,21 +1,7 @@
 <div class="3d-display">
   <div id="container-3d"></div>
-  <div class="keyword-form-3d form-inline">
-    <div class="form-holder">
-      <form>
-        <div class="form-group">
-          <label for="keyword-stream">Keyword</label>
-          <input type="text" class="form-control" ng-model="keywordStream">
-        </div>
-      <!--       <button class="button-3d"  ng-click="start3DKeywordStream()"disabled>Submit</button> -->
-        <button ng-class="{ 'button-3d-disabled': grayedOut(), 'button-3d': !grayedOut() }" ng-disabled="grayedOut()" type="notSubmit" ng-click="requestTweetsByKeyword(keywordStream)">Get Matching DB Tweets</button>
-        <button class="button-3d" type="notSubmit" ng-click="getRestTweets()">Get {{numTweetsToGet}} Tweets</button>
-        <button class="button-3d" type="notSubmit" ng-click="startLiveStream()">Live Stream: {{receivingTweets}}</button>
-<!--         <button class="button-3d" type="notSubmit" ng-click="socketTest()">Socket Test</button> -->
-      <!--       <button class="button-3d" type="notSubmit" ng-click="streamFakeTweets()">Stream Fake Tweets</button> -->
-        <button class="button-3d" type="notSubmit" ng-click="autoScrollToggle()">Autoscroll: {{autoScroll}}</button>
-      </form>
-    </div>
+
+  <div id="menu-3d">
     <div class="layer-menu">
       <table>
       <tr class="layer-menu-title" ng-click="toggleLayerMenu()"> <td colspan="3">Show/Hide Layers</td> </tr>
@@ -26,16 +12,27 @@
         <td><input type="checkbox" ng-model=layersVisible[layer.title].solo ng-change="soloLayer(layer.title)"></td></tr>
       </table>
     </div>
+    <button class="button-3d bottom-button" id="flatten-separate-3d" ng-click="toggleFlatten();">{{flattenText}} All Layers</button><button class="button-3d bottom-button" type="notSubmit" ng-click="autoScrollToggle()">Autoscroll: {{autoScroll}}</button>
   </div>
-  <div class="arrow-3d" id="leftarrow-3d">
+
+
+<!--   <div class="arrow-3d" id="leftarrow-3d">
     <button class="button-3d" id="left-3d"><span>&lt;</span></button>
   </div>
   <div class="arrow-3d" id="rightarrow-3d">
     <button class="button-3d" id="right-3d"><span>&gt;</span></button>
-  </div>
-  <div id="menu-3d">
-    <button class="button-3d" id="flatten-3d">Flatten Layers</button>
-    <button class="button-3d" id="separate-3d">Separate Layers</button>
-    <button ng-click="stopTweets()" class="button-3d" id="stop-3d">Stop Adding Tweets</button>
+  </div> -->
+
+
+  <div class="keyword-form-3d form-inline">
+    <div class="form-holder">
+      <form>
+        <input type="text" class="form-control" ng-model="keywordStream" placeholder="enter a keyword">
+
+        <button ng-class="{ 'button-3d-disabled': grayedOut(), 'button-3d': !grayedOut() }" ng-disabled="grayedOut()" type="notSubmit" ng-click="requestTweetsByKeyword(keywordStream)">Search Database</button>
+        <button class="button-3d" type="notSubmit" ng-click="getRestTweets()">Get {{numTweetsToGet}} New Tweets</button>
+        <button class="button-3d" type="notSubmit" ng-click="startLiveStream()">Live Stream: {{receivingTweets}}</button>
+      </form>
+    </div>
   </div>
 </div>

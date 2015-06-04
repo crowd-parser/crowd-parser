@@ -292,22 +292,19 @@ angular.module('parserApp.display3dService', [])
 
 .factory('Display3d', ['$document', '$window', 'displayHelpers', 'Emoji', function($document, $window, displayHelpers, Emoji) {
 
-  // TODO
-  // - make text go away when zoomed out past a certain distance
-  // - show more info when zoomed in closer than a certain distance?
-  // - buttons next to each layer name - remove, solo, move fwd, move back
-
   var document = $document[0];
   var THREE = $window.THREE;
   var TWEEN = $window.TWEEN;
 
   var sceneCSS, sceneGL, camera, rendererCSS, rendererGL, controls, prevCameraPosition;
+  var menuObj;
 
   var layersSeparated;
   var layers; // visible layers
   var allLayers = {};
   var ribbonHeight;
   var scope;
+  var buttons = [];
 
   var frontLayerZ = 300;
   var layerSpacing = 300;
@@ -443,7 +440,6 @@ angular.module('parserApp.display3dService', [])
       elData.baseBGColorRGB = 'rgb(' + bgRGBA.split(',').slice(0,3).join(',') + ')';
 
       elData.text = text;
-      var oldUsername = rawTweet.username;
       elData.username = Emoji.restoreEmojisInTweet(rawTweet.username);
 
       var x = xStart + Math.floor(index / rows) * xSpacing;
@@ -707,6 +703,7 @@ angular.module('parserApp.display3dService', [])
     sceneCSS = new THREE.Scene();
     sceneGL = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, document.getElementById(containerID).clientWidth / height, 10, 10000 );
+
     camera.position.z = cameraZ !== undefined ? cameraZ : 1000;
     camera.position.y = cameraY !== undefined ? cameraY : 200;
 
@@ -724,6 +721,9 @@ angular.module('parserApp.display3dService', [])
     document.getElementById( containerID ).appendChild( rendererGL.domElement );
     document.getElementById( containerID ).appendChild( rendererCSS.domElement );
 
+    camera.aspect = document.getElementById(containerID).clientWidth/document.getElementById(containerID).clientHeight;
+    camera.updateProjectionMatrix();
+
     rendererCSS.setSize( document.getElementById(containerID).clientWidth, document.getElementById(containerID).clientHeight );
     rendererGL.setSize( document.getElementById(containerID).clientWidth, document.getElementById(containerID).clientHeight - 1 );
     // rendererGL.domElement.style.width = document.getElementById(containerID).clientWidth + 'px';
@@ -732,6 +732,9 @@ angular.module('parserApp.display3dService', [])
     window.onresize = function () {
       rendererCSS.setSize( document.getElementById(containerID).clientWidth, document.getElementById(containerID).clientHeight );
       rendererGL.setSize( document.getElementById(containerID).clientWidth, document.getElementById(containerID).clientHeight - 1 );
+
+      camera.aspect = document.getElementById(containerID).clientWidth/document.getElementById(containerID).clientHeight;
+      camera.updateProjectionMatrix();
       // rendererGL.domElement.style.width = document.getElementById(containerID).clientWidth + 'px';
       // rendererGL.domElement.style.height = (document.getElementById(containerID).clientHeight - 1) + 'px';
     };
@@ -750,17 +753,27 @@ angular.module('parserApp.display3dService', [])
 
     camera.position.z = camera.position.z + layers.length * layerSpacing;
 
-    addButtonEvent('separate-3d', 'click', function() {
-      if (!layersSeparated) {
-        displayHelpers.separateLayers(layers, frontLayerZ, layerSpacing);
-        layersSeparated = true;
-      }
-    });
+    // addButtonEvent('separate-3d', 'click', function() {
+    //   if (!layersSeparated) {
+    //     displayHelpers.separateLayers(layers, frontLayerZ, layerSpacing);
+    //     layersSeparated = true;
+    //   }
+    // });
 
-    addButtonEvent('flatten-3d', 'click', function() {
+    // addButtonEvent('flatten-3d', 'click', function() {
+    //   if (layersSeparated) {
+    //     displayHelpers.flattenLayers(layers, frontLayerZ, layerSpacing, rows, sceneGL, allLayers);
+    //     layersSeparated = false;
+    //   }
+    // });
+
+    addButtonEvent('flatten-separate-3d', 'click', function() {
       if (layersSeparated) {
         displayHelpers.flattenLayers(layers, frontLayerZ, layerSpacing, rows, sceneGL, allLayers);
         layersSeparated = false;
+      } else {
+        displayHelpers.separateLayers(layers, frontLayerZ, layerSpacing);
+        layersSeparated = true;
       }
     });
 
@@ -771,27 +784,28 @@ angular.module('parserApp.display3dService', [])
     // addButtonEvent('left-3d', 'mouseover', function() {
     //   leftHover = true;
     // });
-    addButtonEvent('left-3d', 'mousedown', function() {
-      leftHover = true;
-    });
     // addButtonEvent('left-3d', 'mouseleave', function() {
     //   leftHover = false;
     // });
-    addButtonEvent('left-3d', 'mouseup', function() {
-      leftHover = false;
-    });
     // addButtonEvent('right-3d', 'mouseover', function() {
     //   rightHover = true;
     // });
-    addButtonEvent('right-3d', 'mousedown', function() {
-      rightHover = true;
-    });
     // addButtonEvent('right-3d', 'mouseleave', function() {
     //   rightHover = false;
     // });
-    addButtonEvent('right-3d', 'mouseup', function() {
-      rightHover = false;
-    });
+
+    // addButtonEvent('left-3d', 'mousedown', function() {
+    //   leftHover = true;
+    // });
+    // addButtonEvent('left-3d', 'mouseup', function() {
+    //   leftHover = false;
+    // });
+    // addButtonEvent('right-3d', 'mousedown', function() {
+    //   rightHover = true;
+    // });
+    // addButtonEvent('right-3d', 'mouseup', function() {
+    //   rightHover = false;
+    // });
 
     prevCameraPosition = new THREE.Vector3();
     prevCameraPosition.copy(camera.position);

@@ -183,16 +183,21 @@ exports.processLayersForExistingTweets = function(layerNameList, startId, stopId
   exports.getTableLength("tweets", function(err, total){
     stopId = stopId || total;
 
-      var chunk = 100;
-
+      var chunk = 10000;
+      var majFuncList = [];
       total = stopId - startId;
       console.log("TOTAL TWEETS TO PROCESS", total);
 
-      for(var i = startId - 1; i < stopId; i+=chunk){
+      var recurseThroughIds = function(i){
+        if(i >= stopId){
+          finalCallback();
+          return;
+        }
+
         chunk = Math.min(chunk, stopId - i);
          exports.db.query("SELECT * FROM tweets WHERE id BETWEEN " + (i + 1) + " AND " + (i+chunk) , function(err, finalArr){
-          console.log("PULL 100 MATCHES");
-          console.log("AN ID SAMPLE",finalArr[0]["id"]);
+          console.log("processLayersForExistingTweets 10000 CHUNK");
+          console.log("FIRST ID IN CHUNK",finalArr[0]["id"]);
 
           var preBuildForLayerCache = function(finishLayers){
             exports.genericGetAll('layers', function(err, theLayers, fields){
@@ -205,35 +210,47 @@ exports.processLayersForExistingTweets = function(layerNameList, startId, stopId
             for(var i = 0; i < theLayers.length; i++){
               theCache.layerList.push(theLayers[i].layerName);
             }
+            //this needs to become async chained.
+              finishLayers();
 
-            finishLayers();
+
             });
           };
 
-          var finishLayers = function(layerOverrides){
-            var funcList = [];
-            var layerOverrides = layerOverrides || theCache.layerList;
-              for(var j = 0; j < layerOverrides.length; j++){
-                console.log("PROCESSING LAYER: ", layerOverrides[j]);
-                funcList.push(exports.streamlinedAttemptAtFilterLayers.bind(exports,finalArr,layerOverrides[j]));
-              }
+          var finishLayers = function( layerOverrides){
 
-              exports.asyncMap(funcList, function(finalCallback,results){
-                  console.log("STREAMLINE PAST PROCESSING LAYERS");
-                  finalCallback();
-               }.bind(exports, finalCallback));
+              var eye = i;
+              var funcList = [];
+              var layerOverrides = layerOverrides || theCache.layerList;
+                for(var j = 0; j < layerOverrides.length; j++){
+                  console.log("PROCESSING LAYER: ", layerOverrides[j]);
+                  funcList.push(exports.streamlinedAttemptAtFilterLayers.bind(exports,finalArr,layerOverrides[j]));
+                }
+                //TEST changing this to async chain for putting tweets in db earlier
+                var recurseFinalCB = function(recurseThroughIds,eye,chunk,err,results){
+
+                    console.log("STREAMLINE PAST PROCESSING LAYERS FOR ID: ", eye);
+                    recurseThroughIds(eye+=chunk);
+
+                }.bind(exports, recurseThroughIds, eye, chunk);
+
+                exports.asyncMap(funcList, recurseFinalCB);
+
           };
 
-        if(layerNameList){
-          finishLayers(layerNameList)
-        }else if(theCache.layerList === undefined || theCache.layerList === null){
-          preBuildForLayerCache(finishLayers);
-        }else{
-          finishLayers();
-        }
-      });//for loop end
-    }
+          if(layerNameList){
+            finishLayers(layerNameList);
+          }else if(theCache.layerList === undefined || theCache.layerList === null){
+            preBuildForLayerCache(finishLayers);
+          }else{
+            finishLayers();
+          }
+        });
+      };//end of recurse through ids;
+      //start the whole chain
+    recurseThroughIds(startId-1);
   });
+
 };
 
 
@@ -435,17 +452,20 @@ exports.processSingleTweetIDForKeyword = function(id, keyword, callback){
 };
 
 exports.streamlinedAttemptAtFilterLayers = function(tweetArr, layerName, cb){
-  setTimeout(function(){
+
    var finalArr = [];
     for(var i = 0; i < tweetArr.length; i++){
       var rowObj = exports["layer_"+layerName+"_Function"](tweetArr[i]);
       rowObj.tweet_id = tweetArr[i].id;
       finalArr.push(rowObj);
-      console.log("STREAMLINE FILTERING " + tweetArr[i].id + " FOR LAYER: " + layerName);
+      if(tweetArr[i].id % 500 === 0){
+        console.log("STREAMLINE FILTERING " + tweetArr[i].id + " FOR LAYER: " + layerName);
+      }
+
     }
 
     exports.genericAddToTable("layer_"+layerName,finalArr,exports.errCB, cb, true);
-  },20);
+
 
   };
 
@@ -1116,12 +1136,13 @@ console.log('FUNCS', funcs[0]);
       console.log("WARNING: ATTEMPTING TO CALL CB ALREADY COMPLETED IN ASYNC CHAIN");
       return;
     }
+    console.log("CB inside of async chain called");
     finalResults[index] = results;
     if(index < funcs.length - 1){
       var delayFunc = function(){
         funcs[index+1](cb.bind(exports,index+1));
       };
-      setTimeout(delayFunc,1);
+      delayFunc();
     }else{
       finalCB(null, finalResults,null);
     }
@@ -1268,12 +1289,13 @@ if(!Array.isArray(_listOfObjects)){
           }
       }//for loop done
       if(optBulkAdd){
+        console.log("ABOUT TO ADD BULK TO DATABASE");
         exports.db.query(bulkQueryString, function(err, rows, fields){
           callbackAtEnd(err, rows);
           if(err){
             console.log("BUILD ADD ERR:", err);
           }else{
-            console.log("FINISHED CHUNK OF BULK ADD");
+            console.log("==========SUCCESS FINISHED CHUNK OF BULK ADD===========");
           }
         });
       }

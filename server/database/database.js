@@ -61,6 +61,7 @@ var mysql = require('mysql');
 //TODO CHANGE THIS TO PROD WHEN LIVE
 //OR FIGURE OUT HOW TO USE LIVE VESUS DEV DEPLOY
 exports.currDB = 'dev';
+exports.automatically_start_tweet_stream_on_production = false;
 
 
 //establishes connection to persistent database previously configured
@@ -89,12 +90,42 @@ var connectionLoop = function(){
           console.log(err);
          }
 
+         //this sets an interval to ping the database with
+
+         //restart stream in io.routes automatically
+
+         exports.startStayAlive();
+
+           var testIO = function(_exports){
+             exports = exports || _exports;
+             if(!exports.io){
+               setTimeout(testIO, 150);
+               return;
+             }
+             if(exports.automatically_start_tweet_stream_on_production && exports.currDB === "production"){
+                 exports.startTweetDownload();
+             }
+             console.log("=====DATABASE CONNECTED TO IO=========");
+           }.bind(exports);
+
+           testIO();
+
+
          if(this.notifiersForLive){
             for(var i = 0; i < this.notifiersForLive.length; i++){
              this.notifiersForLive[i]();
            }
            this.notifiersForLive = null;
          }
+      });
+
+      exports.db.on('close', function(err) {
+        if(err) {
+          console.log("DATABASE CONN CLOSED ERR:", err);
+          connectionLoop();
+        } else {
+          console.log('MANUAL DB CONNECTION CLOSED');
+        }
       });
 
       exports.db.on('error', function(err) {
@@ -114,7 +145,22 @@ var connectionLoop = function(){
 
 connectionLoop();
 
+exports.startStayAlive = function(){
+  if(exports.stayAliveId){
+    clearInterval(exports.stayAliveId);
+  }
 
+  exports.stayAliveId = setTimeout(function(){
+    exports.db.query("SELECT 1", function(err){
+      if(err){
+        console.log(err);
+        connectionLoop();
+      }else{
+        exports.startStayAlive();
+      }
+    }, 5000);
+  });
+};
 
 
 /*==================================================================*/
@@ -128,6 +174,62 @@ exports.getTableLength = function(tableName, callback){
 
 exports.userRequestCache = {}; //TODO implement active and canceled status for user requests
 
+exports.processLayersForExistingTweets = function(startId, stopId,callback, finalCallback){
+  callback();
+  startId = startId || 1;
+
+  exports.getTableLength("tweets", function(err, total){
+    stopId = stopId || total;
+
+      var chunk = 100;
+
+      total = stopId - startId;
+      console.log("TOTAL TWEETS TO PROCESS", total);
+
+      for(var i = startId - 1; i < stopId; i+=chunk){
+        chunk = Math.min(chunk, stopId - i);
+         exports.db.query("SELECT * FROM tweets WHERE id BETWEEN " + (i + 1) + " AND " + (i+chunk) , function(err, finalArr){
+          console.log("PULL 100 MATCHES");
+          console.log("AN ID SAMPLE",finalArr[0]["id"]);
+
+          var preBuildForLayerCache = function(finishLayers){
+            exports.genericGetAll('layers', function(err, theLayers, fields){
+             if(err){
+                console.log("BUILD CACHE ERR", err);
+                theLayers = theLayers || [];
+             }
+
+            theCache.layerList = [];
+            for(var i = 0; i < theLayers.length; i++){
+              theCache.layerList.push(theLayers[i].layerName);
+            }
+
+            finishLayers();
+            });
+          };
+
+          var finishLayers = function(){
+            var funcList = [];
+              for(var j = 0; j < theCache.layerList.length; j++){
+                console.log("PROCESSING LAYER: ", theCache.layerList[j]);
+                funcList.push(exports.streamlinedAttemptAtFilterLayers.bind(exports,finalArr,theCache.layerList[j]));
+              }
+
+              exports.asyncMap(funcList, function(finalCallback,results){
+                  console.log("STREAMLINE PAST PROCESSING LAYERS");
+                  finalCallback();
+               }.bind(exports, finalCallback));
+          };
+
+        if(theCache.layerList === undefined || theCache.layerList === null){
+          preBuildForLayerCache(finishLayers);
+        }else{
+          finishLayers();
+        }
+      });//for loop end
+    }
+  });
+};
 
 
 exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callback){
@@ -327,13 +429,28 @@ exports.processSingleTweetIDForKeyword = function(id, keyword, callback){
   this.db.query("INSERT INTO tweets_containing_" + keyword + " (tweet_id) SELECT id FROM tweets WHERE id = " + id + " AND text LIKE '%" + keyword + "%'", callback);
 };
 
+exports.streamlinedAttemptAtFilterLayers = function(tweetArr, layerName, cb){
+  setTimeout(function(){
+   var finalArr = [];
+    for(var i = 0; i < tweetArr.length; i++){
+      var rowObj = exports["layer_"+layerName+"_Function"](tweetArr[i]);
+      rowObj.tweet_id = tweetArr[i].id;
+      finalArr.push(rowObj);
+      console.log("STREAMLINE FILTERING " + tweetArr[i].id + " FOR LAYER: " + layerName);
+    }
+
+    exports.genericAddToTable("layer_"+layerName,finalArr,exports.errCB, cb, true);
+  },20);
+
+  };
 
 exports.filterTweetObjectsForLayer = function(tweetObj, layerName, callback){
 //hmm
   if(Array.isArray(tweetObj)){
+
     for(var i = 0; i < tweetObj.length; i++){
       var rowObj = exports["layer_"+layerName+"_Function"](tweetObj[i]);
-      rowObj.tweet_id = tweetObj.id;
+      rowObj.tweet_id = tweetObj[i].id;
       console.log("FILTERING " + tweetObj[i].id + " FOR LAYER: " + layerName);
       //hmm
       if(i === tweetObj.length - 1){
@@ -341,8 +458,9 @@ exports.filterTweetObjectsForLayer = function(tweetObj, layerName, callback){
       }else{
         exports.genericAddToTable("layer_"+layerName,[rowObj],exports.errCB, null);
       }
-
     }
+
+
   }else{
     var rowObj = exports["layer_"+layerName+"_Function"](tweetObj);
     rowObj.tweet_id = tweetObj.id;
@@ -351,6 +469,26 @@ exports.filterTweetObjectsForLayer = function(tweetObj, layerName, callback){
     exports.genericAddToTable("layer_"+layerName,[rowObj],callback, null);
   }
 
+};
+
+exports.setUniqueTweetIdOnAll = function(cb, finalcb){
+  cb();
+  exports.getKeywordNames(function(list){
+    var funcList = [];
+    for(var i = 0; i < list.length; i++){
+      funcList.push(exports.setColumnToUnique.bind(exports, "tweets_containing_"+list[i], "tweet_id"));
+    }
+    exports.asyncMap(funcList, function(){
+      exports.getLayerNames(function(list){
+       for(var i = 0; i < list.length; i++){
+          funcList.push(exports.setColumnToUnique.bind(exports, "layer_"+list[i], "tweet_id"));
+        }
+        exports.asyncMap(funcList, function(){
+          finalcb();
+        })
+      });
+    });
+  });
 };
 
 
@@ -532,6 +670,7 @@ exports.addLayerTable = function(callback){
   theCache.layerList = null;
   this.genericCreateTable("layers",{layerName: "layers", lastHighestIndexed: 0}, function(){
     exports.setColumnToUnique("layers","layerName", function(){
+
       callback();
     });
   });
@@ -554,8 +693,6 @@ exports.addNewLayer = function(layerName, finalCB){
     var result = exports.exampleObjectForLayerResults(layerName);
       exports.genericAddToTable("layers", {layerName: layerName}, function(err, rows, fields){
 
-
-
         exports.genericCreateTable(layerTableName,result, function(err,rows){
           if(err){
             finalCB(null, layerName);
@@ -565,9 +702,12 @@ exports.addNewLayer = function(layerName, finalCB){
             if(err){
               console.log(err);
             }
-
-            exports.setColumnToUnique(layerTableName,"tweet_id", function(){
-              finalCB(null, layerName); //calling here to avoid server timeout
+            console.log("ADD U: lT", layerTableName);
+            exports.setColumnToUnique(layerTableName,"tweet_id", function(err){
+              if(err){
+                console.log(err);
+              }
+              finalCB(null, layerName);
 
           });
         });
@@ -851,7 +991,8 @@ exports.addForeignKey = function(thisTable, thisTableColumn, thatTable, thatTabl
 };
 
 exports.setColumnToUnique = function(tableName, columnName, callback){
-  this.db.query("ALTER IGNORE TABLE " + tableName + " ADD UNIQUE (" + columnName + ")", callback);
+
+  this.db.query("ALTER IGNORE TABLE "+ tableName+" ADD UNIQUE INDEX un_cn (" +columnName+ ")", callback);
 };
 
 
@@ -1016,7 +1157,7 @@ exports.asyncMap = function(funcs, finalCB){
 //=============== ADD STUFF ====================
 var theCache = {cache: true};
 
-exports.genericAddToTable = function(tableName, _listOfObjects, callbackPerAdd, callbackAtEnd){
+exports.genericAddToTable = function(tableName, _listOfObjects, callbackPerAdd, callbackAtEnd, optBulkAdd){
 var listOfObjects;
 if(!Array.isArray(_listOfObjects)){
   listOfObjects = [_listOfObjects];
@@ -1058,6 +1199,7 @@ if(!Array.isArray(_listOfObjects)){
     var temp;
     var count = listOfObjects.length;
     var allIds = [];
+    var bulkQueryString = "";
 
     exports.doAddingMessage(count);
 
@@ -1077,34 +1219,58 @@ if(!Array.isArray(_listOfObjects)){
         queryStr = queryStr.slice(0, -2);
         queryStr = queryStr + ' )';
 
-        queryStr = insertStr + queryStr;
 
-        exports.db.query(queryStr, function(err, rows, fields){
-          //this returns ids of added object, not the whole object
-          if(err){
-            console.log();
+
+        if(!optBulkAdd){
+          queryStr = insertStr + queryStr;
+              exports.db.query(queryStr, function(err, rows, fields){
+                //this returns ids of added object, not the whole object
+                if(err){
+                  console.log();
+                }else{
+                  console.log("SUCCESS: ADDING: ", rows.insertId)
+                }
+                var theseIds = [];
+                if(rows){
+                  theseIds.push(rows.insertId);
+                  allIds.push(rows.insertId);
+                }
+                count--;
+
+                exports.doAddingMessage(count, 25);
+                callbackPerAdd(err, theseIds);
+                if(count <= 0){
+
+                  if(callbackAtEnd){
+                    callbackAtEnd(err, allIds);
+                  }else{
+
+                  }
+                }
+              });
           }else{
-            console.log("SUCCESS: ADDING: ", rows.insertId)
-          }
-          var theseIds = [];
-          if(rows){
-            theseIds.push(rows.insertId);
-            allIds.push(rows.insertId);
-          }
-          count--;
-
-          exports.doAddingMessage(count, 25);
-          callbackPerAdd(err, theseIds);
-          if(count <= 0){
-
-            if(callbackAtEnd){
-              callbackAtEnd(err, allIds);
+            if(i === 0){
+              bulkQueryString += insertStr + queryStr + ",";
+            }else if(i < listOfObjects.length - 1){
+              bulkQueryString += "(" + queryStr + ",";
             }else{
-
+              //last one
+              bulkQueryString += "(" + queryStr;
             }
+
+          }
+      }//for loop done
+      if(optBulkAdd){
+        exports.db.query(bulkQueryString, function(err, rows, fields){
+          callbackAtEnd(err, rows);
+          if(err){
+            console.log("BUILD ADD ERR:", err);
+          }else{
+            console.log("FINISHED CHUNK OF BULK ADD");
           }
         });
       }
+
   };
 };
 

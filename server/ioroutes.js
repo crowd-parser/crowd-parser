@@ -141,46 +141,74 @@ module.exports = function(io, T) {
 
     // ===== THIS IS USED TO DOWNLOAD TWEETS TO THE DATABASE ====== //
 
-    var streamDownload;
+    io.streamDownload;
+    io.listenToTweetStream = true;
 
-    socket.on('start download', function(rate) {
-      console.log('START DOWNLOAD');
-      streamDownload = T.stream('statuses/sample');
-      var count = 0;
-      var rate = rate || 4;
 
-      streamDownload.on('tweet', function(tweet) {
 
-        if (tweet.lang === 'en') {
-          count++;
-          if(count > 10000000) count = 2;
-          if (count === 1 || count % rate === 0) {
-            if(!db || !db.isLive){
-              console.log("WAITING FOR DB");
-              return;
-            }
-            db.executeFullChainForIncomingTweets(tweet, function(err, container, fields) {
-              if (err) {
-                console.log(err);
-                return;
-              } else {
-                //moved into database module.
-                // exports.io.emit('tweet added', container);
-
-              }
-            });
-          }
+    io.startTweetDownload = function(_io, rate ){
+      io = io || _io;
+        if(io.streamDownload){
+          io.streamDownload.stop();
         }
-      });
 
+        console.log('START DOWNLOAD');
+        io.listenToTweetStream = true;
+        io.streamDownload = T.stream('statuses/sample');
+        var count = 0;
+        var rate = rate || 3;
+
+        io.streamDownload.on('tweet', function(tweet) {
+          console.log();
+          if(io.listenToTweetStream === false){
+            return;
+          }
+
+          if (tweet.lang === 'en') {
+            count++;
+            if(count > 10000000) count = 2;
+            if (count === 1 || count % rate === 0) {
+              if(!db || !db.isLive){
+                console.log("WAITING FOR DB");
+                return;
+              }
+              db.executeFullChainForIncomingTweets(tweet, function(err, container, fields) {
+                if (err) {
+                  console.log(err);
+                  return;
+                } else {
+                  //moved into database module.
+                  // exports.io.emit('tweet added', container);
+
+                }
+              });
+            }
+          }
+        });
+
+    };
+
+    var boundStart = io.startTweetDownload.bind(this, io);
+
+     socket.on('start download', function(rate){
+      boundStart(rate);
     });
 
-    socket.on('stop download', function() {
-      console.log('STOP *******************')
-      streamDownload.stop();
+    io.stopTweetDownload = function(_io){
+      io = io || _io;
+      io.listenToTweetStream = false;
+      if(io.streamDownload){
+        io.streamDownload.stop();
+      }
+      console.log('STOP *******************');
+      console.log('******************* TWEETS STILL PROCESSING THOUGH');
+    };
+
+    var boundStop = io.stopTweetDownload.bind(this, io);
+
+    socket.on('stop download', function(){
+      boundStop();
     });
-
-
 
   });
 

@@ -1,16 +1,18 @@
 <div class="3d-display">
   <div id="container-3d"></div>
 
-  <div class="keyword-form-3d form-inline">
-    <div class="form-holder">
-      <form>
-        <input type="text" class="form-control" ng-model="keywordStream" placeholder="enter a keyword">
-
-        <button ng-class="{ 'button-3d-disabled': grayedOut(), 'button-3d': !grayedOut() }" ng-disabled="grayedOut()" type="notSubmit" ng-click="requestTweetsByKeyword(keywordStream)">Search Database</button>
-        <button class="button-3d" type="notSubmit" ng-click="getRestTweets()">Get {{numTweetsToGet}} New Tweets</button>
-        <button class="button-3d" type="notSubmit" ng-click="startLiveStream()">Live Stream: {{receivingTweets}}</button>
-      </form>
+  <div id="menu-3d">
+    <div class="layer-menu">
+      <table>
+      <tr class="layer-menu-title" ng-click="toggleLayerMenu()"> <td colspan="3">Show/Hide Layers</td> </tr>
+      <tr ng-show="showLayerMenu"> <td>Layer</td> <td>ON</td> <td>SOLO</td> </tr>
+      <tr class="layer-menu-item" ng-repeat="layer in layers" ng-show="showLayerMenu">
+        <td>{{layer.title}}</td>
+        <td><input type="checkbox" ng-model=layersVisible[layer.title].viz ng-change="clearSolo()"></td>
+        <td><input type="checkbox" ng-model=layersVisible[layer.title].solo ng-change="soloLayer(layer.title)"></td></tr>
+      </table>
     </div>
+    <button class="button-3d bottom-button" id="flatten-separate-3d" ng-click="toggleFlatten();">{{flattenText}} All Layers</button><button class="button-3d bottom-button" type="notSubmit" ng-click="autoScrollToggle()">Autoscroll: {{autoScroll}}</button>
   </div>
 
 
@@ -22,18 +24,15 @@
   </div> -->
 
 
+  <div class="keyword-form-3d form-inline">
+    <div class="form-holder">
+      <form>
+        <input type="text" class="form-control" ng-model="keywordStream" placeholder="enter a keyword">
 
-  <div id="menu-3d">
-    <div class="layer-menu">
-      <table>
-      <tr ng-show="showLayerMenu"> <td>Layer</td> <td>ON</td> <td>SOLO</td> </tr>
-      <tr class="layer-menu-item" ng-repeat="layer in layers" ng-show="showLayerMenu">
-        <td>{{layer.title}}</td>
-        <td><input type="checkbox" ng-model=layersVisible[layer.title].viz ng-change="clearSolo()"></td>
-        <td><input type="checkbox" ng-model=layersVisible[layer.title].solo ng-change="soloLayer(layer.title)"></td></tr>
-      <tr class="layer-menu-title" ng-click="toggleLayerMenu()"> <td colspan="3">Show/Hide Layers</td> </tr>
-      </table>
+        <button ng-class="{ 'button-3d-disabled': grayedOut(), 'button-3d': !grayedOut() }" ng-disabled="grayedOut()" type="notSubmit" ng-click="requestTweetsByKeyword(keywordStream)">Search Database</button>
+        <button class="button-3d" type="notSubmit" ng-click="getRestTweets()">Get {{numTweetsToGet}} New Tweets</button>
+        <button class="button-3d" type="notSubmit" ng-click="startLiveStream()">Live Stream: {{receivingTweets}}</button>
+      </form>
     </div>
-    <button class="button-3d" id="flatten-separate-3d" ng-click="toggleFlatten();">{{flattenText}} All Layers</button>
   </div>
 </div>

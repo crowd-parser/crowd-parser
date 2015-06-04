@@ -36,9 +36,9 @@ canvas {  }
 
 #menu-3d {
   position: absolute;
-  bottom: 20px;
+  top: 10px;
   width: 100%;
-  text-align: center;
+  text-align: left;
 }
 
 #mini-menu-3d {
@@ -83,7 +83,7 @@ canvas {  }
   padding-left: 20px;
   background-color: transparent;
   position: absolute;
-  top: 10px;
+  bottom: 10px;
   width: 100%;
   margin: auto;
 }
@@ -255,11 +255,18 @@ canvas {  }
   float: left;
   padding: 0;
 }
+.bottom-button {
+  position: relative;
+  margin-left: 5px;
+  float: left;
+  bottom: 0;
+}
 .layer-menu {
-  display: inline-block;
+  position: relative;
   box-sizing: border-box;
-  margin-top: 10px;
-/*  float: left;*/
+  margin-left: 20px;
+  margin-right:5px;
+  float: left;
   width: 160px;
   color: rgba(127,220,255,0.75);
   background: rgba(0,40,50,0.75);

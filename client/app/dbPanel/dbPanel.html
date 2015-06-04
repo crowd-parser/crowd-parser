@@ -32,9 +32,9 @@
          <button ng-click="testKeywordSearch()" class="btn btn-danger">Test Keyword</button>
 
     </div><div id="admin_layers_controls" class="box">
-        <input type="text" class="form-control" ng-model="layerName" placeholder="Layer Name"><button ng-click="addNewLayer()" class="btn btn-success">Add Layer</button><button ng-click="redoLayer()" class="btn btn-warning">Run Layer</button>
+        <input type="text" class="form-control" ng-model="layerName" placeholder="Layer Name"><button ng-click="addNewLayer()" class="btn btn-success">Add Layer</button><button ng-click="redoLayer()" class="btn btn-warning">Redo Layer</button>
         <button ng-click="deleteLayer()" class="btn btn-danger">Delete Layer</button>
-        <button ng-click="REDOALLLAYERS()" class="btn btn-danger">REDO ALL LAYERS!</button>
+        <button ng-click="REDOALLLAYERS()" class="btn btn-danger">UPDATE ALL LAYERS!</button>
 
 
 
@@ -65,16 +65,11 @@
         <button class="btn btn-success">Start!</button>
       </form>
       <button class="btn btn-danger" ng-click="stopDownload()">Stop!</button>
-    </div>
-
-        <div id="admin_tests_display" class="box">
+    </div><div id="admin_tests_display" class="box">
         <button class="btn btn-warning" ng-click="ADDALLTHETWEETS()">ADD 5000 TEST TWEETS</button>
         <button class="btn btn-default" ng-click="ADDTHEFIVETESTTWEETS()">ADD THE 5 TEST TWEETS</button>
-      </div>
-
-
-        <div id="admin_tests2_display" class="box">
-        <button class="btn btn-warning" ng-click="showDatabases()">List Databases</button>
+      </div><div id="admin_tests2_display" class="box">
+        <button class="btn btn-success" ng-click="setUniqueTweetIdOnAll()">SET UNIQUE TWEET_IDS</button>
 
       </div>
 

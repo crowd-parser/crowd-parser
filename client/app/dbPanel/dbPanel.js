@@ -354,8 +354,20 @@ angular.module('parserApp')
       }).error(function(data){
 
       });
-    }
+    };
 
+
+
+    $scope.setUniqueTweetIdOnAll = function(){
+       $http.post('/auth/adminlogin/setUniqueTweetIdOnAll', {})
+       .success(function(data) {
+
+
+
+      }).error(function(data){
+
+      });
+    };
 
 
     $scope.logout = function() {

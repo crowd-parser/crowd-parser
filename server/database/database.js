@@ -103,7 +103,8 @@ var connectionLoop = function(){
                return;
              }
              if(exports.automatically_start_tweet_stream_on_production && exports.currDB === "production"){
-                 exports.startTweetDownload();
+                console.log("AUTOMATICALLY ENABLING TWEET STREAM ON PRODUCTION");
+                 exports.io.startTweetDownload();
              }
              console.log("=====DATABASE CONNECTED TO IO=========");
            }.bind(exports);
@@ -174,8 +175,9 @@ exports.getTableLength = function(tableName, callback){
 
 exports.userRequestCache = {}; //TODO implement active and canceled status for user requests
 
-exports.processLayersForExistingTweets = function(startId, stopId,callback, finalCallback){
+exports.processLayersForExistingTweets = function(layerNameList, startId, stopId,callback, finalCallback){
   callback();
+
   startId = startId || 1;
 
   exports.getTableLength("tweets", function(err, total){
@@ -208,11 +210,12 @@ exports.processLayersForExistingTweets = function(startId, stopId,callback, fina
             });
           };
 
-          var finishLayers = function(){
+          var finishLayers = function(layerOverrides){
             var funcList = [];
-              for(var j = 0; j < theCache.layerList.length; j++){
-                console.log("PROCESSING LAYER: ", theCache.layerList[j]);
-                funcList.push(exports.streamlinedAttemptAtFilterLayers.bind(exports,finalArr,theCache.layerList[j]));
+            var layerOverrides = layerOverrides || theCache.layerList;
+              for(var j = 0; j < layerOverrides.length; j++){
+                console.log("PROCESSING LAYER: ", layerOverrides[j]);
+                funcList.push(exports.streamlinedAttemptAtFilterLayers.bind(exports,finalArr,layerOverrides[j]));
               }
 
               exports.asyncMap(funcList, function(finalCallback,results){
@@ -221,7 +224,9 @@ exports.processLayersForExistingTweets = function(startId, stopId,callback, fina
                }.bind(exports, finalCallback));
           };
 
-        if(theCache.layerList === undefined || theCache.layerList === null){
+        if(layerNameList){
+          finishLayers(layerNameList)
+        }else if(theCache.layerList === undefined || theCache.layerList === null){
           preBuildForLayerCache(finishLayers);
         }else{
           finishLayers();
@@ -480,6 +485,7 @@ exports.setUniqueTweetIdOnAll = function(cb, finalcb){
     }
     exports.asyncMap(funcList, function(){
       exports.getLayerNames(function(list){
+        var funcList = [];
        for(var i = 0; i < list.length; i++){
           funcList.push(exports.setColumnToUnique.bind(exports, "layer_"+list[i], "tweet_id"));
         }
@@ -553,11 +559,12 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
     };
 
     var main = function(){
-      for(var i = 0; i < theCache.keywordList.length; i++){
-          console.log("PROCESSING KEYWORD: ", theCache.keywordList[i]);
+      var copyOfKeywordListCache = theCache.keywordList;
+      for(var i = 0; i < copyOfKeywordListCache.length; i++){
+          console.log("PROCESSING KEYWORD: ", copyOfKeywordListCache[i]);
           for(var j = 0; j < newTweetIds.length; j++ ){
 
-            exports.processSingleTweetIDForKeyword(newTweetIds[j], theCache.keywordList[i],exports.errCB);
+            exports.processSingleTweetIDForKeyword(newTweetIds[j], copyOfKeywordListCache[i],exports.errCB);
           }
       }
       console.log("PAST KEYWORD PROCESSING: ID", newTweetIds[0]);
@@ -569,6 +576,7 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
         //loop and run layer functions
 
         var preBuildForLayerCache = function(finishLayers){
+
           exports.genericGetAll('layers', function(err, theLayers, fields){
              if(err){
                 console.log("BUILD CACHE ERR", err);
@@ -585,7 +593,7 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
         };
 
         var finishLayers = function(){
-
+          var copyOfLayerListCache = theCache.layerList;
           var funcList = [];
 
           var count = newTweetIds.length;
@@ -596,9 +604,9 @@ exports.executeFullChainForIncomingTweets = function(tweets, callback){
               }
              var tweetObj = rows[0];
 
-              for(var j = 0; j < theCache.layerList.length; j++){
-                console.log("PROCESSING LAYER: ", theCache.layerList[j]);
-                funcList.push(exports.filterTweetObjectsForLayer.bind(exports,tweetObj,theCache.layerList[j]));
+              for(var j = 0; j < copyOfLayerListCache.length; j++){
+                console.log("PROCESSING LAYER: ", copyOfLayerListCache[j]);
+                funcList.push(exports.filterTweetObjectsForLayer.bind(exports,tweetObj,copyOfLayerListCache[j]));
               }
 
               count--;
@@ -702,7 +710,7 @@ exports.addNewLayer = function(layerName, finalCB){
             if(err){
               console.log(err);
             }
-            console.log("ADD U: lT", layerTableName);
+            console.log("ADDING LAYER", layerTableName);
             exports.setColumnToUnique(layerTableName,"tweet_id", function(err){
               if(err){
                 console.log(err);
@@ -745,65 +753,64 @@ exports._setLastIndexedOnKeywordTable = function(keyword, val){
 exports.redoLayer = function(layerName, callback, _finalCB){
 theCache.layerList = null;
 
+
 var layerTableName = "layer_"+layerName;
   exports.genericDropTable(layerTableName, function(){
     exports.addNewLayer(layerName, function(){
       callback(false, true);//this just calls to the client to prevent timeout
-       var lastHighestIndexed = -1;
-       var length = 0;
 
-        exports.db.query('SELECT COUNT(*) FROM tweets', function(err, rows) {
-          length = rows[0]["COUNT(*)"];
-          console.log("TWEETS TO FILTER: ", length);
-          var chunkNumber = 100;
+      //passing a single layer name in
+      exports.processLayersForExistingTweets([layerName], null, null, exports.errCB, _finalCB);
 
-          var setLastIndexedOnLayerTable = exports._setLastIndexedOnLayerTable.bind(exports, layerName);
+      //=============================================
+      //all of this waa the old stuff
+      //I moved parts of it to the new test chain
+      //and we are going to point to it for now
+       // var lastHighestIndexed = -1;
+       // var length = 0;
 
-          var funcList = [];
+       //  exports.db.query('SELECT COUNT(*) FROM tweets', function(err, rows) {
+       //    length = rows[0]["COUNT(*)"];
+       //    console.log("TWEETS TO FILTER: ", length);
+       //    var chunkNumber = 100;
 
-          //this is now infinite looping
-          for(var i = 0; i <= length; i+=chunkNumber){
-            chunkNumber = Math.min(chunkNumber, length - i);
-            var eye = i;
-            var thisFunc = function(exports, chunkNumber, i,cb){
-                console.log("NEW CHUNK: ",chunkNumber);
-                 exports.db.query('SELECT * FROM tweets WHERE id BETWEEN ' + i + " AND " + (i+chunkNumber), function(err, rows, fields){
+       //    var setLastIndexedOnLayerTable = exports._setLastIndexedOnLayerTable.bind(exports, layerName);
 
-                    var thisHighest = i+chunkNumber;
-                    if(thisHighest > lastHighestIndexed){
-                      lastHighestIndexed = thisHighest;
-                      setLastIndexedOnLayerTable(lastHighestIndexed);
-                    }
+       //    var funcList = [];
 
-                    //this was async
-                    exports.filterTweetObjectsForLayer(rows,layerName, cb);
+       //    //this is now infinite looping
+       //    for(var i = 0; i <= length; i+=chunkNumber){
+       //      chunkNumber = Math.min(chunkNumber, length - i);
+       //      var eye = i;
+       //      var thisFunc = function(exports, chunkNumber, i,cb){
+       //          console.log("NEW CHUNK: ",chunkNumber);
+       //           exports.db.query('SELECT * FROM tweets WHERE id BETWEEN ' + i + " AND " + (i+chunkNumber), function(err, rows, fields){
 
-                  /*  for(var i = 0; i < rows.length; i++){
-                      if(i%10===0){
-                        console.log("PULLING TWEET OBJECTS: ",i );
-                      }
-                      //this was the original but failing line
-                      //setTimeout(exports.filterTweetObjectsForLayer.bind(exports, rows[i], layerName, function(tweets){cb(null,tweets.length);}.bind(exports, rows),1));
+       //              var thisHighest = i+chunkNumber;
+       //              if(thisHighest > lastHighestIndexed){
+       //                lastHighestIndexed = thisHighest;
+       //                setLastIndexedOnLayerTable(lastHighestIndexed);
+       //              }
 
-                    }*/
-               });
+       //              //this was async
+       //              exports.filterTweetObjectsForLayer(rows,layerName, cb);
+       //         });
 
-            }.bind(exports, exports, chunkNumber, eye);
+       //      }.bind(exports, exports, chunkNumber, eye);
 
-            funcList.push(thisFunc);
-            if(chunkNumber <= 0){
-              break;
-            }
-          }
+       //      funcList.push(thisFunc);
+       //      if(chunkNumber <= 0){
+       //        break;
+       //      }
+       //    }
 
-          var finalCB = _finalCB || exports.errCB;
-          //var funcList = [function(){}];
-          exports.asyncChain(funcList,finalCB );
+       //    var finalCB = _finalCB || exports.errCB;
+       //    //var funcList = [function(){}];
+       //    exports.asyncChain(funcList,finalCB );
 
         });
     });
-  });
-};
+  };
 
 exports.deleteLayer = function(layerName, cb){
   theCache.layerList = null;

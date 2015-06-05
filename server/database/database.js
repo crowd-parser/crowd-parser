@@ -60,7 +60,6 @@ var mysql = require('mysql');
 
 //TODO CHANGE THIS TO PROD WHEN LIVE
 //OR FIGURE OUT HOW TO USE LIVE VESUS DEV DEPLOY
-exports.currDB = 'dev';
 exports.automatically_start_tweet_stream_on_production = true;
 exports.streamQueueAmount = 50;
 
@@ -81,6 +80,8 @@ var connectionLoop = function(){
         }
         return del.call(this, err, sequence);
       };
+
+      exports.currDB =  process.env.DATABASE_PROD || 'dev'
       console.log("==============CONNECTED as ID ", exports.db.threadId);
       exports.isLive = true;
 
@@ -102,7 +103,7 @@ var connectionLoop = function(){
                setTimeout(testIO, 150);
                return;
              }
-             if(exports.automatically_start_tweet_stream_on_production && exports.currDB === "production"){
+             if(exports.automatically_start_tweet_stream_on_production && process.env.DATABASE_PROD === "production"){
                 console.log("AUTOMATICALLY ENABLING TWEET STREAM ON PRODUCTION");
                  exports.io.startTweetDownload();
              }
@@ -385,6 +386,7 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
       if(typeof previouslyFilteredByThisKeyword === "string"){
 
         exports.io.sockets.in(ifSoAlsoClientID).emit('tweet keyword response', tweetPackages);
+        console.log(tweetPackages);
 
         console.log("=====KEYWORD EMIT " + ifSoAlsoClientID +"==============");
       }else{
@@ -548,13 +550,15 @@ exports.executeFullChainForIncomingTweets = function(tweet, callback){
 
     var firstId = rows["insertId"];
     var total = rows["affectedRows"];
+    console.log(firstId);
 
     var newTweetIds = [];
-    console.log("First Id In Chunk", firstId); //logs 3600 now logs "number"
 
     for(var i = firstId; i < (firstId + total); i++){
+
       newTweetIds.push(i);
     }
+
 
     exports.getKeywordNames(function(exports, newTweetIds, theKeywords){
 

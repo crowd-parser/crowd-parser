@@ -124,6 +124,7 @@ module.exports = function(io, T) {
 
     socket.on('tweet keyword', function(keyword, clientID){
 
+
       if(keyword === undefined || clientID === undefined){
         console.log("ERR: server requires both a keyword and a clientID to be sent on socket");
         return;

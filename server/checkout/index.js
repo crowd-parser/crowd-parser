@@ -7,8 +7,8 @@ var router = express.Router();
 // See your keys here https://dashboard.stripe.com/account/apikeys
 var stripe = require("stripe")("pk_test_ydcNRquEX0MlH5g0m4Jto0ot");
 
-router.get('/purchase', function(req, res, next) {
-
+router.post('/purchase', function(req, res, next) {
+console.log(req.body);
   // (Assuming you're using express - expressjs.com)
   // Get the credit card details submitted by the form
   var stripeToken = req.body.stripeToken;

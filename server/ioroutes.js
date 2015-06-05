@@ -54,7 +54,6 @@ module.exports = function(io, T) {
         setTimeout(setSocketOnDatabase.bind(exports), 50);
         return;
       }
-      db.socket = socket;
       db.io = io;
     };
 
@@ -156,7 +155,7 @@ module.exports = function(io, T) {
         io.listenToTweetStream = true;
         io.streamDownload = T.stream('statuses/sample');
         var count = 0;
-        var rate = rate || 3;
+        var rate = rate || 1;
 
 
         io.streamDownload.on('tweet', function(tweet) {

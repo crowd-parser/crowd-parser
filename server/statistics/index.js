@@ -13,7 +13,7 @@ router.get('/getTweetsCount', function(req, res, next) {
   db.changeToDatabase('production', function(err, response) {
 
     db.db.query('select id from tweets order by id desc limit 1;', function(err, response) {
-console.log(response);
+
       res.send(response);
     });
   });

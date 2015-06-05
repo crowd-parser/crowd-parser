@@ -61,8 +61,8 @@ var mysql = require('mysql');
 //TODO CHANGE THIS TO PROD WHEN LIVE
 //OR FIGURE OUT HOW TO USE LIVE VESUS DEV DEPLOY
 exports.currDB = 'dev';
-exports.automatically_start_tweet_stream_on_production = false;
-
+exports.automatically_start_tweet_stream_on_production = true;
+exports.streamQueueAmount = 50;
 
 //establishes connection to persistent database previously configured
 var connectionLoop = function(){
@@ -210,7 +210,7 @@ exports.processLayersForExistingTweets = function(layerNameList, startId, stopId
             for(var i = 0; i < theLayers.length; i++){
               theCache.layerList.push(theLayers[i].layerName);
             }
-            //this needs to become async chained.
+
               finishLayers();
 
 
@@ -441,9 +441,9 @@ exports.filterALLTweetsByKeyword = function(keyword, callback){
   });
 }
 
-exports.filterALLTweetsFromIdByKeyword = function(id, keyword, callback){
+exports.filterTheseTweetsForKeyword = function(tweets, keyword, callback){
   callback = callback || exports.errCB;
-  this.db.query("INSERT INTO tweets_containing_" + keyword + " (tweet_id) SELECT id FROM tweets WHERE id > " + id + " AND text LIKE '%" + keyword + "%'", callback);
+  this.db.query("INSERT INTO tweets_containing_" + keyword + " (tweet_id) SELECT id FROM tweets WHERE id IN (" + tweets + ") AND text LIKE '%" + keyword + "%'", callback);
 };
 
 exports.processSingleTweetIDForKeyword = function(id, keyword, callback){
@@ -522,144 +522,78 @@ exports.setUniqueTweetIdOnAll = function(cb, finalcb){
 //THIS IS THE WHOLE SHEBANG
 //IT RETURNS AN OBJECT {tweets: tweets, results: results}
 
-exports.queueLength = 0;
-exports.executeFullChainForIncomingTweets = function(tweets, callback){
 
-  if(exports.queueLength > 0 && exports.queueLength % 500 === 0){
-    console.log("++++++++++++++QUEUE LENGTH+++++++",exports.queueLength);
-  }
+exports.streamedTweetCache = [];
 
-  if(exports.queueLength > 1000){
-    //abandon all hope, start dropping tweets
-    callback();
+
+exports.executeFullChainForIncomingTweets = function(tweet, callback){
+
+  exports.streamedTweetCache.push(tweet);
+
+  if(exports.streamedTweetCache.length < exports.streamQueueAmount){
+    callback(false, "queued");
     return;
   }
 
-  if(exports.queueLength > 50){
-    setTimeout(exports.executeFullChainForIncomingTweets.bind(exports,tweets, callback), exports.queueLength);
-    return;
-  }
+  callback(false, "executing build " + packageTweetsToSendToClient + " streamed tweets");
 
-  exports.queueLength++;
+  var tweets = exports.streamedTweetCache;
+  exports.streamedTweetCache = [];
 
-  var finalCallback = callback;
-  if(!Array.isArray(tweets)){
-    tweets = [tweets];
-  }
-
-
-  exports.genericAddToTable('tweets', tweets, function(err, _tweetIds, fields){
+  exports.genericAddToTable('tweets', tweets,null, function(err, rows, fields){
     //tweets added to database, done
     if(err){
       console.log("ERROR FULL CHAIN GENERIC ADD", err);
-
-    }
-    var newTweetIds = _tweetIds;
-    if(!_tweetIds || _tweetIds.length === 0){
-      finalCallback(true, null);
       return;
     }
 
-    var preBuildForkeywordCache = function(main){
-      exports.genericGetAll('keywords', function(err, theKeywords, fields){
+    var firstId = rows["insertId"];
+    var total = rows["affectedRows"];
 
-        if(err){
-          console.log("BUILD CACHE ERR", err);
-          theKeywords = theKeywords || [];
-        }
+    var newTweetIds = [];
+    console.log("FID", firstId); //logs 3600 now logs "number"
 
-        theCache.keywordList = [];
-        for(var i = 0; i < theKeywords.length; i++){
-          theCache.keywordList.push(theKeywords[i].keyword);
-        }
-
-
-        main();
-      });
-    };
-
-    var main = function(){
-      var copyOfKeywordListCache = theCache.keywordList;
-      for(var i = 0; i < copyOfKeywordListCache.length; i++){
-          console.log("PROCESSING KEYWORD: ", copyOfKeywordListCache[i]);
-          for(var j = 0; j < newTweetIds.length; j++ ){
-
-            exports.processSingleTweetIDForKeyword(newTweetIds[j], copyOfKeywordListCache[i],exports.errCB);
-          }
-      }
-      console.log("PAST KEYWORD PROCESSING: ID", newTweetIds[0]);
-      //database is now cranking on updating keyword lists async
-      //we don't care about keywords being finished generating before sending to the client
-
-      //server starts processing layers
-        //pull a layer names
-        //loop and run layer functions
-
-        var preBuildForLayerCache = function(finishLayers){
-
-          exports.genericGetAll('layers', function(err, theLayers, fields){
-             if(err){
-                console.log("BUILD CACHE ERR", err);
-                theLayers = theLayers || [];
-             }
-
-            theCache.layerList = [];
-            for(var i = 0; i < theLayers.length; i++){
-              theCache.layerList.push(theLayers[i].layerName);
-            }
-
-            finishLayers();
-          });
-        };
-
-        var finishLayers = function(){
-          var copyOfLayerListCache = theCache.layerList;
-          var funcList = [];
-
-          var count = newTweetIds.length;
-          for(var i = 0; i < newTweetIds.length; i++){
-            exports.getTweetForId(newTweetIds[i], function(err, rows, fields){
-              if(err){
-                console.log("tweet didn't exist",err);
-              }
-             var tweetObj = rows[0];
-
-              for(var j = 0; j < copyOfLayerListCache.length; j++){
-                console.log("PROCESSING LAYER: ", copyOfLayerListCache[j]);
-                funcList.push(exports.filterTweetObjectsForLayer.bind(exports,tweetObj,copyOfLayerListCache[j]));
-              }
-
-              count--;
-
-              if(count <= 0){
-                exports.asyncMap(funcList, function(finalCallback, tweetIds,results){
-                    console.log("PAST PROCESSING LAYERS: ID", tweetIds[0]);
-                    exports.packageTweetsToSendToClient(tweetIds, finalCallback);
-                    // finalCallback(null, tweetIds, null);
-                 }.bind(exports, finalCallback, newTweetIds));
-              }
-            });
-          }
-
-        };
-
-        if(theCache.layerList === undefined || theCache.layerList === null){
-          preBuildForLayerCache(finishLayers);
-        }else{
-          finishLayers();
-        }
-
-    };
-
-    if(theCache.keywordList === undefined || theCache.keywordList === null){
-      preBuildForkeywordCache(main);
-    }else{
-      main();
+    for(var i = firstId; i < (firstId + total); i++){
+      newTweetIds.push(i);
     }
 
-  });
+    exports.getKeywordNames(function(exports, newTweetIds, theKeywords){
 
-};
+      var copyOfKeywordListCache = theKeywords;
+      var funcList = [];
+      for(var i = 0; i < copyOfKeywordListCache.length; i++){
+          console.log("PROCESSING KEYWORD: ", copyOfKeywordListCache[i]);
+           funcList.push(exports.filterTheseTweetsForKeyword.bind(this, newTweetIds, copyOfKeywordListCache[i]));
+      }
+
+        exports.db.query("SELECT * FROM tweets WHERE id IN (" + newTweetIds + ")", function(err, rows, fields){
+          //run new process on tweetObjects
+          if(err){
+            console.log("PULL ERR: ", err);
+          }
+          var tweets = rows;
+          exports.getLayerNames(function(layerNames){
+            var funcList = [];
+              for(var j = 0; j < layerNames.length; j++){
+                console.log("PROCESSING LAYER: ", layerNames[j]);
+                funcList.push(exports.streamlinedAttemptAtFilterLayers.bind(exports,tweets,layerNames[j]));
+              }
+
+              var recurseFinalCB = function(_exports, newTweetIds){
+                exports = exports || _exports;
+                  exports.packageTweetsToSendToClient(newTweetIds, exports.errCB);
+              }.bind(this,exports, newTweetIds);
+
+              exports.asyncMap(funcList, recurseFinalCB);
+          });
+
+        });
+
+      }.bind(exports, exports, newTweetIds));
+
+    }, true); //this tru here triggers bulk add on generic table add
+
+  };
 
 
 //=========== LAYERS ===================
@@ -781,52 +715,6 @@ var layerTableName = "layer_"+layerName;
 
       //passing a single layer name in
       exports.processLayersForExistingTweets([layerName], null, null, exports.errCB, _finalCB);
-
-      //=============================================
-      //all of this waa the old stuff
-      //I moved parts of it to the new test chain
-      //and we are going to point to it for now
-       // var lastHighestIndexed = -1;
-       // var length = 0;
-
-       //  exports.db.query('SELECT COUNT(*) FROM tweets', function(err, rows) {
-       //    length = rows[0]["COUNT(*)"];
-       //    console.log("TWEETS TO FILTER: ", length);
-       //    var chunkNumber = 100;
-
-       //    var setLastIndexedOnLayerTable = exports._setLastIndexedOnLayerTable.bind(exports, layerName);
-
-       //    var funcList = [];
-
-       //    //this is now infinite looping
-       //    for(var i = 0; i <= length; i+=chunkNumber){
-       //      chunkNumber = Math.min(chunkNumber, length - i);
-       //      var eye = i;
-       //      var thisFunc = function(exports, chunkNumber, i,cb){
-       //          console.log("NEW CHUNK: ",chunkNumber);
-       //           exports.db.query('SELECT * FROM tweets WHERE id BETWEEN ' + i + " AND " + (i+chunkNumber), function(err, rows, fields){
-
-       //              var thisHighest = i+chunkNumber;
-       //              if(thisHighest > lastHighestIndexed){
-       //                lastHighestIndexed = thisHighest;
-       //                setLastIndexedOnLayerTable(lastHighestIndexed);
-       //              }
-
-       //              //this was async
-       //              exports.filterTweetObjectsForLayer(rows,layerName, cb);
-       //         });
-
-       //      }.bind(exports, exports, chunkNumber, eye);
-
-       //      funcList.push(thisFunc);
-       //      if(chunkNumber <= 0){
-       //        break;
-       //      }
-       //    }
-
-       //    var finalCB = _finalCB || exports.errCB;
-       //    //var funcList = [function(){}];
-       //    exports.asyncChain(funcList,finalCB );
 
         });
     });

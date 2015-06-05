@@ -70,8 +70,8 @@ angular.module('parserApp.headerService', [])
       document.addEventListener( 'mousedown', onDocumentMouseDown, false );
       window.addEventListener( 'resize', onWindowResize, false );
 
+      // Removes the main threejs animation for the 3dstream page
       $('.click-to-begin').on('click', function() {
-        // cancelAnimationFrame(mainAnimationFrame);
         $('.tweets-cube').remove();
         cameraMain = null;
         sceneMain = null;
@@ -81,8 +81,8 @@ angular.module('parserApp.headerService', [])
         window.removeEventListener('resize', onWindowResize, false);
       });
 
+      // Removes the animation for the about page
       $('.learn-more').on('click', function() {
-        // cancelAnimationFrame(mainAnimationFrame);
         $('.tweets-cube').remove();
         cameraMain = null;
         sceneMain = null;
@@ -112,24 +112,6 @@ angular.module('parserApp.headerService', [])
       document.removeEventListener( 'mousemove', onDocumentMouseMove );
       document.removeEventListener( 'mouseup', onDocumentMouseUp );
     }
-    function onDocumentMouseWheel( event ) {
-      cameraMain.fov -= event.wheelDeltaY * 0.05;
-      cameraMain.updateProjectionMatrix();
-    }
-    function onDocumentTouchStart( event ) {
-      event.preventDefault();
-      var touch = event.touches[ 0 ];
-      touchX = touch.screenX;
-      touchY = touch.screenY;
-    }
-    function onDocumentTouchMove( event ) {
-      event.preventDefault();
-      var touch = event.touches[ 0 ];
-      lon -= ( touch.screenX - touchX ) * 0.1;
-      lat += ( touch.screenY - touchY ) * 0.1;
-      touchX = touch.screenX;
-      touchY = touch.screenY;
-    }
     function animate() {
       var mainAnimationFrame = requestAnimationFrame( animate );
       lon +=  0.2;
@@ -142,11 +124,13 @@ angular.module('parserApp.headerService', [])
       cameraMain.lookAt( target );
       rendererMain.render( sceneMain, cameraMain );
 
+      // Removes main animation for the 3dstream page
       $('.click-to-begin').on('click', function() {
         cancelAnimationFrame(mainAnimationFrame);
         $('.tweets-cube').remove();
       });
 
+      // Removes main animation for the about page
       $('.learn-more').on('click', function() {
         cancelAnimationFrame(mainAnimationFrame);
         $('.tweets-cube').remove();

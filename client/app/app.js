@@ -37,6 +37,14 @@ angular.module('parserApp', [
       .state('about', {
         url: '/about',
         templateUrl: 'app/about/about.html'
+      })
+      .state('statistics', {
+        url: '/statistics',
+        templateUrl: 'app/statistics/statistics.html'
+      })
+      .state('checkout', {
+        url: '/checkout',
+        templateUrl: 'app/checkout/checkout.html'
       });
 
     $urlRouterProvider

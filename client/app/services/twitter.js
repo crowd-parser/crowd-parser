@@ -19,35 +19,28 @@ angular.module('parserApp.twitterService', [])
     socket.emit('twitter rest search', query, 'mixed', 100);
   };
 
-  var addSpansToPositiveAndNegativeWords = function(data) {
+  var getTweetsCount = function(callback) {
+    $http.get('/statistics/getTweetsCount')
+      .success(function(data) {
 
-    // Add spans for positive and negative words for each tweet for styling purposes
-    data.tweetsWithAnalyses.forEach(function(tweet) {
+      var result = addCommas(data[0].id);
 
-      // Split the text of each tweet into individual words
-      var textArray = tweet.text.split(' ');
-
-      // Check if tweet contains positive words from the base words layer analysis
-      if (tweet.baseLayerResults.positiveWords) {
-
-        // For each positive word in the tweet, add a "positive-word" span
-        tweet.baseLayerResults.positiveWords.forEach(function(word) {
-          textArray[word[1]] = '<span class="positive-word">' + word[0] + '</span>';
-        });
-      }
-
-      // Check if tweet contains positive words from the base words layer analysis
-      if (tweet.baseLayerResults.negativeWords) {
-
-        // For each positive word in the tweet, add a "positive-word" span
-        tweet.baseLayerResults.negativeWords.forEach(function(word) {
-          textArray[word[1]] = '<span class="negative-word">' + word[0] + '</span>';
-        });
-      }
-
-      // Join the tweet back together
-      tweet.text = textArray.join(' ');
+      callback(result);
     });
+  };
+
+  var addCommas = function(num) {
+    num = num.toString().split('');
+    var numberOfCommas = Math.floor(num.length / 3);
+    var index = -3;
+
+    while (numberOfCommas) {
+      num.splice(index, 0, ',');
+      numberOfCommas--;
+      index -= 4;
+    }
+
+    return num.join('');
   };
 
   return {
@@ -57,6 +50,7 @@ angular.module('parserApp.twitterService', [])
 
     getTwitterRestSearch: getTwitterRestSearch,
 
-    addSpansToPositiveAndNegativeWords: addSpansToPositiveAndNegativeWords
+    getTweetsCount: getTweetsCount
+
   };
 });

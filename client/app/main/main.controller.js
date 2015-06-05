@@ -15,10 +15,4 @@ angular.module('parserApp')
     $location.path('/3dstream');
   };
 
-  var socket = io();
-
-  socket.on('tweet added', function(data) {
-    console.log(data);
-  });
-
 });

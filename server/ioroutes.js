@@ -159,7 +159,6 @@ module.exports = function(io, T) {
         var rate = rate || 3;
 
         io.streamDownload.on('tweet', function(tweet) {
-          console.log();
           if(io.listenToTweetStream === false){
             return;
           }
@@ -172,13 +171,12 @@ module.exports = function(io, T) {
                 console.log("WAITING FOR DB");
                 return;
               }
-              db.executeFullChainForIncomingTweets(tweet, function(err, container, fields) {
+              db.executeFullChainForIncomingTweets(tweet, function(err, message, fields) {
                 if (err) {
                   console.log(err);
                   return;
                 } else {
-                  //moved into database module.
-                  // exports.io.emit('tweet added', container);
+                  console.log(message);
 
                 }
               });
@@ -190,7 +188,7 @@ module.exports = function(io, T) {
 
     var boundStart = io.startTweetDownload.bind(this, io);
 
-     socket.on('start download', function(rate){
+    socket.on('start download', function(rate){
       boundStart(rate);
     });
 

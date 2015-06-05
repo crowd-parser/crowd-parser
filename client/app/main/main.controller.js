@@ -15,6 +15,8 @@ angular.module('parserApp')
     $location.path('/3dstream');
   };
 
+  $scope.tweetsCount = '(loading...)';
+
   Twitter.getTweetsCount(function(data) {
     $scope.tweetsCount = data;
   });

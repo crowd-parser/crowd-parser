@@ -158,6 +158,7 @@ module.exports = function(io, T) {
         var count = 0;
         var rate = rate || 3;
 
+
         io.streamDownload.on('tweet', function(tweet) {
           if(io.listenToTweetStream === false){
             return;
@@ -176,7 +177,6 @@ module.exports = function(io, T) {
                   console.log(err);
                   return;
                 } else {
-                  console.log(message);
 
                 }
               });

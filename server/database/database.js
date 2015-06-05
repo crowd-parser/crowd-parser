@@ -531,12 +531,11 @@ exports.executeFullChainForIncomingTweets = function(tweet, callback){
   exports.streamedTweetCache.push(tweet);
 
   if(exports.streamedTweetCache.length < exports.streamQueueAmount){
-    callback(false, "queued");
+    callback(false, true);
     return;
   }
 
-  callback(false, "executing build " + packageTweetsToSendToClient + " streamed tweets");
-
+  callback(false, true);
   var tweets = exports.streamedTweetCache;
   exports.streamedTweetCache = [];
 
@@ -551,7 +550,7 @@ exports.executeFullChainForIncomingTweets = function(tweet, callback){
     var total = rows["affectedRows"];
 
     var newTweetIds = [];
-    console.log("FID", firstId); //logs 3600 now logs "number"
+    console.log("First Id In Chunk", firstId); //logs 3600 now logs "number"
 
     for(var i = firstId; i < (firstId + total); i++){
       newTweetIds.push(i);

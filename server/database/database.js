@@ -377,7 +377,7 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
 
     exports.asyncMap(funcList, function(finalCB, tweetPackages, err, results, fields){
       //we ignore results here
-      if(!exports.socket){
+      if(!exports.io){
         console.log("ERROR: NO SOCKET ON DATABASE WRAPPER");
         return;
       }
@@ -388,7 +388,7 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
 
         console.log("=====KEYWORD EMIT " + ifSoAlsoClientID +"==============");
       }else{
-        exports.socket.emit('tweet added', tweetPackages);
+        exports.io.sockets.emit('tweet added', tweetPackages);
         console.log("=============ADDED EMIT==============");
       }
 

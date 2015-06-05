@@ -505,7 +505,7 @@ describe('=== LAYERS FUNCTIONS ===', function() {
 
 describe('=== FULL PIPELINE FUNCTION ===', function() {
 
-  it('should add the five test tweets and do everything', function(done) {
+  xit('should add the five test tweets and do everything', function(done) {
 
     this.timeout(20000);
 

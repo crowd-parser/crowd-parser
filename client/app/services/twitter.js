@@ -23,8 +23,24 @@ angular.module('parserApp.twitterService', [])
     $http.get('/statistics/getTweetsCount')
       .success(function(data) {
 
-      callback(data[0].id);
+      var result = addCommas(data[0].id);
+
+      callback(result);
     });
+  };
+
+  var addCommas = function(num) {
+    num = num.toString().split('');
+    var numberOfCommas = Math.floor(num.length / 3);
+    var index = -3;
+
+    while (numberOfCommas) {
+      num.splice(index, 0, ',');
+      numberOfCommas--;
+      index -= 4;
+    }
+
+    return num.join('');
   };
 
   return {

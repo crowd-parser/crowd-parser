@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('parserApp')
-  .controller('MainCtrl', function ($scope, $location, Landing) {
+  .controller('MainCtrl', function ($scope, $location, Landing, Twitter) {
 
   $(function() {
 
@@ -14,5 +14,9 @@ angular.module('parserApp')
     $('#tweets-cube').remove();
     $location.path('/3dstream');
   };
+
+  Twitter.getTweetsCount(function(data) {
+    $scope.tweetsCount = data;
+  });
 
 });

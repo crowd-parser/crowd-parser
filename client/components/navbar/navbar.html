@@ -1,0 +1,32 @@
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.3&appId=461808473996671";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+<div class="navbar-section" ng-controller="NavbarCtrl">
+  <i class="fa fa-bars" ng-click="toggleNavbar()"></i>
+  <div class="navbar-menu">
+    <ul>
+      <li><a href="/">Main</a></li>
+      <li><a href="/3dstream">3D</a></li>
+      <li><a href="/checkout">Dashboard</a></li>
+      <li><a href="/about">About</a></li>
+      <li class="menu-social">
+        <a class="sbg-button sbg-button-facebook"  data-sbg-network="facebook"  data-sbg-url="https://crowdparser.org"  data-sbg-title="Crowd Parser"  data-sbg-summary="Explore millions of tweets in 3D!"  data-sbg-image="http://i288.photobucket.com/albums/ll175/michaelcheng429/crowdparserlogogh_zpshipsbtrg.png"  data-sbg-width="600"  data-sbg-height="368" >
+          <i class="sbg-button-icon fa fa-facebook"></i>
+        </a>
+
+        <a class="sbg-button sbg-button-twitter"  data-sbg-network="twitter"  data-sbg-text="Crowd Parser - Explore millions of tweets in 3D! https://crowdparser.org http://bit.ly/1eUSMZO"  data-sbg-via=""  data-sbg-hashtags=""  data-sbg-width="600"  data-sbg-height="258" >
+          <i class="sbg-button-icon fa fa-twitter"></i>
+        </a>
+
+        <a class="sbg-button sbg-button-google-plus"  data-sbg-network="google-plus"  data-sbg-url="https://crowdparser.org"  data-sbg-width="500"  data-sbg-height="505" >
+          <i class="sbg-button-icon fa fa-google-plus"></i>
+        </a></li>
+    </ul>
+  </div>
+</div>

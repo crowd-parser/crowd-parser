@@ -81,4 +81,15 @@ router.post('/purchase', function(req, res, next) {
   });
 });
 
+router.post('/checkIfPurchased', function(req, res) {
+
+  var fb_id = req.body.fb_id;
+
+  db.db.query('SELECT * FROM purchasing_users WHERE fb_id=' + fb_id, function(err, response) {
+    
+    res.send(response[0]);
+  });
+
+});
+
 module.exports = router;

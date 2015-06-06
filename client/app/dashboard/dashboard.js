@@ -10,6 +10,25 @@ angular.module('parserApp')
       });
     }, 500);
 
+    setTimeout(function() {
+
+      FB.getLoginStatus(function(response) {
+        if (response.status === 'connected') {
+
+          var fb_id = response.authResponse.userID.toString();
+
+          $http.post('/checkout/checkIfPurchased', {fb_id: fb_id})
+            .success(function(response) {
+              if (response) {
+                $scope.purchasingUser = true;
+
+                $scope.purchasingUserDetails = response;
+              }
+            });
+        }
+      });
+    }, 550);
+
     $scope.fbLogin = function() {
       FB.login(function(response) {
         if (response.status === 'connected') {
@@ -26,7 +45,7 @@ angular.module('parserApp')
         console.log('success! token: ' + result.id);
 
         FB.getLoginStatus(function(response) {
-          var fb_id = response.authResponse.userID;
+          var fb_id = response.authResponse.userID.toString();
           
           var purchaseDetails = {
             fb_id: fb_id,
@@ -38,6 +57,8 @@ angular.module('parserApp')
           $http.post('/checkout/purchase', {stripeToken: result.id, purchaseDetails: purchaseDetails})
             .success(function(data) {
               console.log('SERVER SUCCESS', data);
+
+              $scope.purchasingUser = true;
             });
         });
       }

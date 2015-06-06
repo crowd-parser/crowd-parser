@@ -76,6 +76,12 @@
 
   <div ng-show="purchasingUser">
     <h1>Purchasing User Dashboard</h1>
+
+    <div>Name: {{purchasingUserDetails.name}}</div>
+    <div>Number of keywords remaining: {{purchasingUserDetails.number_of_keywords}}</div>
+
+    <input type="text" class="form-control" placeholder="add a keyword">
+    <button class="btn btn-primary">Submit</button>
   </div>
   
 </div>

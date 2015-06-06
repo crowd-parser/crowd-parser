@@ -24,6 +24,7 @@
       <link rel="stylesheet" href="app/3dstream/3dstream.css">
       <link rel="stylesheet" href="app/about/about.css">
       <link rel="stylesheet" href="app/app.css">
+      <link rel="stylesheet" href="app/checkout/checkout.css">
       <link rel="stylesheet" href="app/dbPanel/dbPanel.css">
       <link rel="stylesheet" href="app/main/main.css">
       <link rel="stylesheet" href="components/modal/modal.css">
@@ -66,6 +67,8 @@
       <script src="bower_components/d3/d3.js"></script>
       <!-- endbower -->
 
+        <script src="bower_components/angular-payments/lib/angular-payments.js"></script>
+
         <script src="lib/three.min.js"></script>
         <script src="lib/tween.min.js"></script>
         <script src="lib/CSS3DRenderer.js"></script>
@@ -74,6 +77,12 @@
         <script src="assets/fonts/droid/droid_sans_bold.typeface.js"></script>
 
         <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
+
+        <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
+
+        <script>
+          Stripe.setPublishableKey('sk_live_CFGeujb4KYZXrHWeYZo8ZyK2');
+        </script>
       
     <!-- endbuild -->
 
@@ -82,6 +91,7 @@
           <!-- injector:js -->
           <script src="app/3dstream/3dstream.js"></script>
           <script src="app/adminlogin/adminlogin.js"></script>
+          <script src="app/checkout/checkout.js"></script>
           <script src="app/dbPanel/dbPanel.js"></script>
           <script src="app/main/main.controller.js"></script>
           <script src="app/services/auth.js"></script>

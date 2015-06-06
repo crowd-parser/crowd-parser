@@ -10,7 +10,8 @@ angular.module('parserApp', [
   'ngResource',
   'ngSanitize',
   'ui.router',
-  'ui.bootstrap'
+  'ui.bootstrap',
+  'angularPayments'
 ])
   .config(function ($stateProvider, $urlRouterProvider, $locationProvider) {
     $stateProvider
@@ -44,7 +45,8 @@ angular.module('parserApp', [
       })
       .state('checkout', {
         url: '/checkout',
-        templateUrl: 'app/checkout/checkout.html'
+        templateUrl: 'app/checkout/checkout.html',
+        controller: 'CheckoutCtrl'
       });
 
     $urlRouterProvider

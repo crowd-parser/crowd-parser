@@ -61,46 +61,6 @@ angular.module('parserApp.display3dService', [])
     }
   };
 
-  var makeTweetElement = function (layersSeparated, elData, scope, layerObj) {
-
-      var tweet = document.createElement( 'div' );
-      tweet.className = 'tweet-3d';
-      tweet.style.backgroundColor = elData.baseBGColor;
-
-      var username = document.createElement( 'div' );
-      username.textContent = elData.username;
-      tweet.appendChild( username );
-
-      var tweetText = document.createElement( 'div' );
-      tweetText.innerHTML = elData.text;
-      tweet.appendChild( tweetText );
-
-      var score = document.createElement( 'div' );
-      score.textContent = elData.score;
-      tweet.appendChild( score );
-
-      if (+elData.score.split(': ')[1] === 0 || elData.score.split(': ')[1] === 'N/A') {
-        tweetText.className = 'tweetText';
-        score.className = 'score';
-        username.className = 'username';
-      } else {
-        tweetText.className = 'colorTweetText';
-        score.className = 'colorScore';
-        username.className = 'colorUsername';
-      }
-
-      tweet.style.backgroundColor = currentBGColor(layersSeparated, elData);
-
-      if (scope) {
-        tweet.addEventListener( 'click', function ( event ) {
-          scope.editTweet(elData);
-        }, false);
-      }
-
-      return tweet;
-
-  };
-
   var calculateColorFromScore = function (score) {
     var bgRGBA;
     if (score < -5) {
@@ -121,49 +81,91 @@ angular.module('parserApp.display3dService', [])
     return bgRGBA;
   };
 
-  var swapLOD = function (sceneCSS, sceneGL, tweet, layersSeparated, swapTo, scope, layer) {
+  return {
+    makeLoResElement: makeLoResElement,
+    makeLoResMesh: makeLoResMesh,
+    getCameraDistanceFrom: getCameraDistanceFrom,
+    getDisplayWidthAtPoint: getDisplayWidthAtPoint,
+    currentBGColor: currentBGColor,
+    calculateColorFromScore: calculateColorFromScore
+  };
+}])
 
-    var el, object;
+.factory('Display3d', ['$document', '$window', 'displayHelpers', 'Emoji', function($document, $window, displayHelpers, Emoji) {
 
-    var x = tweet.obj.position.x;
-    var y = tweet.obj.position.y;
-    var z = tweet.obj.position.z;
+  var document = $document[0];
+  var THREE = $window.THREE;
+  var TWEEN = $window.TWEEN;
 
-    if (swapTo === 'hi') {
-      el = makeTweetElement(layersSeparated, tweet.elData, scope);
-      sceneGL.remove(tweet.obj);
-      object = new THREE.CSS3DObject( el );
-      object.position.x = x;
-      object.position.y = y;
-      object.position.z = z;
-      sceneCSS.add( object );
-    }
+  var sceneCSS, sceneGL, camera, rendererCSS, rendererGL, controls, prevCameraPosition;
 
-    if (swapTo === 'lo') {
-      sceneCSS.remove(tweet.obj);
-      object = makeLoResMesh(layersSeparated, tweet.elData, layer);
-      object.position.x = x;
-      object.position.y = y;
-      object.position.z = z;
-      sceneGL.add( object );
-    }
+  var layersSeparated;
+  var layers; // visible layers
+  var ribbonHeight;
+  var scope;
 
-    tweet.obj = object;
-    tweet.el = el;
+  var lod0Distance = 1000;
+
+  var frontLayerZ = 300;
+  var layerSpacing = 300;
+
+  // left and right mouse hover buttons
+  var leftHover = false;
+  var rightHover = false;
+  var baseScrollSpeed = 25;
+  var scrollSpeed = baseScrollSpeed;
+  var neverAutoScroll = false;
+  var rightAutoScroll = false;
+  var tick = 0;
+
+  // tweet display settings
+  var rows;
+  var ySpacing = 200;
+  var yStart = 300;
+  var xSpacing = 320;
+  var xStart = -800;
+
+  var updateLayers = function (layersVisible) {
+    layers.forEach(function (layerObj, i) {
+      // if this layer is hidden and should be visible,
+      // toggle on visible and call showLayer
+      if (layerObj.visible === false && layersVisible[layerObj.title].viz === true) {
+        console.log('toggle on ' + layerObj.title);
+        layerObj.visible = true;
+        console.log('showing ' + layerObj.title);
+        showLayer(i);
+      // if this layer is visible and should be hidden
+      // toggle off visible and call hideLayer
+      } else if (layerObj.visible === true && layersVisible[layerObj.title].viz === false) {
+        console.log('toggle off ' + layerObj.title);
+        layerObj.visible = false;
+        console.log('hiding ' + layerObj.title);
+        hideLayer(i);
+      }
+    });
   };
 
-  var separateLayers = function (layers, frontLayerZ, layerSpacing) {
+  var separateLayers = function () {
     for (var i = 0; i < layers.length; i++) {
-      new TWEEN.Tween( layers[i].tweetMaterialNeutral )
-        .to ({opacity: 0.5}, 1000)
-        .start();
+      // tweet opacity webgl
+      if (layers[i].visible) {
+        new TWEEN.Tween( layers[i].tweetMaterialNeutral )
+          .to ({opacity: 0.5}, 1000)
+          .start();
+      }
+      
       layers[i].tweets.forEach(function(tweet) {
+        // tweet position
+        tweet.transition = true;
         new TWEEN.Tween( tweet.obj.position )
           .to( {z: frontLayerZ - layerSpacing*i}, 1000 )
           .easing( TWEEN.Easing.Exponential.InOut )
+          .onComplete( function() {
+            tweet.transition = false;
+          })
           .start();
-
-        if (tweet.el && tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
+        // tweet opacity css
+        if (layers[i].visible && tweet.el && tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
           new TWEEN.Tween( {val: 0} )
             .to ( {val: 0.8}, 1000 )
             .easing( TWEEN.Easing.Exponential.InOut )
@@ -175,11 +177,13 @@ angular.module('parserApp.display3dService', [])
             .start();
         }
       });
+      // ribbon position
       new TWEEN.Tween( layers[i].ribbonMesh.position )
         .to( {z: frontLayerZ - layerSpacing*i - 1}, 1000 )
         .easing( TWEEN.Easing.Exponential.InOut )
         .start();
-      if (i > 0) {
+      if (i > 0 && layers[i].title.visible) {
+        // ribbon title opacity (not front layer)
         new TWEEN.Tween( layers[i].titleMaterial )
           .to( {opacity: 0.5}, 1300 )
           .easing( TWEEN.Easing.Exponential.InOut )
@@ -187,7 +191,7 @@ angular.module('parserApp.display3dService', [])
       }
       layers[i].z = frontLayerZ - layerSpacing*i - 1;
       if (i === 0) {
-
+        // ribbon title opacity (front layer)
         var fadeOut = new TWEEN.Tween( layers[i].combinedMaterial )
           .to( {opacity: 0}, 500)
           .easing( TWEEN.Easing.Quadratic.InOut );
@@ -199,16 +203,20 @@ angular.module('parserApp.display3dService', [])
     }
   };
 
-  var flattenLayers = function (layers, frontLayerZ, layerSpacing, rows, sceneGL, allLayers) {
+  var flattenLayers = function () {
 
     for (var i = 0; i < layers.length; i++) {
       new TWEEN.Tween( layers[i].tweetMaterialNeutral )
         .to ({opacity: 0}, 1000)
         .start();
       layers[i].tweets.forEach(function(tweet) {
+        tweet.transition = true;
         new TWEEN.Tween( tweet.obj.position )
           .to( {z: frontLayerZ - 2*i}, 1000 )
           .easing( TWEEN.Easing.Exponential.InOut )
+          .onComplete( function () {
+            tweet.transition = false;
+          })
           .start();
 
         if (tweet.el && tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
@@ -246,7 +254,7 @@ angular.module('parserApp.display3dService', [])
         combinedMaterial.opacity = 0;
         var layerNames = [];
         layers.forEach(function (item) {
-          if (allLayers[item.title].visible) {
+          if (item.visible) {
             layerNames.push(item.title);
           }
         });
@@ -276,95 +284,13 @@ angular.module('parserApp.display3dService', [])
     }
   };
 
-  return {
-    makeLoResElement: makeLoResElement,
-    makeLoResMesh: makeLoResMesh,
-    getCameraDistanceFrom: getCameraDistanceFrom,
-    getDisplayWidthAtPoint: getDisplayWidthAtPoint,
-    currentBGColor: currentBGColor,
-    makeTweetElement: makeTweetElement,
-    calculateColorFromScore: calculateColorFromScore,
-    swapLOD: swapLOD,
-    separateLayers: separateLayers,
-    flattenLayers: flattenLayers
-  };
-}])
-
-.factory('Display3d', ['$document', '$window', 'displayHelpers', 'Emoji', function($document, $window, displayHelpers, Emoji) {
-
-  var document = $document[0];
-  var THREE = $window.THREE;
-  var TWEEN = $window.TWEEN;
-
-  var sceneCSS, sceneGL, camera, rendererCSS, rendererGL, controls, prevCameraPosition;
-  var menuObj;
-
-  var layersSeparated;
-  var layers; // visible layers
-  var allLayers = {};
-  var ribbonHeight;
-  var scope;
-  var buttons = [];
-
-  var frontLayerZ = 300;
-  var layerSpacing = 300;
-
-  // left and right mouse hover buttons
-  var leftHover = false;
-  var rightHover = false;
-  var baseScrollSpeed = 25;
-  var scrollSpeed = baseScrollSpeed;
-  var neverAutoScroll = false;
-  var rightAutoScroll = false;
-  var tick = 0;
-
-  // tweet display settings
-  var rows;
-  var ySpacing = 200;
-  var yStart = 300;
-  var xSpacing = 320;
-  var xStart = -800;
-
-  var updateLayers = function (layersVisible) {
-    // uiLayer is a layer title
-    for (var uiLayer in layersVisible) {
-      console.log(uiLayer + ' viz: ' + layersVisible[uiLayer].viz);
-      // if there is a hidden layer that should be visible,
-      // toggle on visible and put it in layers
-      if (layersVisible[uiLayer].viz && !allLayers[uiLayer].visible) {
-        console.log('toggle on ' + uiLayer);
-        allLayers[uiLayer].visible = true;
-        //layers.push(allLayers[uiLayer].layer);
-        layers.forEach(function (layer, i) {
-          if (layer.title === uiLayer) {
-            console.log('showing ' + uiLayer);
-            showLayer(i);
-            //layers.splice(i, 1);
-          }
-        });
-      } else if (!layersVisible[uiLayer].viz && allLayers[uiLayer].visible) {
-        console.log('toggle off ' + uiLayer);
-      // if there is a visible layer that should be hidden,
-      // toggle off visible and splice it out of layers
-        allLayers[uiLayer].visible = false;
-        layers.forEach(function (layer, i) {
-          if (layer.title === uiLayer) {
-            console.log('hiding ' + uiLayer);
-            hideLayer(i);
-            //layers.splice(i, 1);
-          }
-        });
-      }
-    }
-  };
-
   var autoScrollToggle = function () {
     neverAutoScroll = !neverAutoScroll;
   };
 
   var adjustRibbonWidth = function() {
     var lastX = 50;
-    layers.forEach(function(layer, i) {
+    layers.forEach(function(layer) {
       var farthestYOnRibbon;
       // probably would be more precise to find out angle of camera vector relative
       // to ribbon but this should work in most cases
@@ -382,16 +308,9 @@ angular.module('parserApp.display3dService', [])
       var screenWidthInBrowser = window.innerWidth;
       var leftEdgeIn3DCoords = controls.target.x - screenWidthIn3DCoords/2;
       var desiredTitleXCoord = leftEdgeIn3DCoords + desiredTitleScreenXPosition * (screenWidthIn3DCoords/screenWidthInBrowser);
-      // center - half screen width = left edge
-      // controls.target.x - (displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, frontLayerZ)/2)
-      // left edge + 200 screen pixels?
-      // var newTitlePosition = controls.target.x - 
-      //     (displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, frontLayerZ)/2) +
-      //     layer.titleMesh.textWidth/2 + i*layer.titleMesh.textWidth/3;
-      // need to more accurately calculate screen position of last X
+
       lastX += layer.titleMesh.textWidth * (screenWidthInBrowser/screenWidthIn3DCoords);
       layer.titleMesh.position.x = desiredTitleXCoord;
-      //layer.titleObj.position.x = controls.target.x-(displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, 0)/2) + titleWidth*3/4;
     });
   };
 
@@ -400,6 +319,52 @@ angular.module('parserApp.display3dService', [])
     button.addEventListener( eventName, function ( event ) {
       callback(event);
     }, false);
+  };
+
+  var makeTweetElement = function (elData, layerObj) {
+
+      var tweet = document.createElement( 'div' );
+      tweet.className = 'tweet-3d';
+      tweet.style.backgroundColor = elData.baseBGColor;
+
+      var username = document.createElement( 'div' );
+      username.textContent = elData.username;
+      tweet.appendChild( username );
+
+      var tweetText = document.createElement( 'div' );
+      tweetText.innerHTML = elData.text;
+      tweet.appendChild( tweetText );
+
+      var score = document.createElement( 'div' );
+      score.textContent = elData.score;
+      tweet.appendChild( score );
+
+      if (+elData.score.split(': ')[1] === 0 || elData.score.split(': ')[1] === 'N/A') {
+        tweetText.className = 'tweetText';
+        score.className = 'score';
+        username.className = 'username';
+      } else {
+        tweetText.className = 'colorTweetText';
+        score.className = 'colorScore';
+        username.className = 'colorUsername';
+      }
+
+      tweet.style.backgroundColor = displayHelpers.currentBGColor(layersSeparated, elData);
+
+      // if current layer is hidden
+      if (!layerObj.visible) {
+        tweet.className = tweet.className + ' invisible';
+      }
+
+      if (scope) {
+        tweet.addEventListener( 'click', function ( event ) {
+          scope.editTweet(elData);
+        }, false);
+      }
+
+
+      return tweet;
+
   };
 
   var addTweet = function(rawTweet, index) {
@@ -447,16 +412,19 @@ angular.module('parserApp.display3dService', [])
       var z = layerObj.z;
       var tweet;
       var object;
+      var lodLevel;
 
       var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, x, y, z );
-      if (tweetDistance > 3000) {
+      if (tweetDistance > lod0Distance) {
+        lodLevel = 'lo';
         object = displayHelpers.makeLoResMesh(layersSeparated, elData, layerObj);
         object.position.x = x;
         object.position.y = y;
         object.position.z = z;
         sceneGL.add( object );
       } else {
-        tweet = displayHelpers.makeTweetElement(layersSeparated, elData, scope, layerObj);
+        lodLevel = 'hi';
+        tweet = makeTweetElement(elData, layerObj);
 
         object = new THREE.CSS3DObject( tweet );
         object.position.x = x;
@@ -465,7 +433,14 @@ angular.module('parserApp.display3dService', [])
         sceneCSS.add( object );
       }
 
-      layerObj.tweets.push({obj: object, el: tweet, elData: elData});
+      layerObj.tweets.push({
+        obj: object,
+        el: tweet,
+        elData: elData,
+        lod: lodLevel,
+        x: x,
+        y: y
+      });
 
     });
 
@@ -505,10 +480,6 @@ angular.module('parserApp.display3dService', [])
     layerObj.ribbonMesh = ribbonMesh;
     layerObj.ribbonMaterial = ribbonMaterial;
 
-    // var ribbon = document.createElement('div');
-    // ribbon.style.height = ribbonHeight + 'px';
-    // ribbon.className = 'ribbon-3d';
-
     // Figure out how to put layer titles back later
     var layerTitleMaterial = new THREE.MeshBasicMaterial( { color: 'rgb(0,150,210)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
     layerTitleMaterial.transparent = true;
@@ -530,10 +501,9 @@ angular.module('parserApp.display3dService', [])
     layerObj.titleMesh = textMesh;
     layerObj.titleMaterial = layerTitleMaterial;
 
-    //layerObj.ribbonEl = ribbon;
+    // set visibility to true on initial creation
+    layerObj.visible = true;
 
-    // stores all layers (hidden and visible) and their current visibility
-    allLayers[layerObj.title] = {visible: true, layer: layerObj};
     // stores visible layers
     layers.push(layerObj);
   };
@@ -584,19 +554,65 @@ angular.module('parserApp.display3dService', [])
     for (var layerIndex = 0; layerIndex < layers.length; layerIndex++) {
       for (var t = 0; t < layers[layerIndex].tweets.length; t++) {
         var tweet = layers[layerIndex].tweets[t];
+        if (!tweet.obj) {
+          console.dir(t);
+        }
         var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, tweet.obj.position.x, tweet.obj.position.y, tweet.obj.position.z );
 
-        if (tweetDistance > 1000 && tweet.el) {
+        if (tweetDistance > lod0Distance && tweet.el) {
 
           // switch to lower LOD
-          displayHelpers.swapLOD(sceneCSS, sceneGL, tweet, layersSeparated, 'lo', scope, layers[layerIndex]);
-        } else if (tweetDistance <= 1000 && !tweet.el) {
+          swapLOD(tweet, 'lo', layers[layerIndex]);
+        } else if (tweetDistance <= lod0Distance && !tweet.el) {
 
           // switch to higher LOD
-          displayHelpers.swapLOD(sceneCSS, sceneGL, tweet, layersSeparated, 'hi', scope, layers[layerIndex]);
+          swapLOD(tweet, 'hi', layers[layerIndex]);
         }
       }
     }
+  };
+
+  var swapLOD = function (tweet, swapTo, layer) {
+
+    var el, object;
+
+    var x = tweet.obj.position.x;
+    var y = tweet.obj.position.y;
+    var z = tweet.obj.position.z;
+
+    // don't do anything if it's already at the right LOD
+    if (swapTo === tweet.lod) {
+      return;
+    }
+
+    // don't do anything if the tweet is tweening
+    if (tweet.transition) {
+      return;
+    }
+
+    if (swapTo === 'hi') {
+      el = makeTweetElement(tweet.elData, layer);
+      sceneGL.remove(tweet.obj);
+      object = new THREE.CSS3DObject( el );
+      object.position.x = x;
+      object.position.y = y;
+      object.position.z = z;
+      sceneCSS.add( object );
+      tweet.lod = 'hi';
+    }
+
+    if (swapTo === 'lo') {
+      sceneCSS.remove(tweet.obj);
+      object = displayHelpers.makeLoResMesh(layersSeparated, tweet.elData, layer);
+      object.position.x = x;
+      object.position.y = y;
+      object.position.z = z;
+      sceneGL.add( object );
+      tweet.lod = 'lo';
+    }
+
+    tweet.obj = object;
+    tweet.el = el;
   };
 
   var animate = function() {
@@ -667,7 +683,7 @@ angular.module('parserApp.display3dService', [])
     makeTweetLayer('emoticonLayerResults', 'emoji', frontLayerZ - layerSpacing);
     makeTweetLayer('slangLayerResults', 'slang', frontLayerZ - layerSpacing*2);
     makeTweetLayer('negationLayerResults', 'negation', frontLayerZ - layerSpacing*3);
-    scope.allLayers = allLayers;
+    scope.layers = layers;
   };
 
   var init = function(context, passedScope) {
@@ -735,6 +751,7 @@ angular.module('parserApp.display3dService', [])
 
       camera.aspect = document.getElementById(containerID).clientWidth/document.getElementById(containerID).clientHeight;
       camera.updateProjectionMatrix();
+      adjustRibbonWidth();
       // rendererGL.domElement.style.width = document.getElementById(containerID).clientWidth + 'px';
       // rendererGL.domElement.style.height = (document.getElementById(containerID).clientHeight - 1) + 'px';
     };
@@ -753,59 +770,15 @@ angular.module('parserApp.display3dService', [])
 
     camera.position.z = camera.position.z + layers.length * layerSpacing;
 
-    // addButtonEvent('separate-3d', 'click', function() {
-    //   if (!layersSeparated) {
-    //     displayHelpers.separateLayers(layers, frontLayerZ, layerSpacing);
-    //     layersSeparated = true;
-    //   }
-    // });
-
-    // addButtonEvent('flatten-3d', 'click', function() {
-    //   if (layersSeparated) {
-    //     displayHelpers.flattenLayers(layers, frontLayerZ, layerSpacing, rows, sceneGL, allLayers);
-    //     layersSeparated = false;
-    //   }
-    // });
-
     addButtonEvent('flatten-separate-3d', 'click', function() {
       if (layersSeparated) {
-        displayHelpers.flattenLayers(layers, frontLayerZ, layerSpacing, rows, sceneGL, allLayers);
+        flattenLayers();
         layersSeparated = false;
       } else {
-        displayHelpers.separateLayers(layers, frontLayerZ, layerSpacing);
+        separateLayers();
         layersSeparated = true;
       }
     });
-
-    // addButtonEvent('stop-3d', 'click', function(event) {
-    //   keepAddingTweets = false;
-    // });
-
-    // addButtonEvent('left-3d', 'mouseover', function() {
-    //   leftHover = true;
-    // });
-    // addButtonEvent('left-3d', 'mouseleave', function() {
-    //   leftHover = false;
-    // });
-    // addButtonEvent('right-3d', 'mouseover', function() {
-    //   rightHover = true;
-    // });
-    // addButtonEvent('right-3d', 'mouseleave', function() {
-    //   rightHover = false;
-    // });
-
-    // addButtonEvent('left-3d', 'mousedown', function() {
-    //   leftHover = true;
-    // });
-    // addButtonEvent('left-3d', 'mouseup', function() {
-    //   leftHover = false;
-    // });
-    // addButtonEvent('right-3d', 'mousedown', function() {
-    //   rightHover = true;
-    // });
-    // addButtonEvent('right-3d', 'mouseup', function() {
-    //   rightHover = false;
-    // });
 
     prevCameraPosition = new THREE.Vector3();
     prevCameraPosition.copy(camera.position);

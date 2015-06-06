@@ -32,8 +32,11 @@ angular.module('parserApp.authService', [])
       });
   };
 
+  var loggedIn = false;
+
   return {
     adminlogin: adminlogin,
-    checkAuth: checkAuth
+    checkAuth: checkAuth,
+    loggedIn: loggedIn
   };
 });

@@ -6,6 +6,7 @@ angular.module('parserApp', [
   'parserApp.emojiService',
   'parserApp.display3dService',
   'parserApp.authService',
+  'parserApp.socialService',
   'ngCookies',
   'ngResource',
   'ngSanitize',
@@ -43,10 +44,10 @@ angular.module('parserApp', [
         url: '/statistics',
         templateUrl: 'app/statistics/statistics.html'
       })
-      .state('checkout', {
-        url: '/checkout',
-        templateUrl: 'app/checkout/checkout.html',
-        controller: 'CheckoutCtrl'
+      .state('dashboard', {
+        url: '/dashboard',
+        templateUrl: 'app/dashboard/dashboard.html',
+        controller: 'DashboardCtrl'
       });
 
     $urlRouterProvider

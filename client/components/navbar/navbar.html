@@ -4,8 +4,9 @@
     <ul>
       <li><a href="/">Main</a></li>
       <li><a href="/3dstream">3D</a></li>
-      <li><a href="/checkout">Dashboard</a></li>
+      <li><a href="/dashboard">Dashboard</a></li>
       <li><a href="/about">About</a></li>
+      <li ng-show="loggedIn"><a href="#" ng-click="fbLogout()">Logout</a></li>
       <li class="menu-social">
         <a class="sbg-button sbg-button-facebook"  data-sbg-network="facebook"  data-sbg-url="https://crowdparser.org"  data-sbg-title="Crowd Parser"  data-sbg-summary="Explore millions of tweets in 3D!"  data-sbg-image="http://i288.photobucket.com/albums/ll175/michaelcheng429/crowdparserlogogh_zpshipsbtrg.png"  data-sbg-width="600"  data-sbg-height="368" >
           <i class="sbg-button-icon fa fa-facebook"></i>

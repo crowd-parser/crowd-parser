@@ -274,33 +274,6 @@ angular.module('parserApp.display3dService', [])
         hideLayer(i);
       }
     });
-    // uiLayer is a layer title
-    // for (var uiLayer in layersVisible) {
-    //   console.log(uiLayer + ' viz: ' + layersVisible[uiLayer].viz);
-    //   // if there is a hidden layer that should be visible,
-    //   // toggle on visible and put it in layers
-    //   if (layersVisible[uiLayer].viz && !allLayers[uiLayer].visible) {
-    //     console.log('toggle on ' + uiLayer);
-    //     allLayers[uiLayer].visible = true;
-    //     layers.forEach(function (layer, i) {
-    //       if (layer.title === uiLayer) {
-    //         console.log('showing ' + uiLayer);
-    //         showLayer(i);
-    //       }
-    //     });
-    //   } else if (!layersVisible[uiLayer].viz && allLayers[uiLayer].visible) {
-    //     console.log('toggle off ' + uiLayer);
-    //   // if there is a visible layer that should be hidden,
-    //   // toggle off visible and splice it out of layers
-    //     allLayers[uiLayer].visible = false;
-    //     layers.forEach(function (layer, i) {
-    //       if (layer.title === uiLayer) {
-    //         console.log('hiding ' + uiLayer);
-    //         hideLayer(i);
-    //       }
-    //     });
-    //   }
-    // }
   };
 
   var autoScrollToggle = function () {
@@ -309,7 +282,7 @@ angular.module('parserApp.display3dService', [])
 
   var adjustRibbonWidth = function() {
     var lastX = 50;
-    layers.forEach(function(layer, i) {
+    layers.forEach(function(layer) {
       var farthestYOnRibbon;
       // probably would be more precise to find out angle of camera vector relative
       // to ribbon but this should work in most cases
@@ -327,16 +300,9 @@ angular.module('parserApp.display3dService', [])
       var screenWidthInBrowser = window.innerWidth;
       var leftEdgeIn3DCoords = controls.target.x - screenWidthIn3DCoords/2;
       var desiredTitleXCoord = leftEdgeIn3DCoords + desiredTitleScreenXPosition * (screenWidthIn3DCoords/screenWidthInBrowser);
-      // center - half screen width = left edge
-      // controls.target.x - (displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, frontLayerZ)/2)
-      // left edge + 200 screen pixels?
-      // var newTitlePosition = controls.target.x - 
-      //     (displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, frontLayerZ)/2) +
-      //     layer.titleMesh.textWidth/2 + i*layer.titleMesh.textWidth/3;
-      // need to more accurately calculate screen position of last X
+
       lastX += layer.titleMesh.textWidth * (screenWidthInBrowser/screenWidthIn3DCoords);
       layer.titleMesh.position.x = desiredTitleXCoord;
-      //layer.titleObj.position.x = controls.target.x-(displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, 0, 0)/2) + titleWidth*3/4;
     });
   };
 
@@ -505,10 +471,6 @@ angular.module('parserApp.display3dService', [])
     sceneGL.add( ribbonMesh );
     layerObj.ribbonMesh = ribbonMesh;
     layerObj.ribbonMaterial = ribbonMaterial;
-
-    // var ribbon = document.createElement('div');
-    // ribbon.style.height = ribbonHeight + 'px';
-    // ribbon.className = 'ribbon-3d';
 
     // Figure out how to put layer titles back later
     var layerTitleMaterial = new THREE.MeshBasicMaterial( { color: 'rgb(0,150,210)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
@@ -784,20 +746,6 @@ angular.module('parserApp.display3dService', [])
 
     camera.position.z = camera.position.z + layers.length * layerSpacing;
 
-    // addButtonEvent('separate-3d', 'click', function() {
-    //   if (!layersSeparated) {
-    //     displayHelpers.separateLayers(layers, frontLayerZ, layerSpacing);
-    //     layersSeparated = true;
-    //   }
-    // });
-
-    // addButtonEvent('flatten-3d', 'click', function() {
-    //   if (layersSeparated) {
-    //     displayHelpers.flattenLayers(layers, frontLayerZ, layerSpacing, rows, sceneGL, allLayers);
-    //     layersSeparated = false;
-    //   }
-    // });
-
     addButtonEvent('flatten-separate-3d', 'click', function() {
       if (layersSeparated) {
         displayHelpers.flattenLayers(layers, frontLayerZ, layerSpacing, rows, sceneGL);
@@ -807,36 +755,6 @@ angular.module('parserApp.display3dService', [])
         layersSeparated = true;
       }
     });
-
-    // addButtonEvent('stop-3d', 'click', function(event) {
-    //   keepAddingTweets = false;
-    // });
-
-    // addButtonEvent('left-3d', 'mouseover', function() {
-    //   leftHover = true;
-    // });
-    // addButtonEvent('left-3d', 'mouseleave', function() {
-    //   leftHover = false;
-    // });
-    // addButtonEvent('right-3d', 'mouseover', function() {
-    //   rightHover = true;
-    // });
-    // addButtonEvent('right-3d', 'mouseleave', function() {
-    //   rightHover = false;
-    // });
-
-    // addButtonEvent('left-3d', 'mousedown', function() {
-    //   leftHover = true;
-    // });
-    // addButtonEvent('left-3d', 'mouseup', function() {
-    //   leftHover = false;
-    // });
-    // addButtonEvent('right-3d', 'mousedown', function() {
-    //   rightHover = true;
-    // });
-    // addButtonEvent('right-3d', 'mouseup', function() {
-    //   rightHover = false;
-    // });
 
     prevCameraPosition = new THREE.Vector3();
     prevCameraPosition.copy(camera.position);

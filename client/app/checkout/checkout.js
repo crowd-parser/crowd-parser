@@ -14,4 +14,11 @@ angular.module('parserApp')
           });
       }
     };
+
+    $scope.selectOption = function(number) {
+
+      $scope.selectedOption = number;
+
+      return false;
+    };
   });

@@ -1,29 +1,55 @@
-<div class="container about-container">
+<a href="/" class="learn-more">back</a>
+
+<div class="container about-container checkout-container">
   
-  <h1>Add a personalized keyword to our keywords list!</h1>
+  <h1>Add personalized keywords <br>to our keywords list!</h1>
+
+  <div class="info-band">
+    <div class="info-quarter">
+      <div>Add new keywords to our master keyword list! We will search through and analyze our millions of tweets for each of your keywords.</div>
+      <i class="fa fa-upload info-icon"></i>
+    </div><!--
+
+    --><div class="info-quarter">
+      <div>Show the world the keywords you added to our list. Your name will appear next to each of your keywords on the 3D page.</div>
+      <i class="fa fa-star-o info-icon"></i>
+    </div><!--
+
+    --><div class="info-quarter">
+      <div>Discover how the Twitter-world feels about your keywords. Do more people feel positively or negatively about them?</div>
+      <i class="fa fa-meh-o info-icon"></i>
+    </div><!--
+
+    --><div class="info-quarter">
+      <div>Explore and enjoy your keyword results with our informative and fun 3D display.</div>
+      <i class="fa fa-cubes info-icon"></i>
+    </div>
+  </div>
+
+  <hr>
 
   <form stripe-form="stripeCallback" class="stripe-form">
 
-    <div class="purchase-options">
-      <div class="purchase-option">
+    <div class="purchase-options" ng-init="selectedOption;">
+      <button class="purchase-option" ng-class="{'active-option':selectedOption === 1}" ng-click="selectOption(1, $('.option-1'))">
         <h3>1 <br>keyword</h3>
         <h4>$2</h4>
-      </div><!--
-      --><div class="purchase-option">
+      </button><!--
+      --><button class="purchase-option option-5" ng-class="{'active-option':selectedOption === 5}" ng-click="selectOption(5, this)">
         <h3>5 <br>keywords</h3>
         <h4>$8</h4>
-      </div><!--
-      --><div class="purchase-option ten-keywords">
+      </button><!--
+      --><button class="purchase-option ten-keywords option-10" ng-class="{'active-option':selectedOption === 10}" ng-click="selectOption(10, this)">
         <h3>10 <br>keywords</h3>
         <h4>$15</h4>
-      </div>
+      </button>
     </div>
 
-    <input class="form-control stripe-input card-input" ng-model="number" placeholder="0000 0000 0000 0000" payments-format="card" payments-validate="card" />
-    <input class="form-control stripe-input expiry-input" ng-model="expiry" placeholder="MM/YYYY" payments-format="expiry" payments-validate="expiry" />
-    <input class="form-control stripe-input cvc-input" ng-model="cvc" placeholder="CVC" payments-format="cvc" payments-format="cvc" />
+    <input class="form-control stripe-input card-input" ng-model="number" placeholder="0000 0000 0000 0000" payments-format="card" payments-validate="card" /><br>
+    <input class="form-control stripe-input expiry-input" ng-model="expiry" placeholder="MM/YY" payments-format="expiry" payments-validate="expiry" /><!--
+    --><input class="form-control stripe-input cvc-input" ng-model="cvc" placeholder="CVC" payments-format="cvc" payments-format="cvc" />
 
-    <button type="submit" class="btn btn-primary">secure checkout</button>
+    <button type="submit" class="btn btn-primary stripe-submit">secure checkout</button>
 
     <img src="assets/images/stripe-secure.png" alt="stripe-secure">
   </form>

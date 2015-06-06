@@ -80,8 +80,10 @@
     <div>Name: {{purchasingUserDetails.name}}</div>
     <div>Number of keywords remaining: {{purchasingUserDetails.number_of_keywords}}</div>
 
-    <input type="text" class="form-control" placeholder="add a keyword">
-    <button class="btn btn-primary">Submit</button>
+    <form onsubmit="return false" ng-submit="userKeywordSubmit()">
+      <input type="text" class="form-control" ng-model="userKeywordInput" placeholder="add a keyword">
+      <button class="btn btn-primary">Submit</button>
+    </form>
   </div>
   
 </div>

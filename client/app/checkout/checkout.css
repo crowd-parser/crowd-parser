@@ -1,8 +1,33 @@
+.checkout-container {
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .stripe-form {
   display: inline-block;
   background: #FFF;
+  font-size: 24px;
   padding: 30px 20px;
   border-radius: 15px;
+}
+
+.info-band {
+  background: #31353D;
+  color: #FFF;
+  margin: 40px 0;
+  padding: 30px 15px;
+}
+
+.info-quarter {
+  display: inline-block;
+  width: 50%;
+  padding: 15px;
+}
+
+.info-icon {
+  color: #92CDCF;
+  font-size: 100px;
+  margin-top: 20px;
 }
 
 .purchase-options {
@@ -12,32 +37,38 @@
 .purchase-option {
   transition: background .5s, color .5s;
   display: inline-block;
-  background: #92CDCF;
-  color: #FFF;
+  background: #FFF;
+  color: #92CDCF;
   width: 31%;
   height: 120px;
   padding: 15px;
   padding-top: 0px;
   margin-right: 5px;
+  border: 1px solid #978F9E;
   border-radius: 50%;
   cursor: pointer;
 }
 
-.purchase-option:hover {
-  background: #FFF;
-  color: #92CDCF;
-  border: 1px solid #978F9E;
+.purchase-option:hover, .active-option {
+  background: #92CDCF;
+  color: #FFF;
+  border: 0;
 }
 
 .ten-keywords {
   margin-right: 0;
 }
 
+.stripe-icon {
+  border: 1px solid #CCC;
+  padding: 6px 12px;
+}
+
 .stripe-form input {
   font-size: 24px;
 }
 
-.stripe-form button {
+.stripe-form .stripe-submit {
   display: block;
   color: #FFF;
   background: #445878;
@@ -64,19 +95,18 @@
 }
 
 .card-input {
-  width: 265px;
-  margin-bottom: 15px;
+  display: inline-block;
+  width: 264px;
 }
 
 .expiry-input {
   display: inline-block;
-  width: 135px;
+  width: 132px;
   margin-bottom: 15px;
-  margin-right: 25px;
 }
 
 .cvc-input {
   display: inline-block;
-  width: 75px;
+  width: 132px;
   margin-bottom: 15px;
 }

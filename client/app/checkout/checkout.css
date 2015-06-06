@@ -1,3 +1,82 @@
+.stripe-form {
+  display: inline-block;
+  background: #FFF;
+  padding: 30px 20px;
+  border-radius: 15px;
+}
+
+.purchase-options {
+  margin-bottom: 40px;
+}
+
+.purchase-option {
+  transition: background .5s, color .5s;
+  display: inline-block;
+  background: #92CDCF;
+  color: #FFF;
+  width: 31%;
+  height: 120px;
+  padding: 15px;
+  padding-top: 0px;
+  margin-right: 5px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.purchase-option:hover {
+  background: #FFF;
+  color: #92CDCF;
+  border: 1px solid #978F9E;
+}
+
+.ten-keywords {
+  margin-right: 0;
+}
+
+.stripe-form input {
+  font-size: 24px;
+}
+
+.stripe-form button {
+  display: block;
+  color: #FFF;
+  background: #445878;
+  font-size: 20px;
+  margin: 0 auto;
+  margin-top: 10px;
+  border-radius: 0;
+}
+
+.stripe-form img {
+  display: block;
+  width: 250px;
+  margin: 0 auto;
+  margin-top: 40px;
+}
+
+.stripe-input {
+  height: 50px;
+  margin: 0 auto;
+}
+
 .ng-invalid {
     color: red;
+}
+
+.card-input {
+  width: 265px;
+  margin-bottom: 15px;
+}
+
+.expiry-input {
+  display: inline-block;
+  width: 135px;
+  margin-bottom: 15px;
+  margin-right: 25px;
+}
+
+.cvc-input {
+  display: inline-block;
+  width: 75px;
+  margin-bottom: 15px;
 }

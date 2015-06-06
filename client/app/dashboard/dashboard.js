@@ -27,7 +27,7 @@ angular.module('parserApp')
             });
         }
       });
-    }, 550);
+    }, 700);
 
     $scope.fbLogin = function() {
       FB.login(function(response) {
@@ -67,5 +67,20 @@ angular.module('parserApp')
     $scope.selectOption = function(number) {
 
       $scope.selectedOption = number;
+    };
+
+    $scope.userKeywordSubmit = function() {
+
+      var userKeyword = $scope.userKeywordInput;
+
+      var params = {
+        id: purchasingUserDetails.id,
+        keyword: userKeyword
+      };
+
+      $http.post('/checkout/userAddKeyword', params)
+        .success(function(response) {
+          console.log(response);
+        });
     };
   });

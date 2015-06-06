@@ -89,7 +89,24 @@ router.post('/checkIfPurchased', function(req, res) {
     
     res.send(response[0]);
   });
+});
 
+router.post('/userAddKeyword', function(req, res) {
+
+  var params = {
+    id: null,
+    purchasing_user: req.body.id,
+    purchased_keyword: req.body.keyword
+  };
+
+  db.db.query('INSERT INTO purchased_keywords SET ?', params, function(err, response) {
+
+    console.log(err, response);
+
+    // db.db.query('UPDATE ')
+
+    res.send('successfully added keyword!');
+  });
 });
 
 module.exports = router;

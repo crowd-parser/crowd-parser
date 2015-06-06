@@ -234,7 +234,6 @@ angular.module('parserApp.display3dService', [])
 
   var layersSeparated;
   var layers; // visible layers
-  var allLayers = {};
   var ribbonHeight;
   var scope;
 

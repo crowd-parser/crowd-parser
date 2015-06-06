@@ -10,7 +10,6 @@ angular.module('parserApp')
     $scope.receivingTweets = 'OFF';
     $scope.clientID = undefined;
     $scope.showLayerMenu = false;
-    $scope.allLayers = {};
     $scope.layers = [];
     $scope.radio = {};
     $scope.layersVisible = {};
@@ -50,11 +49,6 @@ angular.module('parserApp')
     Display3d.animate();
 
     // check all boxes on
-    console.log($scope.layers);
-    for (var layer in $scope.allLayers) {
-      $scope.layers.push($scope.allLayers[layer].layer);
-    }
-
     $scope.layers.forEach(function (layer) {
       $scope.layersVisible[layer.title] = { viz: true };
     });

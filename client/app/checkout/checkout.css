@@ -12,10 +12,8 @@
 }
 
 .info-band {
-  background: #31353D;
-  color: #FFF;
   margin: 40px 0;
-  padding: 30px 15px;
+  padding: 10px 15px;
 }
 
 .info-quarter {
@@ -25,7 +23,7 @@
 }
 
 .info-icon {
-  color: #92CDCF;
+  color: #445878;
   font-size: 100px;
   margin-top: 20px;
 }

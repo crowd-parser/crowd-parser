@@ -1,0 +1,78 @@
+.navbar-section {
+  position: absolute;
+  top: 2px;
+  right: 10px;
+  font-size: 30px;
+  color: #FFF;
+  cursor: pointer;
+}
+
+.navbar-section i:hover {
+  color: #92CDCF; 
+}
+
+.navbar-menu {
+  display: none;
+}
+
+.navbar-menu ul {
+  position: absolute;
+  top: 35px;
+  right: 1px;
+  list-style-type: none;
+  background: #FFF;
+  color: #000;
+  text-align: right;
+  font-size: 17px;
+  padding: 0 10px;
+  border-radius: 5px;
+}
+
+.navbar-menu li:hover {
+  background: #92CDCF;
+  margin: 0 -10px;
+  padding: 0 10px;
+  border-radius: 5px;
+}
+
+.navbar-menu a:hover {
+  color: #FFF;
+  text-decoration: none;
+}
+
+.menu-social {
+  font-size: 22px;
+  padding-bottom: 5px;
+}
+
+.navbar-menu .menu-social:hover {
+  background: #FFF;
+  color: #000;
+  padding-bottom: 5px;
+}
+
+.sbg-button{
+  display:inline-block;
+  width: 1em;
+  height: 1em;
+  text-align: center;
+  line-height: 0;
+  border-radius:.5em;
+  background-color:black;
+  color:white;
+  cursor: pointer;
+}
+.sbg-button:hover{color:white;}
+
+.sbg-button-icon{font-size:.5em;padding:.5em;}
+
+.sbg-button-facebook{background-color:#3b5998;}
+.sbg-button-facebook .sbg-button-icon{padding-left:.44em;}
+.sbg-button-twitter{background-color:#00aced;}
+.sbg-button-twitter .sbg-button-icon{padding-left:.48em;}
+.sbg-button-linkedin{background-color:#007bb6;}
+.sbg-button-google-plus{background-color:#dd4b39;}
+.sbg-button-pinterest{background-color:#cb2027;}
+.sbg-button-pinterest .sbg-button-icon{padding-left:.45em;padding-top: .48em;}
+.sbg-button-email{background-color:#999999;}
+.sbg-button-email .sbg-button-icon{padding-left: .434em;padding-top: .44em;}

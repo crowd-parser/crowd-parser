@@ -14,14 +14,17 @@ angular.module('parserApp.socialService', [])
     // for FB.getLoginStatus().
     if (response.status === 'connected') {
       // Logged into your app and Facebook.
+      // console.log('logged in')
       Auth.loggedIn = true;
     } else if (response.status === 'not_authorized') {
       // The person is logged into Facebook, but not your app.
+      // console.log('not authorized')
       // document.getElementById('fb-status').innerHTML = 'Please log ' +
       //   'into this app to purchase.';
     } else {
       // The person is not logged into Facebook, so we're not sure if
       // they are logged into this app or not.
+      // console.log('not logged in')
       // document.getElementById('fb-status').innerHTML = 'Please log ' +
       //   'into Facebook to purchase.';
     }

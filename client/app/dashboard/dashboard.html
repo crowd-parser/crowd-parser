@@ -37,29 +37,33 @@
   
   <div class="fb-login-container" ng-show="!loggedIn">
     <div id="fb-status">Please log in to purchase.</div>
-    <div>
-      <div class="fb-login-button" data-size="xlarge">Log in with Facebook</div>
-    </div>
+      <button ng-click="fbLogin()">Log in with Facebook</button>
   </div>
 
 
-  <form stripe-form="stripeCallback" class="stripe-form" ng-show="loggedIn && !purchasingUser">
+  <form stripe-form="stripeCallback" class="stripe-form" ng-show="loggedIn && !purchasingUser" onsubmit="return false">
     <h2>Purchase Keywords</h2>
 
     <div class="purchase-options" ng-init="selectedOption;">
-      <button class="purchase-option" ng-class="{'active-option':selectedOption === 1}" ng-click="selectOption(1, $('.option-1'))" onclick="return false">
+      <div class="purchase-option" ng-class="{'active-option':selectedOption === 1}" ng-click="selectOption(1, $('.option-1'))" onclick="return false">
         <h3>1 <br>keyword</h3>
         <h4>$2</h4>
-      </button><!--
-      --><button class="purchase-option option-5" ng-class="{'active-option':selectedOption === 5}" ng-click="selectOption(5, this)" onclick="return false">
+      </div><!--
+      --><div class="purchase-option option-5" ng-class="{'active-option':selectedOption === 5}" ng-click="selectOption(5, this)" onclick="return false">
         <h3>5 <br>keywords</h3>
         <h4>$8</h4>
-      </button><!--
-      --><button class="purchase-option ten-keywords option-10" ng-class="{'active-option':selectedOption === 10}" ng-click="selectOption(10, this)" onclick="return false">
+      </div><!--
+      --><div class="purchase-option ten-keywords option-10" ng-class="{'active-option':selectedOption === 10}" ng-click="selectOption(10, this)" onclick="return false">
         <h3>10 <br>keywords</h3>
         <h4>$15</h4>
-      </button>
+      </div>
     </div>
+
+    <input class="form-control stripe-input" type="text" ng-model="purchasingUsername" placeholder="Name">
+    <p>This name will be displayed next to your keywords.</p>
+
+    <input class="form-control stripe-input" type="text" ng-model="purchasingEmail" placeholder="Email">
+    <p>We hate spam.</p>
 
     <input class="form-control stripe-input card-input" ng-model="number" placeholder="0000 0000 0000 0000" payments-format="card" payments-validate="card" /><br>
     <input class="form-control stripe-input expiry-input" ng-model="expiry" placeholder="MM/YY" payments-format="expiry" payments-validate="expiry" /><!--

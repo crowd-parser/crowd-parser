@@ -74,7 +74,7 @@ angular.module('parserApp')
       var userKeyword = $scope.userKeywordInput;
 
       var params = {
-        id: purchasingUserDetails.id,
+        id: $scope.purchasingUserDetails.id,
         keyword: userKeyword
       };
 

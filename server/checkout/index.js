@@ -101,11 +101,14 @@ router.post('/userAddKeyword', function(req, res) {
 
   db.db.query('INSERT INTO purchased_keywords SET ?', params, function(err, response) {
 
-    console.log(err, response);
+    console.log('INSERT', err, response);
 
-    // db.db.query('UPDATE ')
+    db.db.query('UPDATE purchasing_users SET number_of_keywords=number_of_keywords-1 WHERE purchasing_users.id=' + params.purchasing_user, function(err, response) {
 
-    res.send('successfully added keyword!');
+      console.log('UPDATE', err, response);
+      res.send('successfully added keyword!');
+    });
+
   });
 });
 

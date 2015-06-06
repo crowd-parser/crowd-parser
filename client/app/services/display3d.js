@@ -81,7 +81,71 @@ angular.module('parserApp.display3dService', [])
     return bgRGBA;
   };
 
-  var separateLayers = function (layers, frontLayerZ, layerSpacing) {
+  return {
+    makeLoResElement: makeLoResElement,
+    makeLoResMesh: makeLoResMesh,
+    getCameraDistanceFrom: getCameraDistanceFrom,
+    getDisplayWidthAtPoint: getDisplayWidthAtPoint,
+    currentBGColor: currentBGColor,
+    calculateColorFromScore: calculateColorFromScore
+  };
+}])
+
+.factory('Display3d', ['$document', '$window', 'displayHelpers', 'Emoji', function($document, $window, displayHelpers, Emoji) {
+
+  var document = $document[0];
+  var THREE = $window.THREE;
+  var TWEEN = $window.TWEEN;
+
+  var sceneCSS, sceneGL, camera, rendererCSS, rendererGL, controls, prevCameraPosition;
+
+  var layersSeparated;
+  var layers; // visible layers
+  var ribbonHeight;
+  var scope;
+
+  var lod0Distance = 1000;
+
+  var frontLayerZ = 300;
+  var layerSpacing = 300;
+
+  // left and right mouse hover buttons
+  var leftHover = false;
+  var rightHover = false;
+  var baseScrollSpeed = 25;
+  var scrollSpeed = baseScrollSpeed;
+  var neverAutoScroll = false;
+  var rightAutoScroll = false;
+  var tick = 0;
+
+  // tweet display settings
+  var rows;
+  var ySpacing = 200;
+  var yStart = 300;
+  var xSpacing = 320;
+  var xStart = -800;
+
+  var updateLayers = function (layersVisible) {
+    layers.forEach(function (layerObj, i) {
+      // if this layer is hidden and should be visible,
+      // toggle on visible and call showLayer
+      if (layerObj.visible === false && layersVisible[layerObj.title].viz === true) {
+        console.log('toggle on ' + layerObj.title);
+        layerObj.visible = true;
+        console.log('showing ' + layerObj.title);
+        showLayer(i);
+      // if this layer is visible and should be hidden
+      // toggle off visible and call hideLayer
+      } else if (layerObj.visible === true && layersVisible[layerObj.title].viz === false) {
+        console.log('toggle off ' + layerObj.title);
+        layerObj.visible = false;
+        console.log('hiding ' + layerObj.title);
+        hideLayer(i);
+      }
+    });
+  };
+
+  var separateLayers = function () {
     for (var i = 0; i < layers.length; i++) {
       // tweet opacity webgl
       if (layers[i].visible) {
@@ -92,9 +156,13 @@ angular.module('parserApp.display3dService', [])
       
       layers[i].tweets.forEach(function(tweet) {
         // tweet position
+        tweet.transition = true;
         new TWEEN.Tween( tweet.obj.position )
           .to( {z: frontLayerZ - layerSpacing*i}, 1000 )
           .easing( TWEEN.Easing.Exponential.InOut )
+          .onComplete( function() {
+            tweet.transition = false;
+          })
           .start();
         // tweet opacity css
         if (layers[i].visible && tweet.el && tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
@@ -135,16 +203,20 @@ angular.module('parserApp.display3dService', [])
     }
   };
 
-  var flattenLayers = function (layers, frontLayerZ, layerSpacing, rows, sceneGL) {
+  var flattenLayers = function () {
 
     for (var i = 0; i < layers.length; i++) {
       new TWEEN.Tween( layers[i].tweetMaterialNeutral )
         .to ({opacity: 0}, 1000)
         .start();
       layers[i].tweets.forEach(function(tweet) {
+        tweet.transition = true;
         new TWEEN.Tween( tweet.obj.position )
           .to( {z: frontLayerZ - 2*i}, 1000 )
           .easing( TWEEN.Easing.Exponential.InOut )
+          .onComplete( function () {
+            tweet.transition = false;
+          })
           .start();
 
         if (tweet.el && tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
@@ -210,70 +282,6 @@ angular.module('parserApp.display3dService', [])
         fadeOut.chain(fadeIn).start();
       }
     }
-  };
-
-  return {
-    makeLoResElement: makeLoResElement,
-    makeLoResMesh: makeLoResMesh,
-    getCameraDistanceFrom: getCameraDistanceFrom,
-    getDisplayWidthAtPoint: getDisplayWidthAtPoint,
-    currentBGColor: currentBGColor,
-    calculateColorFromScore: calculateColorFromScore,
-    separateLayers: separateLayers,
-    flattenLayers: flattenLayers
-  };
-}])
-
-.factory('Display3d', ['$document', '$window', 'displayHelpers', 'Emoji', function($document, $window, displayHelpers, Emoji) {
-
-  var document = $document[0];
-  var THREE = $window.THREE;
-  var TWEEN = $window.TWEEN;
-
-  var sceneCSS, sceneGL, camera, rendererCSS, rendererGL, controls, prevCameraPosition;
-
-  var layersSeparated;
-  var layers; // visible layers
-  var ribbonHeight;
-  var scope;
-
-  var frontLayerZ = 300;
-  var layerSpacing = 300;
-
-  // left and right mouse hover buttons
-  var leftHover = false;
-  var rightHover = false;
-  var baseScrollSpeed = 25;
-  var scrollSpeed = baseScrollSpeed;
-  var neverAutoScroll = false;
-  var rightAutoScroll = false;
-  var tick = 0;
-
-  // tweet display settings
-  var rows;
-  var ySpacing = 200;
-  var yStart = 300;
-  var xSpacing = 320;
-  var xStart = -800;
-
-  var updateLayers = function (layersVisible) {
-    layers.forEach(function (layerObj, i) {
-      // if this layer is hidden and should be visible,
-      // toggle on visible and call showLayer
-      if (layerObj.visible === false && layersVisible[layerObj.title].viz === true) {
-        console.log('toggle on ' + layerObj.title);
-        layerObj.visible = true;
-        console.log('showing ' + layerObj.title);
-        showLayer(i);
-      // if this layer is visible and should be hidden
-      // toggle off visible and call hideLayer
-      } else if (layerObj.visible === true && layersVisible[layerObj.title].viz === false) {
-        console.log('toggle off ' + layerObj.title);
-        layerObj.visible = false;
-        console.log('hiding ' + layerObj.title);
-        hideLayer(i);
-      }
-    });
   };
 
   var autoScrollToggle = function () {
@@ -407,7 +415,7 @@ angular.module('parserApp.display3dService', [])
       var lodLevel;
 
       var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, x, y, z );
-      if (tweetDistance > 3000) {
+      if (tweetDistance > lod0Distance) {
         lodLevel = 'lo';
         object = displayHelpers.makeLoResMesh(layersSeparated, elData, layerObj);
         object.position.x = x;
@@ -546,13 +554,16 @@ angular.module('parserApp.display3dService', [])
     for (var layerIndex = 0; layerIndex < layers.length; layerIndex++) {
       for (var t = 0; t < layers[layerIndex].tweets.length; t++) {
         var tweet = layers[layerIndex].tweets[t];
+        if (!tweet.obj) {
+          console.dir(t);
+        }
         var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, tweet.obj.position.x, tweet.obj.position.y, tweet.obj.position.z );
 
-        if (tweetDistance > 1000 && tweet.el) {
+        if (tweetDistance > lod0Distance && tweet.el) {
 
           // switch to lower LOD
           swapLOD(tweet, 'lo', layers[layerIndex]);
-        } else if (tweetDistance <= 1000 && !tweet.el) {
+        } else if (tweetDistance <= lod0Distance && !tweet.el) {
 
           // switch to higher LOD
           swapLOD(tweet, 'hi', layers[layerIndex]);
@@ -569,6 +580,16 @@ angular.module('parserApp.display3dService', [])
     var y = tweet.obj.position.y;
     var z = tweet.obj.position.z;
 
+    // don't do anything if it's already at the right LOD
+    if (swapTo === tweet.lod) {
+      return;
+    }
+
+    // don't do anything if the tweet is tweening
+    if (tweet.transition) {
+      return;
+    }
+
     if (swapTo === 'hi') {
       el = makeTweetElement(tweet.elData, layer);
       sceneGL.remove(tweet.obj);
@@ -577,6 +598,7 @@ angular.module('parserApp.display3dService', [])
       object.position.y = y;
       object.position.z = z;
       sceneCSS.add( object );
+      tweet.lod = 'hi';
     }
 
     if (swapTo === 'lo') {
@@ -586,6 +608,7 @@ angular.module('parserApp.display3dService', [])
       object.position.y = y;
       object.position.z = z;
       sceneGL.add( object );
+      tweet.lod = 'lo';
     }
 
     tweet.obj = object;
@@ -728,6 +751,7 @@ angular.module('parserApp.display3dService', [])
 
       camera.aspect = document.getElementById(containerID).clientWidth/document.getElementById(containerID).clientHeight;
       camera.updateProjectionMatrix();
+      adjustRibbonWidth();
       // rendererGL.domElement.style.width = document.getElementById(containerID).clientWidth + 'px';
       // rendererGL.domElement.style.height = (document.getElementById(containerID).clientHeight - 1) + 'px';
     };
@@ -748,10 +772,10 @@ angular.module('parserApp.display3dService', [])
 
     addButtonEvent('flatten-separate-3d', 'click', function() {
       if (layersSeparated) {
-        displayHelpers.flattenLayers(layers, frontLayerZ, layerSpacing, rows, sceneGL);
+        flattenLayers();
         layersSeparated = false;
       } else {
-        displayHelpers.separateLayers(layers, frontLayerZ, layerSpacing);
+        separateLayers();
         layersSeparated = true;
       }
     });

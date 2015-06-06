@@ -105,6 +105,7 @@ angular.module('parserApp.display3dService', [])
   var scope;
 
   var lod0Distance = 1000;
+  var lod1Distance = 5000;
 
   var frontLayerZ = 300;
   var layerSpacing = 300;
@@ -550,6 +551,11 @@ angular.module('parserApp.display3dService', [])
     rendererGL.render( sceneGL, camera );
   };
 
+  // TEMP NOTES
+  // 1. If I'm past a certain distance, I can probably LOD the whole layer, or even all layers at once.
+  //    I don't have to ping every tweet.
+  // 2. I should super-low LOD stuff that is off screen.
+  // 3. I should have flatten and separate treat layers differently at that level
   var updateTweetLOD = function () {
     for (var layerIndex = 0; layerIndex < layers.length; layerIndex++) {
       for (var t = 0; t < layers[layerIndex].tweets.length; t++) {
@@ -593,6 +599,7 @@ angular.module('parserApp.display3dService', [])
     if (swapTo === 'hi') {
       el = makeTweetElement(tweet.elData, layer);
       sceneGL.remove(tweet.obj);
+      tweet.obj.geometry.dispose();
       object = new THREE.CSS3DObject( el );
       object.position.x = x;
       object.position.y = y;

@@ -6,7 +6,7 @@ angular.module('parserApp')
     $scope.tweetData = [];
     $scope.tweetCount = 0;
     $scope.autoScroll = 'ON';
-    $scope.numTweetsToGet = 800;
+    $scope.numTweetsToGet = 400;
     $scope.receivingTweets = 'OFF';
     $scope.clientID = undefined;
     $scope.showLayerMenu = false;
@@ -35,7 +35,7 @@ angular.module('parserApp')
       } else {
         $scope.flattenText = 'Flatten';
       }
-    }
+    };
 
     // Popup modal for editing tweet (currently just a display)
     $scope.editTweet = Modal.confirm.editTweet(function(x) { console.log(x); });
@@ -50,6 +50,7 @@ angular.module('parserApp')
     Display3d.animate();
 
     // check all boxes on
+    console.log($scope.layers);
     for (var layer in $scope.allLayers) {
       $scope.layers.push($scope.allLayers[layer].layer);
     }

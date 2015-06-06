@@ -6,20 +6,61 @@ angular.module('parserApp')
     setInterval(function() {
       $scope.$apply(function() {
 
-        Social.checkLoginState();
         $scope.loggedIn = Auth.loggedIn;
       });
     }, 500);
+
+    setTimeout(function() {
+
+      FB.getLoginStatus(function(response) {
+        if (response.status === 'connected') {
+
+          var fb_id = response.authResponse.userID.toString();
+
+          $http.post('/checkout/checkIfPurchased', {fb_id: fb_id})
+            .success(function(response) {
+              if (response) {
+                $scope.purchasingUser = true;
+
+                $scope.purchasingUserDetails = response;
+              }
+            });
+        }
+      });
+    }, 550);
+
+    $scope.fbLogin = function() {
+      FB.login(function(response) {
+        if (response.status === 'connected') {
+          Auth.loggedIn = true;
+          $scope.loggedIn = Auth.loggedIn;
+        }
+      });
+    };
 
     $scope.stripeCallback = function (code, result) {
       if (result.error) {
         console.log('it failed! error: ' + result.error.message);
       } else {
         console.log('success! token: ' + result.id);
-        $http.post('/checkout/purchase', {stripeToken: result.id})
-          .success(function(data) {
-            console.log('SERVER SUCCESS', data);
-          });
+
+        FB.getLoginStatus(function(response) {
+          var fb_id = response.authResponse.userID.toString();
+          
+          var purchaseDetails = {
+            fb_id: fb_id,
+            name: $scope.purchasingUsername,
+            email: $scope.purchasingEmail,
+            number_of_keywords: $scope.selectedOption
+          };
+
+          $http.post('/checkout/purchase', {stripeToken: result.id, purchaseDetails: purchaseDetails})
+            .success(function(data) {
+              console.log('SERVER SUCCESS', data);
+
+              $scope.purchasingUser = true;
+            });
+        });
       }
     };
 
@@ -27,23 +68,4 @@ angular.module('parserApp')
 
       $scope.selectedOption = number;
     };
-
-    $scope.fbLogin = function() {
-      // console.log('LOGINTEST')
-      // FB.login(function(response) {
-      //   console.log(response);
-
-      //   // if (response.status === 'connected') {
-      //     Auth.loggedIn = true;
-      //   // }
-      // });
-    };
-
-    $scope.fbLogout = function() {
-      FB.logout(function(response) {
-        console.log(response);
-        Auth.loggedIn = false;
-      });
-    };
-
   });

@@ -17,7 +17,7 @@ angular.module('parserApp.display3dService', [])
   };
 
   var makeLoResMesh = function (layersSeparated, elData, layerObj) {
-    var loGeo = new THREE.PlaneBufferGeometry(140, 140);
+    var loGeo = new THREE.PlaneGeometry(140, 140);
     var loMesh;
     var score = elData.score.split(': ')[1];
     if (score === 'N/A') {
@@ -439,12 +439,42 @@ angular.module('parserApp.display3dService', [])
         el: tweet,
         elData: elData,
         lod: lodLevel,
-        x: x,
-        y: y
+        index: index,
+        position: new THREE.Vector3(x, y, z),
       });
 
     });
 
+  };
+
+  var mergeTweets = function (tweetsToMerge) {
+    var combinedGeo = new THREE.Geometry();
+    var combinedMat = [];
+
+    if (!window.combinedGeo) {
+      window.combinedGeo = combinedGeo;
+    }
+
+    for (var i = 0; i < tweetsToMerge.length; i++) {
+      var tweet = tweetsToMerge[i];
+      tweet.position.copy(tweet.obj.position);
+      console.log('mergeTweets- copied tweet position for tweet ' + tweet.index + ' : ' + JSON.stringify(tweet.position));
+      tweet.obj.position.set(0,0,0);
+      tweet.obj.updateMatrix();
+      combinedGeo.merge(tweet.obj.geometry, tweet.obj.matrix, i);
+      combinedMat.push(tweet.obj.material);
+      sceneGL.remove(tweet.obj);
+      tweet.obj = undefined;
+    }
+    var testMat = new THREE.MeshBasicMaterial({color: 'rgb(0,225,0)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide});
+    testMat.transparent = true;
+    testMat.opacity = 0.25;
+    //var combinedMesh = new THREE.Mesh(combinedGeo, new THREE.MeshFaceMaterial(combinedMat));
+    var combinedMesh = new THREE.Mesh(combinedGeo, testMat);
+    if (!window.combinedMesh) {
+      window.combinedMesh = combinedMesh;
+    }
+    return combinedMesh;
   };
 
   var makeTweetLayer = function(layerResultsProp, layerTitle, z) {
@@ -561,16 +591,25 @@ angular.module('parserApp.display3dService', [])
       for (var t = 0; t < layers[layerIndex].tweets.length; t++) {
         var tweet = layers[layerIndex].tweets[t];
         if (!tweet.obj) {
-          console.dir(t);
+          console.log('index: ' + t);
+          console.log(JSON.stringify(tweet.position));
         }
-        var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, tweet.obj.position.x, tweet.obj.position.y, tweet.obj.position.z );
+        if (tweet.obj) {
+          console.log('copying tweet position in updateTweetLOD for index ' + t + ' : ' + tweet.position.x);
+          tweet.position.copy(tweet.obj.position);
+          console.log('new tweet x: ' + tweet.position.x);
+          if (tweet.index === 0) {
+          }
+        }
+        var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, tweet.position.x, tweet.position.y, tweet.position.z );
 
-        if (tweetDistance > lod0Distance && tweet.el) {
-
+        if (tweetDistance > lod1Distance) {
+          // switch to lo LOD1
+          swapLOD(tweet, 'lo1', layers[layerIndex]);
+        } else if (tweetDistance > lod0Distance) {
           // switch to lower LOD
           swapLOD(tweet, 'lo', layers[layerIndex]);
         } else if (tweetDistance <= lod0Distance && !tweet.el) {
-
           // switch to higher LOD
           swapLOD(tweet, 'hi', layers[layerIndex]);
         }
@@ -582,9 +621,20 @@ angular.module('parserApp.display3dService', [])
 
     var el, object;
 
-    var x = tweet.obj.position.x;
-    var y = tweet.obj.position.y;
-    var z = tweet.obj.position.z;
+    var index = tweet.index;
+    var row = index % rows;
+    var col = Math.floor(index/rows);
+
+    var x, y, z;
+
+    if (tweet.obj) {
+      console.log('copying tweet position in swapLOD for index ' + index + ' : ' + tweet.position.x);
+      tweet.position.copy(tweet.obj.position);
+      console.log('new tweet x: ' + tweet.position.x);
+    }
+    x = tweet.position.x;
+    y = tweet.position.y;
+    z = tweet.position.z;
 
     // don't do anything if it's already at the right LOD
     if (swapTo === tweet.lod) {
@@ -596,7 +646,9 @@ angular.module('parserApp.display3dService', [])
       return;
     }
 
+    // 'hi' = css div
     if (swapTo === 'hi') {
+      console.log('swapping to hi');
       el = makeTweetElement(tweet.elData, layer);
       sceneGL.remove(tweet.obj);
       tweet.obj.geometry.dispose();
@@ -608,8 +660,17 @@ angular.module('parserApp.display3dService', [])
       tweet.lod = 'hi';
     }
 
+    // 'lo' = single webgl square
     if (swapTo === 'lo') {
-      sceneCSS.remove(tweet.obj);
+      console.log('swapping to lo for index:' + tweet.index);
+      if (tweet.el) { // swapping from hi
+        sceneCSS.remove(tweet.obj);
+      } else { // swapping from lo1
+        if (tweet.obj) { // only primary box in a merge group should have an obj
+          sceneGL.remove(tweet.obj);
+          tweet.obj.geometry.dispose();
+        }
+      }
       object = displayHelpers.makeLoResMesh(layersSeparated, tweet.elData, layer);
       object.position.x = x;
       object.position.y = y;
@@ -618,12 +679,46 @@ angular.module('parserApp.display3dService', [])
       tweet.lod = 'lo';
     }
 
+    // 'lo1' = 4 square geom merged into 1
+    if (swapTo === 'lo1') {
+      console.log('swapping to lo1');
+      var tweetsToMerge = [];
+      var tweetsInLayer = layer.tweets.length;
+      if (row % 2 === 0 && col % 2 === 0) {
+        // this is a primary box, 1 merge per primary
+        tweetsToMerge.push(tweet);
+        if (index+1 < tweetsInLayer) {
+          tweetsToMerge.push(layer.tweets[index+1]); // tweet below
+        }
+        if (index+rows < tweetsInLayer) {
+          tweetsToMerge.push(layer.tweets[index+rows]); // tweet to right
+        }
+        if (index+rows+1 < tweetsInLayer) {
+          tweetsToMerge.push(layer.tweets[index+rows+1]); // tweet 1 below and 1 right
+        }
+        object = mergeTweets(tweetsToMerge);
+        object.position.set(x, y, z);
+        sceneGL.add(object);
+        console.log('new lo1 mesh: ' + JSON.stringify(object.position));
+      } else {
+        object = undefined;
+      }
+      tweet.lod = 'lo1';
+    }
+
+    if (object === undefined) {
+    }
     tweet.obj = object;
     tweet.el = el;
   };
 
   var animate = function() {
-    requestAnimationFrame( animate );
+    var cameraMoved = false;
+
+    setTimeout( function() {
+        requestAnimationFrame( animate );
+    }, 1000 / 15 );
+
     tick++;
 
     // check if camera has moved
@@ -633,14 +728,19 @@ angular.module('parserApp.display3dService', [])
       // if so, adjust ribbon width so you don't see the left/right ends of the ribbon
       adjustRibbonWidth();
       updateTweetLOD();
+      cameraMoved = true;
     }
 
     prevCameraPosition.copy(camera.position);
 
     // auto scroll if tweets are falling off the right
-    if (!leftHover && !rightHover) {
+    if (cameraMoved && !leftHover && !rightHover) {
       if (layers[0].tweets.length) {
-        var lastTweetPosition = layers[0].tweets[layers[0].tweets.length-1].obj.position;
+        var lastTweet = layers[0].tweets[layers[0].tweets.length-1];
+        if (lastTweet.obj) {
+          lastTweet.position.copy(lastTweet.obj.position);
+        }
+        var lastTweetPosition = lastTweet.position;
         var rightEdge = displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, controls.target.y, controls.target.z)/2 + camera.position.x;
         if ((lastTweetPosition.x + xSpacing) > rightEdge) {
           var distanceToGo = (lastTweetPosition.x + xSpacing) - rightEdge;
@@ -673,14 +773,14 @@ angular.module('parserApp.display3dService', [])
     }
     TWEEN.update();
     controls.update();
+      render();
 
     // throttle
     // code for doing something every x ticks
-    var freq = 30;
-    if (tick >= 60/freq) {
-      tick = 0;
-      render();
-    }
+    // var freq = 30;
+    // if (tick >= 60/freq) {
+    //   tick = 0;
+    // }
   };
 
   var makeLayers = function () {

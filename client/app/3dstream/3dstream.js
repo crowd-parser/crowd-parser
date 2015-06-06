@@ -18,8 +18,8 @@ angular.module('parserApp')
     $scope.flattenText = 'Flatten';
     var liveStreamStarted = false;
     var expectedKeywordTweets = 0;
-    //var runFakeTweets = false;
-    //var intervalID;
+    var runFakeTweets = false;
+    var intervalID;
     var timeoutPromise;
 
 
@@ -368,48 +368,56 @@ angular.module('parserApp')
     // ====================================
     // CODE FOR GENERATING FAKE TEST TWEETS
     // ====================================
-    // var fakeScore = function () {
-    //   if (Math.random() < 0.6) {
-    //     return 0;
-    //   }
-    //   return Math.round(-1 + 2 * Math.random());
-    // };
+    var fakeScore = function () {
+      if (Math.random() < 0.6) {
+        return 0;
+      }
+      return Math.round(-1 + 2 * Math.random());
+    };
 
-    // var fakeText = function () {
-    //   var length = 10 + 100 * Math.random();
-    //   var chars = "abcdefghijklmnopqurstuvwxyz";
-    //   var text = '';
-    //   for (var i = 0; i < length; i++) {
-    //     if (3 * Math.random() <= 1 && text[text.length-1] !== ' ') {
-    //       text += ' '
-    //     }
-    //     text += chars[Math.floor(chars.length * Math.random())];
-    //   }
-    //   return text;
-    // };
+    var fakeText = function () {
+      var length = 10 + 100 * Math.random();
+      var chars = "abcdefghijklmnopqurstuvwxyz";
+      var text = '';
+      for (var i = 0; i < length; i++) {
+        if (3 * Math.random() <= 1 && text[text.length-1] !== ' ') {
+          text += ' '
+        }
+        text += chars[Math.floor(chars.length * Math.random())];
+      }
+      return text;
+    };
 
-    // var addFakeTweet = function () {
-    //   if ($scope.tweetCount >= 600) {
-    //     $scope.stopTweets();
-    //   }
-    //   if (runFakeTweets === true) {
-    //     var fakeTweet = {};
-    //     fakeTweet.baseLayerResults = { score: fakeScore() };
-    //     fakeTweet.emoticonLayerResults = { score: fakeScore() };
-    //     fakeTweet.username = 'user' + Math.round(1000 * Math.random());
-    //     fakeTweet.text = fakeText();
-    //     $scope.tweetData.push(fakeTweet);
-    //     Display3d.addTweet(fakeTweet, $scope.tweetCount);
-    //     $scope.tweetCount++;
-    //   }
-    // };
+    var addFakeTweet = function () {
+      if ($scope.tweetCount >= 600) {
+        $scope.stopTweets();
+      }
+      if (runFakeTweets === true) {
+        var fakeTweet = {};
+        fakeTweet.baseLayerResults = { positiveWords: [], negativeWords: [], score: fakeScore() };
+        fakeTweet.emoticonLayerResults = { positiveWords: [], negativeWords: [], score: fakeScore() };
+        fakeTweet.username = 'user' + Math.round(1000 * Math.random());
+        fakeTweet.text = fakeText();
+        $scope.tweetData.push(fakeTweet);
+        Display3d.addTweet(fakeTweet, $scope.tweetCount);
+        $scope.tweetCount++;
+      }
+    };
 
-    // $scope.streamFakeTweets = function () {
-    //   // stop any existing stream
-    //   socket.emit('twitter stop continuous stream');
-    //   runFakeTweets = true;
-    //   intervalID = setInterval(addFakeTweet, 5);
-    // };
+    $scope.streamFakeTweets = function () {
+      // stop any existing stream
+      socket.emit('twitter stop continuous stream');
+      if (runFakeTweets) {
+        runFakeTweets = false;
+        if (intervalID) {
+          clearInterval(intervalID);
+        }
+      } else {
+        runFakeTweets = true;
+        intervalID = setInterval(addFakeTweet, 50);
+      }
+      
+    };
 
     // $scope.fullScreen = function () {
     //   $scope.tweetData = [];

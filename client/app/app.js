@@ -48,6 +48,14 @@ angular.module('parserApp', [
         url: '/dashboard',
         templateUrl: 'app/dashboard/dashboard.html',
         controller: 'DashboardCtrl'
+      })
+      .state('privacy-policy', {
+        url: '/wp4fb/privacy-policy',
+        templateUrl: 'app/privacy-policy/privacy-policy.html'
+      })
+      .state('terms-of-service', {
+        url: '/terms-of-service',
+        templateUrl: 'app/privacy-policy/terms-of-service.html'
       });
 
     $urlRouterProvider

@@ -457,9 +457,15 @@ angular.module('parserApp.display3dService', [])
 
     for (var i = 0; i < tweetsToMerge.length; i++) {
       var tweet = tweetsToMerge[i];
+      // if (tweet.obj === undefined) {
+      //   console.log('undefined obj for index: ' + tweet.index);
+      // }
       tweet.position.copy(tweet.obj.position);
-      console.log('mergeTweets- copied tweet position for tweet ' + tweet.index + ' : ' + JSON.stringify(tweet.position));
-      tweet.obj.position.set(0,0,0);
+      var tmpRows = 2;
+      var x = Math.floor(i / tmpRows) * xSpacing;
+      var y = 0 - (i % tmpRows) * ySpacing;
+      // console.log('index: ' + tweet.index + ' ypos: ' + y);
+      tweet.obj.position.set(x,y,0);
       tweet.obj.updateMatrix();
       combinedGeo.merge(tweet.obj.geometry, tweet.obj.matrix, i);
       combinedMat.push(tweet.obj.material);
@@ -591,30 +597,53 @@ angular.module('parserApp.display3dService', [])
       for (var t = 0; t < layers[layerIndex].tweets.length; t++) {
         var tweet = layers[layerIndex].tweets[t];
         if (!tweet.obj) {
-          console.log('index: ' + t);
-          console.log(JSON.stringify(tweet.position));
         }
         if (tweet.obj) {
-          console.log('copying tweet position in updateTweetLOD for index ' + t + ' : ' + tweet.position.x);
           tweet.position.copy(tweet.obj.position);
-          console.log('new tweet x: ' + tweet.position.x);
           if (tweet.index === 0) {
           }
         }
         var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, tweet.position.x, tweet.position.y, tweet.position.z );
+        var layerDistance = displayHelpers.getCameraDistanceFrom( camera, controls.target.x, controls.target.y, layers[layerIndex].z );
 
-        if (tweetDistance > lod1Distance) {
-          // switch to lo LOD1
-          swapLOD(tweet, 'lo1', layers[layerIndex]);
-        } else if (tweetDistance > lod0Distance) {
-          // switch to lower LOD
+        // whole layer swaps
+        if (layerDistance > lod1Distance) {
+          // switch whole layer to LOD1
+          swapLayerLOD(layers[layerIndex], 'lo1');
+        } else if (layerDistance <= lod1Distance && layers[layerIndex].lod === 'lo1') {
+          // switch whole layer to lo
+          swapLayerLOD(layers[layerIndex], 'lo');
+        }
+
+        // individual tweet swaps
+        if (layerDistance <= lod1Distance && tweetDistance > lod0Distance && tweet.el) {
+          // switch to lo from hi
           swapLOD(tweet, 'lo', layers[layerIndex]);
-        } else if (tweetDistance <= lod0Distance && !tweet.el) {
-          // switch to higher LOD
+          layers[layerIndex].lod = 'individual';
+        } else if (layerDistance <= lod1Distance && tweetDistance <= lod0Distance && !tweet.el) {
+          // switch to hi from lo
           swapLOD(tweet, 'hi', layers[layerIndex]);
+          layers[layerIndex].lod = 'individual';
         }
       }
     }
+  };
+
+  var swapLayerLOD = function(layer, swapTo) {
+    if (layer.lod === swapTo) {
+      return;
+    }
+    if (layer.lodHolder) {
+      sceneGL.remove(layer.lodHolder);
+      layer.lodHolder = undefined;
+    }
+    layer.lodHolder = new THREE.Object3D();
+    for (var t = 0; t < layer.tweets.length; t++) {
+      var tweet = layer.tweets[t];
+      swapLOD(tweet, swapTo, layer);
+    }
+    sceneGL.add(layer.lodHolder);
+    layer.lod = swapTo;
   };
 
   var swapLOD = function (tweet, swapTo, layer) {
@@ -628,9 +657,7 @@ angular.module('parserApp.display3dService', [])
     var x, y, z;
 
     if (tweet.obj) {
-      console.log('copying tweet position in swapLOD for index ' + index + ' : ' + tweet.position.x);
       tweet.position.copy(tweet.obj.position);
-      console.log('new tweet x: ' + tweet.position.x);
     }
     x = tweet.position.x;
     y = tweet.position.y;
@@ -648,7 +675,7 @@ angular.module('parserApp.display3dService', [])
 
     // 'hi' = css div
     if (swapTo === 'hi') {
-      console.log('swapping to hi');
+      //console.log('swapping to hi');
       el = makeTweetElement(tweet.elData, layer);
       sceneGL.remove(tweet.obj);
       tweet.obj.geometry.dispose();
@@ -662,12 +689,12 @@ angular.module('parserApp.display3dService', [])
 
     // 'lo' = single webgl square
     if (swapTo === 'lo') {
-      console.log('swapping to lo for index:' + tweet.index);
+      //console.log('swapping to lo for index:' + tweet.index);
       if (tweet.el) { // swapping from hi
         sceneCSS.remove(tweet.obj);
       } else { // swapping from lo1
         if (tweet.obj) { // only primary box in a merge group should have an obj
-          sceneGL.remove(tweet.obj);
+          layer.ribbonMesh.remove(tweet.obj);
           tweet.obj.geometry.dispose();
         }
       }
@@ -680,34 +707,46 @@ angular.module('parserApp.display3dService', [])
     }
 
     // 'lo1' = 4 square geom merged into 1
-    if (swapTo === 'lo1') {
-      console.log('swapping to lo1');
+    if (swapTo === 'lo1' && tweet.lod === 'lo') { // from lo - need another condition if from lo2
+      //console.log('swapping to lo1, index ' + index + ' layer ' + layer.title);
       var tweetsToMerge = [];
       var tweetsInLayer = layer.tweets.length;
       if (row % 2 === 0 && col % 2 === 0) {
+        //console.log ('merging ' + index + ', ' + (index+1) + ', ' + (index+rows) + ', ' + (index+rows+1));
         // this is a primary box, 1 merge per primary
         tweetsToMerge.push(tweet);
-        if (index+1 < tweetsInLayer) {
+        if (index+1 < tweetsInLayer && row + 1 < 25) {
           tweetsToMerge.push(layer.tweets[index+1]); // tweet below
         }
         if (index+rows < tweetsInLayer) {
           tweetsToMerge.push(layer.tweets[index+rows]); // tweet to right
         }
-        if (index+rows+1 < tweetsInLayer) {
+        if (index+rows+1 < tweetsInLayer && row + 1 < 25) {
           tweetsToMerge.push(layer.tweets[index+rows+1]); // tweet 1 below and 1 right
         }
         object = mergeTweets(tweetsToMerge);
+        // set necessary values for non-primary squares - need to make sure this is done AFTER merging
+        for (var j = 1; j < tweetsToMerge.length; j++) {
+          tweetsToMerge[j].lod = 'lo1';
+          tweetsToMerge[j].obj = undefined;
+          //console.log('swapTo post merge set to undefined, tweet index: ' + tweetsToMerge[j].index);
+          tweetsToMerge[j].el = undefined;
+        }
         object.position.set(x, y, z);
-        sceneGL.add(object);
-        console.log('new lo1 mesh: ' + JSON.stringify(object.position));
+        //sceneGL.add(object);
+        //layer.ribbonMesh.add(object);
+        //layer.ribbonMesh.updateMatrixWorld();
+        layer.lodHolder.add(object);
+        // console.log(layer.lodHolder);
+        //THREE.SceneUtils.attach(object, sceneGL, layer.ribbonMesh);
       } else {
-        object = undefined;
+        // the non-primary squares don't need to worry about it
+        return;
       }
       tweet.lod = 'lo1';
     }
 
-    if (object === undefined) {
-    }
+
     tweet.obj = object;
     tweet.el = el;
   };

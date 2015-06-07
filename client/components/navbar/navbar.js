@@ -18,6 +18,7 @@ angular.module('parserApp')
     $scope.fbLogout = function() {
       FB.logout(function(response) {
         Auth.loggedIn = false;
+        Auth.purchasingUser = false;
       });
     };
 

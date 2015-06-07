@@ -34,9 +34,12 @@ angular.module('parserApp.authService', [])
 
   var loggedIn = false;
 
+  var purchasingUser = false;
+
   return {
     adminlogin: adminlogin,
     checkAuth: checkAuth,
-    loggedIn: loggedIn
+    loggedIn: loggedIn,
+    purchasingUser: purchasingUser
   };
 });

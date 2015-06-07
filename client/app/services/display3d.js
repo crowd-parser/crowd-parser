@@ -457,20 +457,19 @@ angular.module('parserApp.display3dService', [])
 
     for (var i = 0; i < tweetsToMerge.length; i++) {
       var tweet = tweetsToMerge[i];
-      // if (tweet.obj === undefined) {
-      //   console.log('undefined obj for index: ' + tweet.index);
-      // }
-      tweet.position.copy(tweet.obj.position);
-      var tmpRows = 2;
-      var x = Math.floor(i / tmpRows) * xSpacing;
-      var y = 0 - (i % tmpRows) * ySpacing;
-      // console.log('index: ' + tweet.index + ' ypos: ' + y);
-      tweet.obj.position.set(x,y,0);
-      tweet.obj.updateMatrix();
-      combinedGeo.merge(tweet.obj.geometry, tweet.obj.matrix, i);
-      combinedMat.push(tweet.obj.material);
-      sceneGL.remove(tweet.obj);
-      tweet.obj = undefined;
+      if (tweet !== null) {
+        tweet.position.copy(tweet.obj.position);
+        var tmpRows = 2;
+        var x = Math.floor(i / tmpRows) * xSpacing;
+        var y = 0 - (i % tmpRows) * ySpacing;
+        // console.log('index: ' + tweet.index + ' ypos: ' + y);
+        tweet.obj.position.set(x,y,0);
+        tweet.obj.updateMatrix();
+        combinedGeo.merge(tweet.obj.geometry, tweet.obj.matrix, i);
+        combinedMat.push(tweet.obj.material);
+        sceneGL.remove(tweet.obj);
+        tweet.obj = undefined;
+      }
     }
     var testMat = new THREE.MeshBasicMaterial({color: 'rgb(0,225,0)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide});
     testMat.transparent = true;
@@ -717,20 +716,28 @@ angular.module('parserApp.display3dService', [])
         tweetsToMerge.push(tweet);
         if (index+1 < tweetsInLayer && row + 1 < 25) {
           tweetsToMerge.push(layer.tweets[index+1]); // tweet below
+        } else {
+          tweetsToMerge.push(null);
         }
         if (index+rows < tweetsInLayer) {
           tweetsToMerge.push(layer.tweets[index+rows]); // tweet to right
+        } else {
+          tweetsToMerge.push(null);
         }
         if (index+rows+1 < tweetsInLayer && row + 1 < 25) {
           tweetsToMerge.push(layer.tweets[index+rows+1]); // tweet 1 below and 1 right
+        } else {
+          tweetsToMerge.push(null);
         }
         object = mergeTweets(tweetsToMerge);
         // set necessary values for non-primary squares - need to make sure this is done AFTER merging
         for (var j = 1; j < tweetsToMerge.length; j++) {
-          tweetsToMerge[j].lod = 'lo1';
-          tweetsToMerge[j].obj = undefined;
-          //console.log('swapTo post merge set to undefined, tweet index: ' + tweetsToMerge[j].index);
-          tweetsToMerge[j].el = undefined;
+          if (tweetsToMerge[j] !== null) {
+            tweetsToMerge[j].lod = 'lo1';
+            tweetsToMerge[j].obj = undefined;
+            //console.log('swapTo post merge set to undefined, tweet index: ' + tweetsToMerge[j].index);
+            tweetsToMerge[j].el = undefined;
+          }
         }
         object.position.set(x, y, z);
         //sceneGL.add(object);

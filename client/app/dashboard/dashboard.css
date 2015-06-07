@@ -124,6 +124,13 @@
   margin-bottom: 15px;
 }
 
+.purchasing-user-container input {
+  width: 300px;
+  margin: 0 auto;
+  margin-top: 30px;
+  margin-bottom: 8px;
+}
+
 .share-keywords {
   font-size: 50px;
 }

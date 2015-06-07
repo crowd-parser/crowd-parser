@@ -3,6 +3,8 @@
 angular.module('parserApp')
   .controller('DashboardCtrl', function ($scope, $http, Auth, Social) {
 
+    Social.sbg();
+
     setInterval(function() {
       $scope.$apply(function() {
 

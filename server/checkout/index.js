@@ -91,6 +91,17 @@ router.post('/checkIfPurchased', function(req, res) {
   });
 });
 
+router.get('/getUserKeywords/:id', function(req, res) {
+
+  var id = req.params.id;
+
+  db.db.query('SELECT purchased_keyword FROM purchased_keywords WHERE purchasing_user=' + id, function(err, response) {
+    
+    console.log(err, response);
+    res.send(response);
+  });
+});
+
 router.post('/userAddKeyword', function(req, res) {
 
   var params = {
@@ -109,6 +120,14 @@ router.post('/userAddKeyword', function(req, res) {
       res.send('successfully added keyword!');
     });
 
+  });
+});
+
+router.get('/getAllUserKeywordsWithNames', function(req, res) {
+
+  db.db.query('SELECT purchasing_users.name, purchased_keywords.purchased_keyword FROM purchasing_users JOIN purchased_keywords ON purchasing_users.id=purchased_keywords.purchasing_user', function(err, response) {
+
+    console.log(err, response);
   });
 });
 

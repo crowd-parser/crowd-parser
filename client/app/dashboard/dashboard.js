@@ -3,10 +3,13 @@
 angular.module('parserApp')
   .controller('DashboardCtrl', function ($scope, $http, Auth, Social) {
 
+    Social.sbg();
+
     setInterval(function() {
       $scope.$apply(function() {
 
         $scope.loggedIn = Auth.loggedIn;
+        $scope.purchasingUser = Auth.purchasingUser;
       });
     }, 500);
 
@@ -20,9 +23,16 @@ angular.module('parserApp')
           $http.post('/checkout/checkIfPurchased', {fb_id: fb_id})
             .success(function(response) {
               if (response) {
-                $scope.purchasingUser = true;
+                Auth.purchasingUser = true;
+                $scope.purchasingUser = Auth.purchasingUser;
 
                 $scope.purchasingUserDetails = response;
+
+                $http.get('/checkout/getUserKeywords/' + $scope.purchasingUserDetails.id)
+                  .success(function(response) {
+
+                    $scope.purchasingUserKeywords = response;
+                  });
               }
             });
         }
@@ -34,6 +44,27 @@ angular.module('parserApp')
         if (response.status === 'connected') {
           Auth.loggedIn = true;
           $scope.loggedIn = Auth.loggedIn;
+
+          if (response.status === 'connected') {
+
+            var fb_id = response.authResponse.userID.toString();
+
+            $http.post('/checkout/checkIfPurchased', {fb_id: fb_id})
+              .success(function(response) {
+                if (response) {
+                  Auth.purchasingUser = true;
+                  $scope.purchasingUser = Auth.purchasingUser;
+
+                  $scope.purchasingUserDetails = response;
+
+                  $http.get('/checkout/getUserKeywords/' + $scope.purchasingUserDetails.id)
+                    .success(function(response) {
+
+                      $scope.purchasingUserKeywords = response;
+                    });
+                }
+              });
+          }
         }
       });
     };

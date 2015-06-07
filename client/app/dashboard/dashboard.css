@@ -1,5 +1,13 @@
-#fb-status {
-  font-size: 14px;
+.fb-login-button-custom {
+  background: #3B5998;
+  color: #FFF;
+  font-size: 20px;
+  padding: 2px 9px;
+  border: 0;
+}
+
+.fb-login-button-custom:hover {
+  background: #466AB6;
 }
 
 .checkout-container {

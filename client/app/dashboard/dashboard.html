@@ -78,6 +78,8 @@
     <h1>Purchasing User Dashboard</h1>
 
     <div>Name: {{purchasingUserDetails.name}}</div>
+    <div>My keywords: <div ng-repeat="keyword in purchasingUserKeywords">{{keyword.purchased_keyword}}</div></div>
+
     <div>Number of keywords remaining: {{purchasingUserDetails.number_of_keywords}}</div>
 
     <form onsubmit="return false" ng-submit="userKeywordSubmit()">

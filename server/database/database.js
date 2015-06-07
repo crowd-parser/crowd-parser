@@ -81,7 +81,7 @@ var connectionLoop = function(){
         return del.call(this, err, sequence);
       };
 
-      exports.currDB =  process.env.DATABASE_PROD || 'dev'
+      exports.currDB =  process.env.DATABASE_PROD || 'production'
       console.log("==============CONNECTED as ID ", exports.db.threadId);
       exports.isLive = true;
 

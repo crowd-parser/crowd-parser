@@ -91,6 +91,17 @@ router.post('/checkIfPurchased', function(req, res) {
   });
 });
 
+router.get('/getUserKeywords/:id', function(req, res) {
+
+  var id = req.params.id;
+
+  db.db.query('SELECT purchased_keyword FROM purchased_keywords WHERE purchasing_user=' + id, function(err, response) {
+    
+    console.log(err, response);
+    res.send(response);
+  });
+});
+
 router.post('/userAddKeyword', function(req, res) {
 
   var params = {

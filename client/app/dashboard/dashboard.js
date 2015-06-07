@@ -23,6 +23,12 @@ angular.module('parserApp')
                 $scope.purchasingUser = true;
 
                 $scope.purchasingUserDetails = response;
+
+                $http.get('/checkout/getUserKeywords/' + $scope.purchasingUserDetails.id)
+                  .success(function(response) {
+
+                    $scope.purchasingUserKeywords = response;
+                  });
               }
             });
         }

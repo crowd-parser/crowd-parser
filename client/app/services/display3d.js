@@ -473,25 +473,67 @@ angular.module('parserApp.display3dService', [])
         if (layerObj.lodHolder && layerObj.lodHolder.children[0]) {
           layerObj.lodHolder.children[0].geometry.dispose();
         }
-
-        
         sceneGL.remove(layerObj.lodHolder);
         layerObj.lodHolder = undefined;
         layerObj.lodHolder = new THREE.Object3D();
-        // gets all the previous tweets
+
+
+        var combinedGeo = new THREE.Geometry();
+        //var combinedMat = [];
         var combinedMat = [layerObj.tweetMaterialNeutral, layerObj.tweetMaterialPos, layerObj.tweetMaterialNeg];
-        var prevTweetsObj = mergeTweets(layerObj.tweets, layerObj);
-        var score = +elData.score.split(": ")[1];
-        var matIndex = getMatIndexFromScore(score);
-        var newPlaneMesh = displayHelpers.makeLoResMesh(layersSeparated, elData, layerObj, 'p');
-        newPlaneMesh.position.set(x,y,z);
+        var newPlaneMesh;
+        var tmpX;
+        var tmpY;
+        var tmpRows;
+        var score;
+        var matIndex;
+
+        for (var i = 0; i < layerObj.tweets.length; i++) {
+          var prevTweet = layerObj.tweets[i];
+          if (prevTweet !== null) {
+            if (prevTweet.obj) {
+              prevTweet.position.copy(prevTweet.obj.position);
+            }
+            tmpRows = rows;
+            tmpX = Math.floor(i / tmpRows) * xSpacing;
+            tmpY = 0 - (i % tmpRows) * ySpacing;
+            // console.log('index: ' + prevTweet.index + ' ypos: ' + y);
+            score = +prevTweet.elData.score.split(': ')[1];
+            matIndex = getMatIndexFromScore(score);
+            sceneGL.remove(prevTweet.obj);
+            if (prevTweet.obj) {
+              prevTweet.obj.geometry.dispose();
+            }
+            newPlaneMesh = displayHelpers.makeLoResMesh(layersSeparated, prevTweet.elData, layerObj, 'p');
+            newPlaneMesh.position.set(tmpX,tmpY,0);
+            newPlaneMesh.updateMatrix();
+            combinedGeo.merge(newPlaneMesh.geometry, newPlaneMesh.matrix, matIndex);
+            newPlaneMesh.geometry.dispose();
+            newPlaneMesh = undefined;
+            //combinedMat.push(prevTweet.obj.material);
+            sceneGL.remove(prevTweet.obj);
+            prevTweet.obj = undefined;
+          }
+        }
+        // add newest tweet
+        newPlaneMesh = displayHelpers.makeLoResMesh(layersSeparated, elData, layerObj, 'p');
+        tmpX = Math.floor(i / tmpRows) * xSpacing;
+        tmpY = 0 - (i % tmpRows) * ySpacing;
+        score = +elData.score.split(': ')[1];
+        matIndex = getMatIndexFromScore(score);
+        newPlaneMesh.position.set(tmpX,tmpY,0);
         newPlaneMesh.updateMatrix();
-        prevTweetsObj.geometry.merge(newPlaneMesh.geometry, newPlaneMesh.matrix, matIndex);
+        combinedGeo.merge(newPlaneMesh.geometry, newPlaneMesh.matrix, matIndex);
         newPlaneMesh.geometry.dispose();
         newPlaneMesh = undefined;
-        var obj = new THREE.Mesh(prevTweetsObj.geometry, new THREE.MeshFaceMaterial(combinedMat));
-        obj.position.set(xStart,yStart,z);
-        layerObj.lodHolder.add(obj);
+        var testMat = new THREE.MeshBasicMaterial({color: 'rgb(0,225,0)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide});
+        testMat.transparent = true;
+        testMat.opacity = 0.25;
+        var combinedMesh = new THREE.Mesh(combinedGeo, new THREE.MeshFaceMaterial(combinedMat));
+        combinedMesh.position.set(xStart, yStart, z);
+
+
+        layerObj.lodHolder.add(combinedMesh);
         sceneGL.add(layerObj.lodHolder);
 
 

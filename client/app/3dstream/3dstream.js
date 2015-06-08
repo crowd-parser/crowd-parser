@@ -18,8 +18,8 @@ angular.module('parserApp')
     $scope.flattenText = 'Flatten';
     var liveStreamStarted = false;
     var expectedKeywordTweets = 0;
-    //var runFakeTweets = false;
-    //var intervalID;
+    var runFakeTweets = false;
+    var intervalID;
     var timeoutPromise;
 
 
@@ -81,13 +81,15 @@ angular.module('parserApp')
 
     // two options, option 1: user navigates away traditionally (close browser,
     // type in new url, use back button, refresh)
-    window.onbeforeunload = function (event) {
-      socket.emit('twitter stop continuous stream');
+    window.onbeforeunload = function () {
+      Display3d.clear();
+      //socket.emit('twitter stop continuous stream');
     };
 
     // option 2: user uses angular routes
-    $scope.$on('$locationChangeStart', function (event, next, current) {
-      socket.emit('twitter stop continuous stream');
+    $scope.$on('$locationChangeStart', function () {
+      Display3d.clear();
+      //socket.emit('twitter stop continuous stream');
     });
 
     // toggle autoscroll on or off
@@ -123,12 +125,16 @@ angular.module('parserApp')
 
     // request REST tweets from server
     $scope.getRestTweets = function () {
-      $scope.tweetData = [];
-      $scope.tweetCount = 0;
 
       if (!$scope.keywordStream) {
         return;
       }
+
+      $scope.tweetData = [];
+      $scope.tweetCount = 0;
+      liveStreamStarted = false;
+      Display3d.clear();
+      Display3d.reinit(25);
 
       socketWithRoom(function () {
         socket.emit('twitter rest search', $scope.keywordStream, 'recent', 100, null, $scope.clientID);
@@ -205,6 +211,8 @@ angular.module('parserApp')
       if (liveStreamStarted === false) {
         $scope.tweetData = [];
         $scope.tweetCount = 0;
+        Display3d.clear();
+        Display3d.reinit(25);
       }
 
       // if off, stops listening for live stream emits from DB
@@ -269,6 +277,8 @@ angular.module('parserApp')
 
       $scope.tweetData = [];
       $scope.tweetCount = 0;
+      Display3d.clear();
+      Display3d.reinit(25);
 
       socketWithRoom(function () {
         socket.emit('tweet keyword', keyword, $scope.clientID);
@@ -368,48 +378,56 @@ angular.module('parserApp')
     // ====================================
     // CODE FOR GENERATING FAKE TEST TWEETS
     // ====================================
-    // var fakeScore = function () {
-    //   if (Math.random() < 0.6) {
-    //     return 0;
-    //   }
-    //   return Math.round(-1 + 2 * Math.random());
-    // };
+    var fakeScore = function () {
+      if (Math.random() < 0.6) {
+        return 0;
+      }
+      return Math.round(-1 + 2 * Math.random());
+    };
 
-    // var fakeText = function () {
-    //   var length = 10 + 100 * Math.random();
-    //   var chars = "abcdefghijklmnopqurstuvwxyz";
-    //   var text = '';
-    //   for (var i = 0; i < length; i++) {
-    //     if (3 * Math.random() <= 1 && text[text.length-1] !== ' ') {
-    //       text += ' '
-    //     }
-    //     text += chars[Math.floor(chars.length * Math.random())];
-    //   }
-    //   return text;
-    // };
+    var fakeText = function () {
+      var length = 10 + 100 * Math.random();
+      var chars = "abcdefghijklmnopqurstuvwxyz";
+      var text = '';
+      for (var i = 0; i < length; i++) {
+        if (3 * Math.random() <= 1 && text[text.length-1] !== ' ') {
+          text += ' '
+        }
+        text += chars[Math.floor(chars.length * Math.random())];
+      }
+      return text;
+    };
 
-    // var addFakeTweet = function () {
-    //   if ($scope.tweetCount >= 600) {
-    //     $scope.stopTweets();
-    //   }
-    //   if (runFakeTweets === true) {
-    //     var fakeTweet = {};
-    //     fakeTweet.baseLayerResults = { score: fakeScore() };
-    //     fakeTweet.emoticonLayerResults = { score: fakeScore() };
-    //     fakeTweet.username = 'user' + Math.round(1000 * Math.random());
-    //     fakeTweet.text = fakeText();
-    //     $scope.tweetData.push(fakeTweet);
-    //     Display3d.addTweet(fakeTweet, $scope.tweetCount);
-    //     $scope.tweetCount++;
-    //   }
-    // };
+    var addFakeTweet = function () {
+      if ($scope.tweetCount >= 600) {
+        $scope.stopTweets();
+      }
+      if (runFakeTweets === true) {
+        var fakeTweet = {};
+        fakeTweet.baseLayerResults = { positiveWords: [], negativeWords: [], score: fakeScore() };
+        fakeTweet.emoticonLayerResults = { positiveWords: [], negativeWords: [], score: fakeScore() };
+        fakeTweet.username = 'user' + Math.round(1000 * Math.random());
+        fakeTweet.text = fakeText();
+        $scope.tweetData.push(fakeTweet);
+        Display3d.addTweet(fakeTweet, $scope.tweetCount);
+        $scope.tweetCount++;
+      }
+    };
 
-    // $scope.streamFakeTweets = function () {
-    //   // stop any existing stream
-    //   socket.emit('twitter stop continuous stream');
-    //   runFakeTweets = true;
-    //   intervalID = setInterval(addFakeTweet, 5);
-    // };
+    $scope.streamFakeTweets = function () {
+      // stop any existing stream
+      socket.emit('twitter stop continuous stream');
+      if (runFakeTweets) {
+        runFakeTweets = false;
+        if (intervalID) {
+          clearInterval(intervalID);
+        }
+      } else {
+        runFakeTweets = true;
+        intervalID = setInterval(addFakeTweet, 5);
+      }
+      
+    };
 
     // $scope.fullScreen = function () {
     //   $scope.tweetData = [];

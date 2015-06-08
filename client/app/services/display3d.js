@@ -17,7 +17,7 @@ angular.module('parserApp.display3dService', [])
   };
 
   var makeLoResMesh = function (layersSeparated, elData, layerObj) {
-    var loGeo = new THREE.PlaneBufferGeometry(140, 140);
+    var loGeo = new THREE.PlaneGeometry(140, 140);
     var loMesh;
     var score = elData.score.split(': ')[1];
     if (score === 'N/A') {
@@ -105,6 +105,7 @@ angular.module('parserApp.display3dService', [])
   var scope;
 
   var lod0Distance = 1000;
+  var lod1Distance = 2000;
 
   var frontLayerZ = 300;
   var layerSpacing = 300;
@@ -124,6 +125,44 @@ angular.module('parserApp.display3dService', [])
   var yStart = 300;
   var xSpacing = 320;
   var xStart = -800;
+
+  var clear = function () {
+    console.log('calling clear');
+    if (layers !== undefined) {
+      layers.forEach( function (layer) {
+        sceneGL.remove(layer.ribbonMesh);
+        layer.ribbonMesh = undefined;
+        sceneGL.remove(layer.titleMesh);
+        layer.titleMesh = undefined;
+        layer.ribbonMaterial.dispose();
+        layer.ribbonMaterial = undefined;
+        layer.titleMaterial.dispose();
+        layer.titleMaterial = undefined;
+        layer.tweetMaterialNeutral.dispose();
+        layer.tweetMaterialNeutral = undefined;
+        layer.tweetMaterialPos.dispose();
+        layer.tweetMaterialPos = undefined;
+        layer.tweetMaterialNeg.dispose();
+        layer.tweetMaterialNeg = undefined;
+        layer.tweets.forEach( function (tweet) {
+          if (tweet.obj) {
+            sceneGL.remove(tweet.obj);
+            sceneCSS.remove(tweet.obj);
+            if (tweet.obj.geometry) {
+              tweet.obj.geometry.dispose();
+            }
+            if (tweet.obj.material) {
+              tweet.obj.material.dispose();
+            }
+          }
+          tweet.obj = undefined;
+          tweet.el = undefined;
+        });
+        layer.tweets = undefined;
+        layer = undefined;
+      });
+    }
+  };
 
   var updateLayers = function (layersVisible) {
     layers.forEach(function (layerObj, i) {
@@ -415,6 +454,7 @@ angular.module('parserApp.display3dService', [])
       var lodLevel;
 
       var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, x, y, z );
+
       if (tweetDistance > lod0Distance) {
         lodLevel = 'lo';
         object = displayHelpers.makeLoResMesh(layersSeparated, elData, layerObj);
@@ -438,12 +478,57 @@ angular.module('parserApp.display3dService', [])
         el: tweet,
         elData: elData,
         lod: lodLevel,
-        x: x,
-        y: y
+        index: index,
+        position: new THREE.Vector3(x, y, z),
       });
 
     });
 
+  };
+
+  var mergeTweets = function (tweetsToMerge, layer) {
+    var combinedGeo = new THREE.Geometry();
+    //var combinedMat = [];
+    var combinedMat = [layer.tweetMaterialNeutral, layer.tweetMaterialPos, layer.tweetMaterialNeg];
+
+    if (!window.combinedGeo) {
+      window.combinedGeo = combinedGeo;
+    }
+
+    for (var i = 0; i < tweetsToMerge.length; i++) {
+      var tweet = tweetsToMerge[i];
+      if (tweet !== null) {
+        tweet.position.copy(tweet.obj.position);
+        var tmpRows = 2;
+        var x = Math.floor(i / tmpRows) * xSpacing;
+        var y = 0 - (i % tmpRows) * ySpacing;
+        // console.log('index: ' + tweet.index + ' ypos: ' + y);
+        tweet.obj.position.set(x,y,0);
+        tweet.obj.updateMatrix();
+        var score = +tweet.elData.score.split(': ')[1];
+        var matIndex;
+        if (score > 0) {
+          matIndex = 1;
+        } else if (score < 0) {
+          matIndex = 2;
+        } else {
+          matIndex = 0;
+        }
+        combinedGeo.merge(tweet.obj.geometry, tweet.obj.matrix, matIndex);
+        //combinedMat.push(tweet.obj.material);
+        sceneGL.remove(tweet.obj);
+        tweet.obj = undefined;
+      }
+    }
+    var testMat = new THREE.MeshBasicMaterial({color: 'rgb(0,225,0)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide});
+    testMat.transparent = true;
+    testMat.opacity = 0.25;
+    var combinedMesh = new THREE.Mesh(combinedGeo, new THREE.MeshFaceMaterial(combinedMat));
+    //var combinedMesh = new THREE.Mesh(combinedGeo, testMat);
+    if (!window.combinedMesh) {
+      window.combinedMesh = combinedMesh;
+    }
+    return combinedMesh;
   };
 
   var makeTweetLayer = function(layerResultsProp, layerTitle, z) {
@@ -550,35 +635,81 @@ angular.module('parserApp.display3dService', [])
     rendererGL.render( sceneGL, camera );
   };
 
+  // TEMP NOTES
+  // 1. If I'm past a certain distance, I can probably LOD the whole layer, or even all layers at once.
+  //    I don't have to ping every tweet.
+  // 2. I should super-low LOD stuff that is off screen.
+  // 3. I should have flatten and separate treat layers differently at that level
   var updateTweetLOD = function () {
     for (var layerIndex = 0; layerIndex < layers.length; layerIndex++) {
       for (var t = 0; t < layers[layerIndex].tweets.length; t++) {
         var tweet = layers[layerIndex].tweets[t];
         if (!tweet.obj) {
-          console.dir(t);
         }
-        var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, tweet.obj.position.x, tweet.obj.position.y, tweet.obj.position.z );
+        if (tweet.obj) {
+          tweet.position.copy(tweet.obj.position);
+          if (tweet.index === 0) {
+          }
+        }
+        var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, tweet.position.x, tweet.position.y, tweet.position.z );
+        var layerDistance = displayHelpers.getCameraDistanceFrom( camera, controls.target.x, controls.target.y, layers[layerIndex].z );
 
-        if (tweetDistance > lod0Distance && tweet.el) {
+        // whole layer swaps
+        if (layerDistance > lod1Distance) {
+          // switch whole layer to LOD1
+          swapLayerLOD(layers[layerIndex], 'lo1');
+        } else if (layerDistance <= lod1Distance && layers[layerIndex].lod === 'lo1') {
+          // switch whole layer to lo
+          swapLayerLOD(layers[layerIndex], 'lo');
+        }
 
-          // switch to lower LOD
+        // individual tweet swaps
+        if (layerDistance <= lod1Distance && tweetDistance > lod0Distance && tweet.el) {
+          // switch to lo from hi
           swapLOD(tweet, 'lo', layers[layerIndex]);
-        } else if (tweetDistance <= lod0Distance && !tweet.el) {
-
-          // switch to higher LOD
+          layers[layerIndex].lod = 'individual';
+        } else if (layerDistance <= lod1Distance && tweetDistance <= lod0Distance && !tweet.el) {
+          // switch to hi from lo
           swapLOD(tweet, 'hi', layers[layerIndex]);
+          layers[layerIndex].lod = 'individual';
         }
       }
     }
+  };
+
+  var swapLayerLOD = function(layer, swapTo) {
+    if (layer.lod === swapTo) {
+      return;
+    }
+    if (layer.lodHolder) {
+      sceneGL.remove(layer.lodHolder);
+      layer.lodHolder = undefined;
+    }
+    layer.lodHolder = new THREE.Object3D();
+    for (var t = 0; t < layer.tweets.length; t++) {
+      var tweet = layer.tweets[t];
+      swapLOD(tweet, swapTo, layer);
+    }
+    sceneGL.add(layer.lodHolder);
+    layer.lod = swapTo;
   };
 
   var swapLOD = function (tweet, swapTo, layer) {
 
     var el, object;
 
-    var x = tweet.obj.position.x;
-    var y = tweet.obj.position.y;
-    var z = tweet.obj.position.z;
+    var index = tweet.index;
+    var row = index % rows;
+    var col = Math.floor(index/rows);
+
+    var x, y, z;
+
+    if (tweet.obj) {
+      tweet.position.copy(tweet.obj.position);
+    }
+    x = tweet.position.x;
+    y = tweet.position.y;
+    z = tweet.position.z;
 
     // don't do anything if it's already at the right LOD
     if (swapTo === tweet.lod) {
@@ -590,9 +721,12 @@ angular.module('parserApp.display3dService', [])
       return;
     }
 
+    // 'hi' = css div
     if (swapTo === 'hi') {
+      //console.log('swapping to hi');
       el = makeTweetElement(tweet.elData, layer);
       sceneGL.remove(tweet.obj);
+      tweet.obj.geometry.dispose();
       object = new THREE.CSS3DObject( el );
       object.position.x = x;
       object.position.y = y;
@@ -601,8 +735,17 @@ angular.module('parserApp.display3dService', [])
       tweet.lod = 'hi';
     }
 
+    // 'lo' = single webgl square
     if (swapTo === 'lo') {
-      sceneCSS.remove(tweet.obj);
+      //console.log('swapping to lo for index:' + tweet.index);
+      if (tweet.el) { // swapping from hi
+        sceneCSS.remove(tweet.obj);
+      } else { // swapping from lo1
+        if (tweet.obj) { // only primary box in a merge group should have an obj
+          layer.ribbonMesh.remove(tweet.obj);
+          tweet.obj.geometry.dispose();
+        }
+      }
       object = displayHelpers.makeLoResMesh(layersSeparated, tweet.elData, layer);
       object.position.x = x;
       object.position.y = y;
@@ -611,12 +754,66 @@ angular.module('parserApp.display3dService', [])
       tweet.lod = 'lo';
     }
 
+    // 'lo1' = 4 square geom merged into 1
+    if (swapTo === 'lo1' && tweet.lod === 'lo') { // from lo - need another condition if from lo2
+      //console.log('swapping to lo1, index ' + index + ' layer ' + layer.title);
+      var tweetsToMerge = [];
+      var tweetsInLayer = layer.tweets.length;
+      if (row % 2 === 0 && col % 2 === 0) {
+        //console.log ('merging ' + index + ', ' + (index+1) + ', ' + (index+rows) + ', ' + (index+rows+1));
+        // this is a primary box, 1 merge per primary
+        tweetsToMerge.push(tweet);
+        if (index+1 < tweetsInLayer && row + 1 < 25) {
+          tweetsToMerge.push(layer.tweets[index+1]); // tweet below
+        } else {
+          tweetsToMerge.push(null);
+        }
+        if (index+rows < tweetsInLayer) {
+          tweetsToMerge.push(layer.tweets[index+rows]); // tweet to right
+        } else {
+          tweetsToMerge.push(null);
+        }
+        if (index+rows+1 < tweetsInLayer && row + 1 < 25) {
+          tweetsToMerge.push(layer.tweets[index+rows+1]); // tweet 1 below and 1 right
+        } else {
+          tweetsToMerge.push(null);
+        }
+        object = mergeTweets(tweetsToMerge, layer);
+        // set necessary values for non-primary squares - need to make sure this is done AFTER merging
+        for (var j = 1; j < tweetsToMerge.length; j++) {
+          if (tweetsToMerge[j] !== null) {
+            tweetsToMerge[j].lod = 'lo1';
+            tweetsToMerge[j].obj = undefined;
+            //console.log('swapTo post merge set to undefined, tweet index: ' + tweetsToMerge[j].index);
+            tweetsToMerge[j].el = undefined;
+          }
+        }
+        object.position.set(x, y, z);
+        //sceneGL.add(object);
+        //layer.ribbonMesh.add(object);
+        //layer.ribbonMesh.updateMatrixWorld();
+        layer.lodHolder.add(object);
+        // console.log(layer.lodHolder);
+        //THREE.SceneUtils.attach(object, sceneGL, layer.ribbonMesh);
+      } else {
+        // the non-primary squares don't need to worry about it
+        return;
+      }
+      tweet.lod = 'lo1';
+    }
+
+
     tweet.obj = object;
     tweet.el = el;
   };
 
   var animate = function() {
-    requestAnimationFrame( animate );
+    var cameraMoved = false;
+
+    setTimeout( function() {
+        requestAnimationFrame( animate );
+    }, 1000 / 15 );
+
     tick++;
 
     // check if camera has moved
@@ -626,14 +823,19 @@ angular.module('parserApp.display3dService', [])
       // if so, adjust ribbon width so you don't see the left/right ends of the ribbon
       adjustRibbonWidth();
       updateTweetLOD();
+      cameraMoved = true;
     }
 
     prevCameraPosition.copy(camera.position);
 
     // auto scroll if tweets are falling off the right
-    if (!leftHover && !rightHover) {
+    if (cameraMoved && !leftHover && !rightHover) {
       if (layers[0].tweets.length) {
-        var lastTweetPosition = layers[0].tweets[layers[0].tweets.length-1].obj.position;
+        var lastTweet = layers[0].tweets[layers[0].tweets.length-1];
+        if (lastTweet.obj) {
+          lastTweet.position.copy(lastTweet.obj.position);
+        }
+        var lastTweetPosition = lastTweet.position;
         var rightEdge = displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, controls.target.y, controls.target.z)/2 + camera.position.x;
         if ((lastTweetPosition.x + xSpacing) > rightEdge) {
           var distanceToGo = (lastTweetPosition.x + xSpacing) - rightEdge;
@@ -666,14 +868,14 @@ angular.module('parserApp.display3dService', [])
     }
     TWEEN.update();
     controls.update();
+      render();
 
     // throttle
     // code for doing something every x ticks
-    var freq = 30;
-    if (tick >= 60/freq) {
-      tick = 0;
-      render();
-    }
+    // var freq = 30;
+    // if (tick >= 60/freq) {
+    //   tick = 0;
+    // }
   };
 
   var makeLayers = function () {
@@ -701,10 +903,8 @@ angular.module('parserApp.display3dService', [])
 
     // overwrite defaults if in mini window
     if (context === 'mini') {
-      containerID = 'mini-container-3d';
       cameraZ = 200;
       cameraY = 0;
-      height = document.getElementById(containerID).clientHeight;
       rows = 1;
       ySpacing = 180;
       layerSpacing = 125;
@@ -766,10 +966,6 @@ angular.module('parserApp.display3dService', [])
       xStart = 0 - (displayHelpers.getDisplayWidthAtPoint(camera,0,0,0) / 4);
     }
 
-    makeLayers();
-
-    camera.position.z = camera.position.z + layers.length * layerSpacing;
-
     addButtonEvent('flatten-separate-3d', 'click', function() {
       if (layersSeparated) {
         flattenLayers();
@@ -780,12 +976,25 @@ angular.module('parserApp.display3dService', [])
       }
     });
 
+    initRepeatable(25);
+  };
+
+  var initRepeatable = function (numRows) {
+
+    layers = [];
+    layersSeparated = true;
+
+    makeLayers();
+
+    // this needs work
+    camera.position.z = numRows * 250;
+
     prevCameraPosition = new THREE.Vector3();
     prevCameraPosition.copy(camera.position);
     
     render();
     adjustRibbonWidth();
-    return camera;
+
   };
 
 
@@ -794,6 +1003,8 @@ angular.module('parserApp.display3dService', [])
     addTweet: addTweet,
     makeTweetLayer: makeTweetLayer,
     init: init,
+    reinit: initRepeatable,
+    clear: clear,
     animate: animate,
     autoScrollToggle: autoScrollToggle,
     updateLayers: updateLayers

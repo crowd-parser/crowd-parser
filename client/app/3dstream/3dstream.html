@@ -12,7 +12,8 @@
         <td><input type="checkbox" ng-model=layersVisible[layer.title].solo ng-change="soloLayer(layer.title)"></td></tr>
       </table>
     </div>
-    <button class="button-3d bottom-button" id="flatten-separate-3d" ng-click="toggleFlatten();">{{flattenText}} All Layers</button><button class="button-3d bottom-button" type="notSubmit" ng-click="autoScrollToggle()">Autoscroll: {{autoScroll}}</button>
+    <button class="button-3d bottom-button" id="flatten-separate-3d" ng-click="toggleFlatten();">{{flattenText}} All Layers</button>
+    <button class="button-3d bottom-button" type="notSubmit" ng-click="autoScrollToggle()">Autoscroll: {{autoScroll}}</button>
   </div>
 
 
@@ -32,6 +33,7 @@
         <button ng-class="{ 'button-3d-disabled': grayedOut(), 'button-3d': !grayedOut() }" ng-disabled="grayedOut()" type="notSubmit" ng-click="requestTweetsByKeyword(keywordStream)">Search Database</button>
         <button class="button-3d" type="notSubmit" ng-click="getRestTweets()">Get {{numTweetsToGet}} New Tweets</button>
         <button class="button-3d" type="notSubmit" ng-click="startLiveStream()">Live Stream: {{receivingTweets}}</button>
+        <button class="button-3d" type="notSubmit" ng-click="streamFakeTweets()">Fake Tweets</button>
       </form>
     </div>
   </div>

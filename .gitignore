@@ -11,3 +11,4 @@ server/config/twitter_CH_private.js
 server/auth/adminlogin/adminloginsecret.js
 client/assets/fonts/droid/NOTICE
 client/assets/fonts/droid/README.txt
+ch_todo.txt

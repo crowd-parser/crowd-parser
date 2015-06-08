@@ -177,11 +177,11 @@ router.post('/userAddKeyword', function(req, res) {
       res.send('Error! Missing ID/keyword.');
     }
 
-    db.db.query('SELECT number_of_keywords FROM purchasing_users WHERE id=req.body.id', function(err, response) {
+    db.db.query('SELECT number_of_keywords FROM purchasing_users WHERE id=' + req.body.id, function(err, response) {
 
       if (err) {
 
-        handleError(res. err, 'Error getting user\'s number of keywords from database!');
+        handleError(res, err, 'Error getting user\'s number of keywords from database!');
       } else {
         console.log(response);
         if (response[0].number_of_keywords <= 0) {

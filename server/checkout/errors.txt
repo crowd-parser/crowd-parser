@@ -1,2 +1,18 @@
 Mon Jun 08 2015 18:37:01 GMT-0500 (CDT) - Error updating user keyword count! - Error: ER_BAD_FIELD_ERROR: Unknown column 'undefined' in 'where clause'
 
+Mon Jun 08 2015 18:46:34 GMT-0500 (CDT) - undefined - Error getting user's number of keywords from database!
+
+Mon Jun 08 2015 18:46:59 GMT-0500 (CDT) - undefined - Error getting user's number of keywords from database!
+
+Mon Jun 08 2015 18:48:28 GMT-0500 (CDT) - undefined - Error getting user's number of keywords from database!
+
+Mon Jun 08 2015 18:48:44 GMT-0500 (CDT) - undefined - Error getting user's number of keywords from database!
+
+Mon Jun 08 2015 18:50:18 GMT-0500 (CDT) - undefined - Error getting user's number of keywords from database!
+
+Mon Jun 08 2015 18:52:18 GMT-0500 (CDT) - undefined - Error getting user's number of keywords from database!
+
+Mon Jun 08 2015 18:55:33 GMT-0500 (CDT) - undefined - Error getting user's number of keywords from database!
+
+Mon Jun 08 2015 18:56:40 GMT-0500 (CDT) - Error getting user's number of keywords from database! - Error: ER_BAD_FIELD_ERROR: Unknown column 'req.body.id' in 'where clause'
+

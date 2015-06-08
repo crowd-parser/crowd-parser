@@ -201,29 +201,43 @@ angular.module('parserApp.display3dService', [])
           .start();
       }
       
-      layers[i].tweets.forEach(function(tweet) {
-        // tweet position
-        tweet.transition = true;
-        new TWEEN.Tween( tweet.obj.position )
-          .to( {z: frontLayerZ - layerSpacing*i}, 1000 )
-          .easing( TWEEN.Easing.Exponential.InOut )
-          .onComplete( function() {
-            tweet.transition = false;
-          })
-          .start();
-        // tweet opacity css
-        if (layers[i].visible && tweet.el && tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
-          new TWEEN.Tween( {val: 0} )
-            .to ( {val: 0.8}, 1000 )
+      // Tween individual tweets if at two closest LODs
+      if (layers[i].lod === 'hi' || layers[i].lod === 'lo') {
+        layers[i].tweets.forEach(function(tweet) {
+          // tweet position
+          tweet.transition = true;
+          new TWEEN.Tween( tweet.obj.position )
+            .to( {z: frontLayerZ - layerSpacing*i}, 1000 )
             .easing( TWEEN.Easing.Exponential.InOut )
-            .onUpdate( function () {
-              if (tweet.el) {
-                tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
-              }
+            .onComplete( function() {
+              tweet.transition = false;
             })
             .start();
-        }
-      });
+          // tweet opacity css
+          if (layers[i].visible && tweet.el && tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
+            new TWEEN.Tween( {val: 0} )
+              .to ( {val: 0.8}, 1000 )
+              .easing( TWEEN.Easing.Exponential.InOut )
+              .onUpdate( function () {
+                if (tweet.el) {
+                  tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
+                }
+              })
+              .start();
+          }
+        });
+      } else { // at further LODs, all tweets are in one object
+        layers[i].transition = true;
+        new TWEEN.Tween( layers[i].lodHolder.position )
+          .to( {z: frontLayerZ - layerSpacing*i}, 1000)
+          .easing( TWEEN.Easing.Exponential.InOut)
+          .onComplete( function () {
+            this.transition = false;
+          }.bind(layers[i]))
+          .start();
+      }
+
+
       // ribbon position
       new TWEEN.Tween( layers[i].ribbonMesh.position )
         .to( {z: frontLayerZ - layerSpacing*i - 1}, 1000 )
@@ -253,31 +267,48 @@ angular.module('parserApp.display3dService', [])
   var flattenLayers = function () {
 
     for (var i = 0; i < layers.length; i++) {
+
+      // tween neutral tweet material to invisible when flattening
       new TWEEN.Tween( layers[i].tweetMaterialNeutral )
         .to ({opacity: 0}, 1000)
         .start();
-      layers[i].tweets.forEach(function(tweet) {
-        tweet.transition = true;
-        new TWEEN.Tween( tweet.obj.position )
-          .to( {z: frontLayerZ - 2*i}, 1000 )
-          .easing( TWEEN.Easing.Exponential.InOut )
-          .onComplete( function () {
-            tweet.transition = false;
-          })
-          .start();
 
-        if (tweet.el && tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
-          new TWEEN.Tween( {val: 0.8} )
-            .to ( {val: 0}, 1000 )
+      // Tween individual tweets if at two closest LODs
+      if (layers[i].lod === 'hi' || layers[i].lod === 'lo') {
+        layers[i].tweets.forEach(function(tweet) {
+          tweet.transition = true;
+          new TWEEN.Tween( tweet.obj.position )
+            .to( {z: frontLayerZ - 2*i}, 1000 )
             .easing( TWEEN.Easing.Exponential.InOut )
-            .onUpdate( function () {
-              if (tweet.el) {
-                tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
-              }
+            .onComplete( function () {
+              tweet.transition = false;
             })
             .start();
-        }
-      });
+
+          if (tweet.el && tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
+            new TWEEN.Tween( {val: 0.8} )
+              .to ( {val: 0}, 1000 )
+              .easing( TWEEN.Easing.Exponential.InOut )
+              .onUpdate( function () {
+                if (tweet.el) {
+                  tweet.el.style.backgroundColor = 'rgba(225,225,225,' + this.val + ')';
+                }
+              })
+              .start();
+          }
+        });
+      } else { // at further LODs, all tweets are in one object
+        layers[i].transition = true;
+        new TWEEN.Tween( layers[i].lodHolder.position )
+          .to( {z: frontLayerZ - 2*i}, 1000)
+          .easing( TWEEN.Easing.Exponential.InOut)
+          .onComplete( function () {
+            this.transition = false;
+          }.bind(layers[i]))
+          .start();
+      }
+
+      // tween ribbon and title
       new TWEEN.Tween( layers[i].ribbonMesh.position )
         .to( {z: frontLayerZ - 2*i - 1}, 1000 )
         .easing( TWEEN.Easing.Exponential.InOut )
@@ -819,7 +850,7 @@ angular.module('parserApp.display3dService', [])
     }
 
     // don't do anything if the tweet is tweening
-    if (tweet.transition) {
+    if (tweet.transition || layer.transition) {
       return;
     }
 

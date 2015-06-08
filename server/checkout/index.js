@@ -53,60 +53,67 @@ var handleError = function(res, err, message) {
 
 router.post('/purchase', function(req, res, next) {
 
-  var params = {
-    id: null,
-    fb_id: req.body.purchaseDetails.fb_id,
-    name: req.body.purchaseDetails.name,
-    email: req.body.purchaseDetails.email,
-    number_of_keywords: req.body.purchaseDetails.number_of_keywords
-  }
+  if (req.body.fbToken !== req.session.fbToken) {
+    
+    console.log('Token does not match!');
+    res.send('Token does not match!');
+  } else {
 
-  var chargeAmount;
-
-  if (params.number_of_keywords === 1) {
-    chargeAmount = 200;
-  } else if (params.number_of_keywords === 5) {
-    chargeAmount = 800;
-  } else if (params.number_of_keywords === 10) {
-    chargeAmount = 1500;
-  }
-
-  var stripeToken = req.body.stripeToken;
-
-  var charge = stripe.charges.create({
-    amount: chargeAmount, // amount in cents, again
-    currency: "usd",
-    source: stripeToken,
-    description: params.number_of_keywords + ' keywords purchased' 
-  }, function(err, charge) {
-    if (err) {
-
-      handleError(res, err, 'Stripe error!');
-    } else {
-      console.log('User charged!', charge);
-
-      db.db.query('USE production', function(err, response) {
-
-        if (err) {
-
-          handleError(res, err, 'Error switching to database!');
-        } else {
-          
-          db.db.query('INSERT INTO purchasing_users SET ?', params, function(err, response) {
-
-            if (err) {
-              
-              handleError(res, err, 'Error inserting user!');
-            } else {
-              
-              console.log('User inserted into database!', response);
-              res.send('Stripe success!', charge);
-            }
-          });
-        }
-      });
+    var params = {
+      id: null,
+      fb_id: req.body.purchaseDetails.fb_id,
+      name: req.body.purchaseDetails.name,
+      email: req.body.purchaseDetails.email,
+      number_of_keywords: req.body.purchaseDetails.number_of_keywords
     }
-  });
+
+    var chargeAmount;
+
+    if (params.number_of_keywords === 1) {
+      chargeAmount = 200;
+    } else if (params.number_of_keywords === 5) {
+      chargeAmount = 800;
+    } else if (params.number_of_keywords === 10) {
+      chargeAmount = 1500;
+    }
+
+    var stripeToken = req.body.stripeToken;
+
+    var charge = stripe.charges.create({
+      amount: chargeAmount, // amount in cents, again
+      currency: "usd",
+      source: stripeToken,
+      description: params.number_of_keywords + ' keywords purchased' 
+    }, function(err, charge) {
+      if (err) {
+
+        handleError(res, err, 'Stripe error!');
+      } else {
+        console.log('User charged!', charge);
+
+        db.db.query('USE production', function(err, response) {
+
+          if (err) {
+
+            handleError(res, err, 'Error switching to database!');
+          } else {
+            
+            db.db.query('INSERT INTO purchasing_users SET ?', params, function(err, response) {
+
+              if (err) {
+                
+                handleError(res, err, 'Error inserting user!');
+              } else {
+                
+                console.log('User inserted into database!', response);
+                res.send('Stripe success!', charge);
+              }
+            });
+          }
+        });
+      }
+    });
+  }
 });
 
 router.post('/checkIfPurchased', function(req, res) {
@@ -125,42 +132,54 @@ router.get('/getUserKeywords/:id', function(req, res) {
 
   db.db.query('SELECT purchased_keyword FROM purchased_keywords WHERE purchasing_user=' + id, function(err, response) {
     
-    console.log(err, response);
-    res.send(response);
+    if (err) {
+
+      handleError(res, err, 'Error getting user keywords!');
+    } else {
+
+      res.send(response);
+    }
   });
 });
 
 router.post('/userAddKeyword', function(req, res) {
 
-  if (!req.body.id || !req.body.keyword) {
-    res.send('Error! Missing ID/keyword.');
-  }
+  if (req.body.fbToken !== req.session.fbToken) {
+    
+    console.log('Token does not match!');
+    res.send('Token does not match!');
+  } else {
 
-  var params = {
-    id: null,
-    purchasing_user: req.body.id,
-    purchased_keyword: req.body.keyword
-  };
-
-  db.db.query('INSERT INTO purchased_keywords SET ?', params, function(err, response) {
-
-    if (err) {
-
-      handleError(res, err, 'Error inserting keyword into database!');
-    } else {
-
-      db.db.query('UPDATE purchasing_users SET number_of_keywords=number_of_keywords-1 WHERE purchasing_users.id=' + params.purchasing_user, function(err, response) {
-
-        if (err) {
-
-          handleError(res, err, 'Error updating user keyword count!');
-        } else {
-
-          res.send('Successfully added user keyword!');
-        }
-      });
+    if (!req.body.id || !req.body.keyword) {
+      res.send('Error! Missing ID/keyword.');
     }
-  });
+
+    var params = {
+      id: null,
+      purchasing_user: req.body.id,
+      purchased_keyword: req.body.keyword
+    };
+
+    db.db.query('INSERT INTO purchased_keywords SET ?', params, function(err, response) {
+
+      if (err) {
+
+        handleError(res, err, 'Error inserting keyword into database!');
+      } else {
+
+        db.db.query('UPDATE purchasing_users SET number_of_keywords=number_of_keywords-1 WHERE purchasing_users.id=' + params.purchasing_user, function(err, response) {
+
+          if (err) {
+
+            handleError(res, err, 'Error updating user keyword count!');
+          } else {
+
+            res.send('Successfully added user keyword!');
+          }
+        });
+      }
+    });
+  }
 });
 
 router.get('/getAllUserKeywordsWithNames', function(req, res) {
@@ -169,6 +188,13 @@ router.get('/getAllUserKeywordsWithNames', function(req, res) {
 
     console.log(err, response);
   });
+});
+
+router.post('/saveToken', function(req, res) {
+
+  req.session.fbToken = req.body.fbToken;
+
+  res.send('Access token saved!');
 });
 
 module.exports = router;

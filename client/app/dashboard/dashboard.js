@@ -16,8 +16,35 @@ angular.module('parserApp')
       });
     }, 500);
 
+    // Check if user is a purchasing user at page load. If so, display the user dashboard instead of the checkout view.
+    setTimeout(function() {
+
+      FB.getLoginStatus(function(response) {
+        if (response.status === 'connected') {
+
+          var fb_id = response.authResponse.userID.toString();
+
+          saveToken(response.authResponse.accessToken);
+          localStorage.setItem('fb_id', fb_id);
+
+          checkIfPurchased(fb_id);
+        }
+      });
+    }, 700);
+
+    // Save user's FB token for authentication
+    function saveToken(token) {
+      $http.post('/checkout/saveToken', {fbToken: token})
+        .success(function(data) {
+
+          console.log('FB access token saved!');
+        });
+
+      localStorage.setItem('fbToken', token);
+    }
+
     // Checks if user is a purchasing user. If so, display user dashboard instead of the checkout view.
-    var checkIfPurchased = function(fb_id, callback) {
+    function checkIfPurchased(fb_id) {
 
       $http.post('/checkout/checkIfPurchased', {fb_id: fb_id})
         .success(function(response) {
@@ -34,20 +61,7 @@ angular.module('parserApp')
               });
           }
         });
-    };
-
-    // Check if user is a purchasing user at page load. If so, display the user dashboard instead of the checkout view.
-    setTimeout(function() {
-
-      FB.getLoginStatus(function(response) {
-        if (response.status === 'connected') {
-
-          var fb_id = response.authResponse.userID.toString();
-
-          checkIfPurchased(fb_id);
-        }
-      });
-    }, 700);
+    }
 
     // User logs in with Facebook. If not purchasing user, display Stripe checkout view.
     // If user is a purchasing user, replace entire view with user dashboard
@@ -60,6 +74,9 @@ angular.module('parserApp')
           if (response.status === 'connected') {
 
             var fb_id = response.authResponse.userID.toString();
+
+            saveToken(response.authResponse.accessToken);
+            localStorage.setItem('fb_id', fb_id);
 
             checkIfPurchased(fb_id);
           }
@@ -105,7 +122,13 @@ angular.module('parserApp')
             number_of_keywords: $scope.selectedOption
           };
 
-          $http.post('/checkout/purchase', {stripeToken: result.id, purchaseDetails: purchaseDetails})
+          var fbToken = response.authResponse.accessToken;
+
+          $http.post('/checkout/purchase', {
+            stripeToken: result.id, 
+            purchaseDetails: purchaseDetails, 
+            fbToken: fbToken
+          })
             .success(function(data) {
               console.log('SERVER SUCCESS', data);
 
@@ -122,23 +145,25 @@ angular.module('parserApp')
 
     $scope.userKeywordSubmit = function() {
 
+      var fbToken = localStorage.getItem('fbToken');
+
       var userKeyword = $scope.userKeywordInput;
       $scope.userKeywordInput = '';
 
       var params = {
         id: $scope.purchasingUserDetails.id,
-        keyword: userKeyword
+        keyword: userKeyword,
+        fbToken: fbToken
       };
 
       $http.post('/checkout/userAddKeyword', params)
         .success(function(response) {
+          
           console.log(response);
 
-          $http.get('/checkout/getUserKeywords/' + $scope.purchasingUserDetails.id)
-            .success(function(response) {
+          var fb_id = localStorage.getItem('fb_id');
 
-              $scope.purchasingUserKeywords = response;
-            });
+          checkIfPurchased(fb_id);
         });
     };
   });

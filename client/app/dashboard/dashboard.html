@@ -77,19 +77,19 @@
       </div>
     </div>
 
-    <input class="form-control stripe-input" type="text" ng-model="purchasingUsername" placeholder="Name">
+    <input class="form-control stripe-input" type="text" ng-model="purchasingUsername" placeholder="Name" required />
     <p>This name will be displayed next to your keywords.</p>
 
-    <input class="form-control stripe-input" type="email" ng-model="purchasingEmail" placeholder="Email">
+    <input class="form-control stripe-input" type="email" ng-model="purchasingEmail" placeholder="Email" required />
 
-    <input class="form-control stripe-input" type="email" ng-model="repeatPurchasingEmail" placeholder="Confirm email">
+    <input class="form-control stripe-input" type="email" ng-model="repeatPurchasingEmail" placeholder="Confirm email" required />
     <p>We hate spam.</p>
 
     <input class="form-control stripe-input card-input" ng-model="number" placeholder="0000 0000 0000 0000" payments-format="card" payments-validate="card" /><br>
     <input class="form-control stripe-input expiry-input" ng-model="expiry" placeholder="MM/YY" payments-format="expiry" payments-validate="expiry" /><!--
-    --><input class="form-control stripe-input cvc-input" ng-model="cvc" placeholder="CVC" payments-format="cvc" payments-format="cvc" />
+    --><input class="form-control stripe-input cvc-input" ng-model="cvc" placeholder="CVC" payments-format="cvc" payments-format="cvc" required />
 
-    <div class="alert alert-danger" style="display: none"></div>
+    <div class="alert alert-danger stripe-error" style="display: none"></div>
 
     <button type="submit" class="btn btn-primary stripe-submit">secure checkout</button>
 

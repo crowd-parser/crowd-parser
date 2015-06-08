@@ -3,6 +3,8 @@
 var express = require('express');
 var router = express.Router();
 
+var fs = require('fs');
+
 var db = require('../database/database');
 
 // var params = {
@@ -41,38 +43,78 @@ router.post('/purchase', function(req, res, next) {
     number_of_keywords: req.body.purchaseDetails.number_of_keywords
   }
 
+  var chargeAmount;
+
+  if (params.number_of_keywords === 1) {
+    chargeAmount = 200;
+  } else if (params.number_of_keywords === 5) {
+    chargeAmount = 800;
+  } else if (params.number_of_keywords === 10) {
+    chargeAmount = 1500;
+  }
 
   var stripeToken = req.body.stripeToken;
 
   var charge = stripe.charges.create({
-    amount: 50, // amount in cents, again
+    amount: chargeAmount, // amount in cents, again
     currency: "usd",
     source: stripeToken,
     description: params.number_of_keywords + ' keywords purchased' 
   }, function(err, charge) {
     if (err) {
-      console.log(err);
-      res.send('Stripe error!', err);
+      console.log('Stripe error!', err);
+
+      var errorMessage = new Date() + ' - ' + 'Stripe error! - ' + err + '\n\n';
+
+      fs.appendFile('errors.txt', errorMessage, function(err) {
+        if (err) {
+          console.log(err);
+        } else {
+
+          res.send('Stripe error!', err);
+        }
+      });
     } else {
-      console.log(charge);
+      console.log('User charged!', charge);
 
       db.db.query('USE production', function(err, response) {
 
         if (err) {
 
-          console.log(err);
-          res.send('Error switching to database!', err)
+          console.log('Error switching database!', err);
+
+          var errorMessage = new Date() + ' - ' + 'Error switching database! - ' + err + '\n\n';
+
+          fs.appendFile('errors.txt', errorMessage, function(err) {
+            if (err) {
+              console.log(err);
+            } else {
+
+              res.send('Error switching to database!', err)
+            }
+          });
         } else {
           
           db.db.query('INSERT INTO purchasing_users SET ?', params, function(err, response) {
 
             if (err) {
-              console.log(err);
-              res.send('Error inserting information!', err);
+              console.log('Error inserting into database!', err);
+
+              var errorMessage = new Date() + ' - ' + 'Error inserting into database! - ' + err + '\n\n';
+
+              fs.appendFile('errors.txt', errorMessage, function(err) {
+                if (err) {
+                  console.log(err);
+                } else {
+
+                  res.send('Error inserting information!', err);
+                }
+              });
+
             } else {
               
-              console.log(response);
-              res.send('Success!', charge);
+              console.log('User inserted into database!', response);
+              res.send('Stripe success!', charge);
             }
           });
         }

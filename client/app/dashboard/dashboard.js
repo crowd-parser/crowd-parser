@@ -49,7 +49,8 @@ angular.module('parserApp')
       });
     }, 700);
 
-    // User logs in with Facebook. 
+    // User logs in with Facebook. If not purchasing user, display Stripe checkout view.
+    // If user is a purchasing user, replace entire view with user dashboard
     $scope.fbLogin = function() {
       FB.login(function(response) {
         if (response.status === 'connected') {
@@ -66,10 +67,32 @@ angular.module('parserApp')
       });
     };
 
+    // Stripe checkout form. Displayed when user is logged in, but not a purchasing user
     $scope.stripeCallback = function (code, result) {
-      if (result.error) {
-        console.log('it failed! error: ' + result.error.message);
+      if ($scope.purchasingEmail !== $scope.repeatPurchasingEmail) {
+
+        $('.stripe-error').html('');
+
+        $('.stripe-error').show().append('<div>Error: Emails do not match</div>');
+      } else if (!$scope.selectedOption) {
+
+        $('.stripe-error').html('');
+
+        $('.stripe-error').show().append('<div>Error: Number of keywords not selected</div>');
+      } else if (result.error) {
+
+        $('.stripe-error').html('');
+
+        if (result.error.message) {
+
+          $('.stripe-error').show().append('<div>Error: ' + result.error.message + '</div>');
+          console.log('Error: ' + result.error.message);
+        } else {
+          $('.stripe-error').show().append('<div>Error: ' + result.error + '</div>');
+        }
+
       } else {
+        $('.stripe-error').hide();
         console.log('success! token: ' + result.id);
 
         FB.getLoginStatus(function(response) {
@@ -86,7 +109,9 @@ angular.module('parserApp')
             .success(function(data) {
               console.log('SERVER SUCCESS', data);
 
-              $scope.purchasingUser = true;
+              checkIfPurchased(fb_id);
+
+              Auth.purchasingUser = true;
             });
         });
       }

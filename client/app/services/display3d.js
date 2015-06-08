@@ -105,7 +105,7 @@ angular.module('parserApp.display3dService', [])
   var scope;
 
   var lod0Distance = 1000;
-  var lod1Distance = 5000;
+  var lod1Distance = 2000;
 
   var frontLayerZ = 300;
   var layerSpacing = 300;
@@ -486,9 +486,10 @@ angular.module('parserApp.display3dService', [])
 
   };
 
-  var mergeTweets = function (tweetsToMerge) {
+  var mergeTweets = function (tweetsToMerge, layer) {
     var combinedGeo = new THREE.Geometry();
-    var combinedMat = [];
+    //var combinedMat = [];
+    var combinedMat = [layer.tweetMaterialNeutral, layer.tweetMaterialPos, layer.tweetMaterialNeg];
 
     if (!window.combinedGeo) {
       window.combinedGeo = combinedGeo;
@@ -504,8 +505,17 @@ angular.module('parserApp.display3dService', [])
         // console.log('index: ' + tweet.index + ' ypos: ' + y);
         tweet.obj.position.set(x,y,0);
         tweet.obj.updateMatrix();
-        combinedGeo.merge(tweet.obj.geometry, tweet.obj.matrix, i);
-        combinedMat.push(tweet.obj.material);
+        var score = +tweet.elData.score.split(': ')[1];
+        var matIndex;
+        if (score > 0) {
+          matIndex = 1;
+        } else if (score < 0) {
+          matIndex = 2;
+        } else {
+          matIndex = 0;
+        }
+        combinedGeo.merge(tweet.obj.geometry, tweet.obj.matrix, matIndex);
+        //combinedMat.push(tweet.obj.material);
         sceneGL.remove(tweet.obj);
         tweet.obj = undefined;
       }
@@ -513,8 +523,8 @@ angular.module('parserApp.display3dService', [])
     var testMat = new THREE.MeshBasicMaterial({color: 'rgb(0,225,0)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide});
     testMat.transparent = true;
     testMat.opacity = 0.25;
-    //var combinedMesh = new THREE.Mesh(combinedGeo, new THREE.MeshFaceMaterial(combinedMat));
-    var combinedMesh = new THREE.Mesh(combinedGeo, testMat);
+    var combinedMesh = new THREE.Mesh(combinedGeo, new THREE.MeshFaceMaterial(combinedMat));
+    //var combinedMesh = new THREE.Mesh(combinedGeo, testMat);
     if (!window.combinedMesh) {
       window.combinedMesh = combinedMesh;
     }
@@ -768,7 +778,7 @@ angular.module('parserApp.display3dService', [])
         } else {
           tweetsToMerge.push(null);
         }
-        object = mergeTweets(tweetsToMerge);
+        object = mergeTweets(tweetsToMerge, layer);
         // set necessary values for non-primary squares - need to make sure this is done AFTER merging
         for (var j = 1; j < tweetsToMerge.length; j++) {
           if (tweetsToMerge[j] !== null) {

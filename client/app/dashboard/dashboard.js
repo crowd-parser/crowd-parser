@@ -103,6 +103,7 @@ angular.module('parserApp')
     $scope.userKeywordSubmit = function() {
 
       var userKeyword = $scope.userKeywordInput;
+      $scope.userKeywordInput = '';
 
       var params = {
         id: $scope.purchasingUserDetails.id,
@@ -112,6 +113,12 @@ angular.module('parserApp')
       $http.post('/checkout/userAddKeyword', params)
         .success(function(response) {
           console.log(response);
+
+          $http.get('/checkout/getUserKeywords/' + $scope.purchasingUserDetails.id)
+            .success(function(response) {
+
+              $scope.purchasingUserKeywords = response;
+            });
         });
     };
   });

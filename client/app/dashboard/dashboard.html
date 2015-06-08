@@ -2,6 +2,14 @@
 
 <div class="container about-container checkout-container">
 
+  <!--
+  *
+  *
+  * Information about purchasing keywords. Hidden after purchase and replaced with dashboard view. 
+  *
+  *
+  -->
+
   <div class="checkout-info" ng-hide="purchasingUser">
     <h1>Add personalized keywords <br>to our keywords list!</h1>
 
@@ -30,9 +38,11 @@
   
 
   <!--
-    Below we include the Login Button social plugin. This button uses
-    the JavaScript SDK to present a graphical Login button that triggers
-    the FB.login() function when clicked.
+  *
+  *
+  * Facebook login button. Hidden after user logs in.
+  *
+  *
   -->
   
   <div class="fb-login-container" ng-show="!loggedIn">
@@ -40,6 +50,14 @@
       <button ng-click="fbLogin()" class="fb-login-button-custom"><i class="fa fa-facebook"></i> Log in with Facebook</button>
   </div>
 
+  <!--
+  *
+  *
+  * Stripe checkout form. Shown after login and hidden if user has purchased a keyword. 
+  *
+  *
+  *
+  -->
 
   <form stripe-form="stripeCallback" class="stripe-form" ng-show="loggedIn && !purchasingUser" onsubmit="return false">
     <h2>Purchase Keywords</h2>
@@ -62,17 +80,29 @@
     <input class="form-control stripe-input" type="text" ng-model="purchasingUsername" placeholder="Name">
     <p>This name will be displayed next to your keywords.</p>
 
-    <input class="form-control stripe-input" type="text" ng-model="purchasingEmail" placeholder="Email">
+    <input class="form-control stripe-input" type="email" ng-model="purchasingEmail" placeholder="Email">
+
+    <input class="form-control stripe-input" type="email" ng-model="repeatPurchasingEmail" placeholder="Confirm email">
     <p>We hate spam.</p>
 
     <input class="form-control stripe-input card-input" ng-model="number" placeholder="0000 0000 0000 0000" payments-format="card" payments-validate="card" /><br>
     <input class="form-control stripe-input expiry-input" ng-model="expiry" placeholder="MM/YY" payments-format="expiry" payments-validate="expiry" /><!--
     --><input class="form-control stripe-input cvc-input" ng-model="cvc" placeholder="CVC" payments-format="cvc" payments-format="cvc" />
 
+    <div class="alert alert-danger" style="display: none"></div>
+
     <button type="submit" class="btn btn-primary stripe-submit">secure checkout</button>
 
     <img src="assets/images/stripe-secure.png" alt="stripe-secure">
   </form>
+
+  <!-- 
+  *
+  *
+  * Dashboard for users who have purchased keywords. 
+  *
+  *
+  -->
 
   <div ng-show="purchasingUser" class="purchasing-user-container">
     <h1>Purchasing User Dashboard</h1>

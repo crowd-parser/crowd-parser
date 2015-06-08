@@ -17,7 +17,7 @@ angular.module('parserApp')
     }, 500);
 
     // Checks if user is a purchasing user. If so, display user dashboard instead of the checkout view.
-    var checkIfPurchased = function(fb_id) {
+    var checkIfPurchased = function(fb_id, callback) {
 
       $http.post('/checkout/checkIfPurchased', {fb_id: fb_id})
         .success(function(response) {
@@ -110,8 +110,6 @@ angular.module('parserApp')
               console.log('SERVER SUCCESS', data);
 
               checkIfPurchased(fb_id);
-
-              Auth.purchasingUser = true;
             });
         });
       }

@@ -33,6 +33,24 @@ var db = require('../database/database');
 // See your keys here https://dashboard.stripe.com/account/apikeys
 var stripe = require("stripe")("sk_test_nZOqLgj1GjSsAeNNfshNlpdH");
 
+var handleError = function(res, err, message) {
+
+  console.log(message, err);
+
+  var errorMessage = new Date() + ' - ' + message + ' - ' + err + '\n\n';
+
+  fs.appendFile('./server/checkout/errors.txt', errorMessage, function(error) {
+    if (error) {
+      console.log(error);
+      res.send('Error logging error!', error);
+    } else {
+
+      console.log('Error logged!');
+      res.send(message, err);
+    }
+  });
+};
+
 router.post('/purchase', function(req, res, next) {
 
   var params = {
@@ -62,18 +80,8 @@ router.post('/purchase', function(req, res, next) {
     description: params.number_of_keywords + ' keywords purchased' 
   }, function(err, charge) {
     if (err) {
-      console.log('Stripe error!', err);
 
-      var errorMessage = new Date() + ' - ' + 'Stripe error! - ' + err + '\n\n';
-
-      fs.appendFile('errors.txt', errorMessage, function(err) {
-        if (err) {
-          console.log(err);
-        } else {
-
-          res.send('Stripe error!', err);
-        }
-      });
+      handleError(res, err, 'Stripe error!');
     } else {
       console.log('User charged!', charge);
 
@@ -81,36 +89,14 @@ router.post('/purchase', function(req, res, next) {
 
         if (err) {
 
-          console.log('Error switching database!', err);
-
-          var errorMessage = new Date() + ' - ' + 'Error switching database! - ' + err + '\n\n';
-
-          fs.appendFile('errors.txt', errorMessage, function(err) {
-            if (err) {
-              console.log(err);
-            } else {
-
-              res.send('Error switching to database!', err)
-            }
-          });
+          handleError(res, err, 'Error switching to database!');
         } else {
           
           db.db.query('INSERT INTO purchasing_users SET ?', params, function(err, response) {
 
             if (err) {
-              console.log('Error inserting into database!', err);
-
-              var errorMessage = new Date() + ' - ' + 'Error inserting into database! - ' + err + '\n\n';
-
-              fs.appendFile('errors.txt', errorMessage, function(err) {
-                if (err) {
-                  console.log(err);
-                } else {
-
-                  res.send('Error inserting information!', err);
-                }
-              });
-
+              
+              handleError(res, err, 'Error inserting user!');
             } else {
               
               console.log('User inserted into database!', response);
@@ -146,6 +132,10 @@ router.get('/getUserKeywords/:id', function(req, res) {
 
 router.post('/userAddKeyword', function(req, res) {
 
+  if (!req.body.id || !req.body.keyword) {
+    res.send('Error! Missing ID/keyword.');
+  }
+
   var params = {
     id: null,
     purchasing_user: req.body.id,
@@ -154,14 +144,22 @@ router.post('/userAddKeyword', function(req, res) {
 
   db.db.query('INSERT INTO purchased_keywords SET ?', params, function(err, response) {
 
-    console.log('INSERT', err, response);
+    if (err) {
 
-    db.db.query('UPDATE purchasing_users SET number_of_keywords=number_of_keywords-1 WHERE purchasing_users.id=' + params.purchasing_user, function(err, response) {
+      handleError(res, err, 'Error inserting keyword into database!');
+    } else {
 
-      console.log('UPDATE', err, response);
-      res.send('successfully added keyword!');
-    });
+      db.db.query('UPDATE purchasing_users SET number_of_keywords=number_of_keywords-1 WHERE purchasing_users.id=' + params.purchasing_user, function(err, response) {
 
+        if (err) {
+
+          handleError(res, err, 'Error updating user keyword count!');
+        } else {
+
+          res.send('Successfully added user keyword!');
+        }
+      });
+    }
   });
 });
 

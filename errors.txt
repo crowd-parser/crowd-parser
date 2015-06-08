@@ -1,2 +1,0 @@
-Mon Jun 08 2015 14:30:16 GMT-0500 (CDT) - Stripe error! - Error: Missing required param: amount.
-

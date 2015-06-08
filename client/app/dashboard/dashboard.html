@@ -113,7 +113,7 @@
     <div>Number of keywords remaining: {{purchasingUserDetails.number_of_keywords}}</div>
 
     <form onsubmit="return false" ng-submit="userKeywordSubmit()">
-      <input type="text" class="form-control" ng-model="userKeywordInput" placeholder="add a keyword">
+      <input type="text" class="form-control" ng-model="userKeywordInput" placeholder="add a keyword" required />
       <button class="btn btn-primary">Submit</button>
     </form>
 

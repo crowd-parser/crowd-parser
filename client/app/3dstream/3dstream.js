@@ -81,13 +81,15 @@ angular.module('parserApp')
 
     // two options, option 1: user navigates away traditionally (close browser,
     // type in new url, use back button, refresh)
-    window.onbeforeunload = function (event) {
-      socket.emit('twitter stop continuous stream');
+    window.onbeforeunload = function () {
+      Display3d.clear();
+      //socket.emit('twitter stop continuous stream');
     };
 
     // option 2: user uses angular routes
-    $scope.$on('$locationChangeStart', function (event, next, current) {
-      socket.emit('twitter stop continuous stream');
+    $scope.$on('$locationChangeStart', function () {
+      Display3d.clear();
+      //socket.emit('twitter stop continuous stream');
     });
 
     // toggle autoscroll on or off
@@ -123,12 +125,16 @@ angular.module('parserApp')
 
     // request REST tweets from server
     $scope.getRestTweets = function () {
-      $scope.tweetData = [];
-      $scope.tweetCount = 0;
 
       if (!$scope.keywordStream) {
         return;
       }
+
+      $scope.tweetData = [];
+      $scope.tweetCount = 0;
+      liveStreamStarted = false;
+      Display3d.clear();
+      Display3d.reinit(25);
 
       socketWithRoom(function () {
         socket.emit('twitter rest search', $scope.keywordStream, 'recent', 100, null, $scope.clientID);
@@ -205,6 +211,8 @@ angular.module('parserApp')
       if (liveStreamStarted === false) {
         $scope.tweetData = [];
         $scope.tweetCount = 0;
+        Display3d.clear();
+        Display3d.reinit(25);
       }
 
       // if off, stops listening for live stream emits from DB
@@ -269,6 +277,8 @@ angular.module('parserApp')
 
       $scope.tweetData = [];
       $scope.tweetCount = 0;
+      Display3d.clear();
+      Display3d.reinit(25);
 
       socketWithRoom(function () {
         socket.emit('tweet keyword', keyword, $scope.clientID);

@@ -126,6 +126,44 @@ angular.module('parserApp.display3dService', [])
   var xSpacing = 320;
   var xStart = -800;
 
+  var clear = function () {
+    console.log('calling clear');
+    if (layers !== undefined) {
+      layers.forEach( function (layer) {
+        sceneGL.remove(layer.ribbonMesh);
+        layer.ribbonMesh = undefined;
+        sceneGL.remove(layer.titleMesh);
+        layer.titleMesh = undefined;
+        layer.ribbonMaterial.dispose();
+        layer.ribbonMaterial = undefined;
+        layer.titleMaterial.dispose();
+        layer.titleMaterial = undefined;
+        layer.tweetMaterialNeutral.dispose();
+        layer.tweetMaterialNeutral = undefined;
+        layer.tweetMaterialPos.dispose();
+        layer.tweetMaterialPos = undefined;
+        layer.tweetMaterialNeg.dispose();
+        layer.tweetMaterialNeg = undefined;
+        layer.tweets.forEach( function (tweet) {
+          if (tweet.obj) {
+            sceneGL.remove(tweet.obj);
+            sceneCSS.remove(tweet.obj);
+            if (tweet.obj.geometry) {
+              tweet.obj.geometry.dispose();
+            }
+            if (tweet.obj.material) {
+              tweet.obj.material.dispose();
+            }
+          }
+          tweet.obj = undefined;
+          tweet.el = undefined;
+        });
+        layer.tweets = undefined;
+        layer = undefined;
+      });
+    }
+  };
+
   var updateLayers = function (layersVisible) {
     layers.forEach(function (layerObj, i) {
       // if this layer is hidden and should be visible,
@@ -416,6 +454,7 @@ angular.module('parserApp.display3dService', [])
       var lodLevel;
 
       var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, x, y, z );
+
       if (tweetDistance > lod0Distance) {
         lodLevel = 'lo';
         object = displayHelpers.makeLoResMesh(layersSeparated, elData, layerObj);
@@ -854,10 +893,8 @@ angular.module('parserApp.display3dService', [])
 
     // overwrite defaults if in mini window
     if (context === 'mini') {
-      containerID = 'mini-container-3d';
       cameraZ = 200;
       cameraY = 0;
-      height = document.getElementById(containerID).clientHeight;
       rows = 1;
       ySpacing = 180;
       layerSpacing = 125;
@@ -919,10 +956,6 @@ angular.module('parserApp.display3dService', [])
       xStart = 0 - (displayHelpers.getDisplayWidthAtPoint(camera,0,0,0) / 4);
     }
 
-    makeLayers();
-
-    camera.position.z = camera.position.z + layers.length * layerSpacing;
-
     addButtonEvent('flatten-separate-3d', 'click', function() {
       if (layersSeparated) {
         flattenLayers();
@@ -933,12 +966,25 @@ angular.module('parserApp.display3dService', [])
       }
     });
 
+    initRepeatable(25);
+  };
+
+  var initRepeatable = function (numRows) {
+
+    layers = [];
+    layersSeparated = true;
+
+    makeLayers();
+
+    // this needs work
+    camera.position.z = numRows * 250;
+
     prevCameraPosition = new THREE.Vector3();
     prevCameraPosition.copy(camera.position);
     
     render();
     adjustRibbonWidth();
-    return camera;
+
   };
 
 
@@ -947,6 +993,8 @@ angular.module('parserApp.display3dService', [])
     addTweet: addTweet,
     makeTweetLayer: makeTweetLayer,
     init: init,
+    reinit: initRepeatable,
+    clear: clear,
     animate: animate,
     autoScrollToggle: autoScrollToggle,
     updateLayers: updateLayers

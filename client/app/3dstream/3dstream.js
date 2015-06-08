@@ -398,9 +398,15 @@ angular.module('parserApp')
       return text;
     };
 
+    var endTime;
+
     var addFakeTweet = function () {
       if ($scope.tweetCount >= 1000) {
         runFakeTweets = false;
+        if (!endTime) {
+          endTime = new Date();
+          console.log(endTime - timeStart);
+        }
       }
       if (runFakeTweets === true) {
         var fakeTweet = {};
@@ -414,6 +420,8 @@ angular.module('parserApp')
       }
     };
 
+    var timeStart;
+
     $scope.streamFakeTweets = function () {
       // stop any existing stream
       socket.emit('twitter stop continuous stream');
@@ -424,7 +432,8 @@ angular.module('parserApp')
         }
       } else {
         runFakeTweets = true;
-        intervalID = setInterval(addFakeTweet, 200);
+        timeStart = new Date();
+        intervalID = setInterval(addFakeTweet, 1);
       }
       
     };

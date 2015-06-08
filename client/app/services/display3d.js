@@ -498,74 +498,75 @@ angular.module('parserApp.display3dService', [])
 
       if (layerDistance > lod1Distance) {
 
-        layerObj.lod = 'lo1'
+        layerObj.lod = 'lo1';
+        layerObj.lastDisplayedTweet = layerObj.lastDisplayedTweet || 0;
         lodLevel = 'lo1';
 
-        if (layerObj.lodHolder && layerObj.lodHolder.children[0]) {
-          layerObj.lodHolder.children[0].geometry.dispose();
-        }
-        sceneGL.remove(layerObj.lodHolder);
-        layerObj.lodHolder = undefined;
-        layerObj.lodHolder = new THREE.Object3D();
+        var thisTweet = {
+          obj: object,
+          el: tweet,
+          elData: elData,
+          lod: lodLevel,
+          index: index,
+          position: new THREE.Vector3(x, y, z),
+        };
 
+        layerObj.tweets.push(thisTweet);
 
-        var combinedGeo = new THREE.Geometry();
-        //var combinedMat = [];
-        var combinedMat = [layerObj.tweetMaterialNeutral, layerObj.tweetMaterialPos, layerObj.tweetMaterialNeg];
-        var newPlaneMesh;
-        var tmpX;
-        var tmpY;
-        var tmpRows;
-        var score;
-        var matIndex;
+        // if we have enough columns to make n x n blocks
+        if ((index+1) % (rows*2) === 0) {
+          console.log(index);
 
-        for (var i = 0; i < layerObj.tweets.length; i++) {
-          var prevTweet = layerObj.tweets[i];
-          if (prevTweet !== null) {
-            if (prevTweet.obj) {
-              prevTweet.position.copy(prevTweet.obj.position);
+          // make a new LOD holder for layer (it is hard to get an old one to rerender for some reason)
+          var tmpArray = [];
+          if (layerObj.lodHolder && layerObj.lodHolder.children[0]) {
+            for (var k = 0; k < layerObj.lodHolder.children.length; k++) {
+              tmpArray.push(layerObj.lodHolder.children[k]);
             }
-            tmpRows = rows;
-            tmpX = Math.floor(i / tmpRows) * xSpacing;
-            tmpY = 0 - (i % tmpRows) * ySpacing;
-            // console.log('index: ' + prevTweet.index + ' ypos: ' + y);
-            score = +prevTweet.elData.score.split(': ')[1];
-            matIndex = getMatIndexFromScore(score);
-            sceneGL.remove(prevTweet.obj);
-            if (prevTweet.obj) {
-              prevTweet.obj.geometry.dispose();
-            }
-            newPlaneMesh = displayHelpers.makeLoResMesh(layersSeparated, prevTweet.elData, layerObj, 'p');
-            newPlaneMesh.position.set(tmpX,tmpY,0);
-            newPlaneMesh.updateMatrix();
-            combinedGeo.merge(newPlaneMesh.geometry, newPlaneMesh.matrix, matIndex);
-            newPlaneMesh.geometry.dispose();
-            newPlaneMesh = undefined;
-            //combinedMat.push(prevTweet.obj.material);
-            sceneGL.remove(prevTweet.obj);
-            prevTweet.obj = undefined;
           }
+          sceneGL.remove(layerObj.lodHolder);
+          layerObj.lodHolder = undefined;
+          layerObj.lodHolder = new THREE.Object3D();
+          for (var m = 0; m < tmpArray.length; m++) {
+            layerObj.lodHolder.children.push(tmpArray[m]);
+          }
+
+
+          // var combinedGeo = new THREE.Geometry();
+          // //var combinedMat = [];
+          // var combinedMat = [layerObj.tweetMaterialNeutral, layerObj.tweetMaterialPos, layerObj.tweetMaterialNeg];
+          // var newPlaneMesh;
+          // var tmpX;
+          // var tmpY;
+          // var tmpRows;
+          // var score;
+          // var matIndex;
+
+          for (var i = layerObj.lastDisplayedTweet; i < layerObj.tweets.length; i++) {
+            var n = 2; // merge an n x n square
+            var row = i % rows;
+            var col = Math.floor(i/rows);
+            if (row % n === 0 && col % n === 0) {
+              var tweetsToMerge = [];
+              for (var colIndex = 0; colIndex < n; colIndex++) {
+                for (var rowIndex = 0; rowIndex < n; rowIndex++) {
+                  var currentIndex = i + rowIndex + (rows * colIndex);
+                  if (currentIndex < layerObj.tweets.length && row + rowIndex < rows) {
+                    tweetsToMerge.push(layerObj.tweets[currentIndex]);
+                  } else {
+                    tweetsToMerge.push(null);
+                  }
+                }
+              }
+              var combinedMesh = mergeTweets(tweetsToMerge, layerObj);
+              combinedMesh.position.copy(tweetsToMerge[0].position);
+              tweetsToMerge[0].obj = combinedMesh;
+              layerObj.lodHolder.add(combinedMesh);
+              layerObj.lastDisplayedTweet = i;
+            }
+          }
+          sceneGL.add(layerObj.lodHolder);
         }
-        // add newest tweet
-        newPlaneMesh = displayHelpers.makeLoResMesh(layersSeparated, elData, layerObj, 'p');
-        tmpX = Math.floor(i / tmpRows) * xSpacing;
-        tmpY = 0 - (i % tmpRows) * ySpacing;
-        score = +elData.score.split(': ')[1];
-        matIndex = getMatIndexFromScore(score);
-        newPlaneMesh.position.set(tmpX,tmpY,0);
-        newPlaneMesh.updateMatrix();
-        combinedGeo.merge(newPlaneMesh.geometry, newPlaneMesh.matrix, matIndex);
-        newPlaneMesh.geometry.dispose();
-        newPlaneMesh = undefined;
-        var testMat = new THREE.MeshBasicMaterial({color: 'rgb(0,225,0)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide});
-        testMat.transparent = true;
-        testMat.opacity = 0.25;
-        var combinedMesh = new THREE.Mesh(combinedGeo, new THREE.MeshFaceMaterial(combinedMat));
-        combinedMesh.position.set(xStart, yStart, z);
-
-
-        layerObj.lodHolder.add(combinedMesh);
-        sceneGL.add(layerObj.lodHolder);
 
 
       } else if (tweetDistance > lod0Distance) {
@@ -575,6 +576,16 @@ angular.module('parserApp.display3dService', [])
         object.position.y = y;
         object.position.z = z;
         sceneGL.add( object );
+
+        layerObj.tweets.push({
+          obj: object,
+          el: tweet,
+          elData: elData,
+          lod: lodLevel,
+          index: index,
+          position: new THREE.Vector3(x, y, z),
+        });
+
       } else {
         lodLevel = 'hi';
         tweet = makeTweetElement(elData, layerObj);
@@ -584,16 +595,16 @@ angular.module('parserApp.display3dService', [])
         object.position.y = y;
         object.position.z = z;
         sceneCSS.add( object );
-      }
 
-      layerObj.tweets.push({
-        obj: object,
-        el: tweet,
-        elData: elData,
-        lod: lodLevel,
-        index: index,
-        position: new THREE.Vector3(x, y, z),
-      });
+        layerObj.tweets.push({
+          obj: object,
+          el: tweet,
+          elData: elData,
+          lod: lodLevel,
+          index: index,
+          position: new THREE.Vector3(x, y, z),
+        });
+      }
 
     });
 
@@ -626,7 +637,7 @@ angular.module('parserApp.display3dService', [])
         if (tweet.obj) {
           tweet.position.copy(tweet.obj.position);
         }
-        var tmpRows = rows;
+        var tmpRows = Math.sqrt(tweetsToMerge.length);
         var x = Math.floor(i / tmpRows) * xSpacing;
         var y = 0 - (i % tmpRows) * ySpacing;
         // console.log('index: ' + tweet.index + ' ypos: ' + y);
@@ -890,43 +901,43 @@ angular.module('parserApp.display3dService', [])
     // 'lo1' = 4 square geom merged into 1
     if (swapTo === 'lo1' && tweet.lod === 'lo') { // from lo - need another condition if from lo2
       //console.log('swapping to lo1, index ' + index + ' layer ' + layer.title);
-      // var tweetsToMerge = [];
-      // var tweetsInLayer = layer.tweets.length;
-      // if (row % 2 === 0 && col % 2 === 0) {
-      //   //console.log ('merging ' + index + ', ' + (index+1) + ', ' + (index+rows) + ', ' + (index+rows+1));
-      //   // this is a primary box, 1 merge per primary
-      //   tweetsToMerge.push(tweet);
-      //   if (index+1 < tweetsInLayer && row + 1 < 25) {
-      //     tweetsToMerge.push(layer.tweets[index+1]); // tweet below
-      //   } else {
-      //     tweetsToMerge.push(null);
-      //   }
-      //   if (index+rows < tweetsInLayer) {
-      //     tweetsToMerge.push(layer.tweets[index+rows]); // tweet to right
-      //   } else {
-      //     tweetsToMerge.push(null);
-      //   }
-      //   if (index+rows+1 < tweetsInLayer && row + 1 < 25) {
-      //     tweetsToMerge.push(layer.tweets[index+rows+1]); // tweet 1 below and 1 right
-      //   } else {
-      //     tweetsToMerge.push(null);
-      //   }
-      //   object = mergeTweets(tweetsToMerge, layer);
-      //   // set necessary values for non-primary squares - need to make sure this is done AFTER merging
-      //   for (var j = 1; j < tweetsToMerge.length; j++) {
-      //     if (tweetsToMerge[j] !== null) {
-      //       tweetsToMerge[j].lod = 'lo1';
-      //       tweetsToMerge[j].obj = undefined;
-      //       //console.log('swapTo post merge set to undefined, tweet index: ' + tweetsToMerge[j].index);
-      //       tweetsToMerge[j].el = undefined;
-      //     }
-      //   }
-        object = mergeTweets(layer.tweets, layer);
-        layer.tweets.forEach(function (tweet) {
-          tweet.lod = 'lo1';
-          tweet.obj = undefined;
-          tweet.el = undefined;
-        });
+      var tweetsToMerge = [];
+      var tweetsInLayer = layer.tweets.length;
+      if (row % 2 === 0 && col % 2 === 0) {
+        //console.log ('merging ' + index + ', ' + (index+1) + ', ' + (index+rows) + ', ' + (index+rows+1));
+        // this is a primary box, 1 merge per primary
+        tweetsToMerge.push(tweet);
+        if (index+1 < tweetsInLayer && row + 1 < 25) {
+          tweetsToMerge.push(layer.tweets[index+1]); // tweet below
+        } else {
+          tweetsToMerge.push(null);
+        }
+        if (index+rows < tweetsInLayer) {
+          tweetsToMerge.push(layer.tweets[index+rows]); // tweet to right
+        } else {
+          tweetsToMerge.push(null);
+        }
+        if (index+rows+1 < tweetsInLayer && row + 1 < 25) {
+          tweetsToMerge.push(layer.tweets[index+rows+1]); // tweet 1 below and 1 right
+        } else {
+          tweetsToMerge.push(null);
+        }
+        object = mergeTweets(tweetsToMerge, layer);
+        // set necessary values for non-primary squares - need to make sure this is done AFTER merging
+        for (var j = 1; j < tweetsToMerge.length; j++) {
+          if (tweetsToMerge[j] !== null) {
+            tweetsToMerge[j].lod = 'lo1';
+            tweetsToMerge[j].obj = undefined;
+            //console.log('swapTo post merge set to undefined, tweet index: ' + tweetsToMerge[j].index);
+            tweetsToMerge[j].el = undefined;
+          }
+        }
+        // object = mergeTweets(layer.tweets, layer);
+        // layer.tweets.forEach(function (tweet) {
+        //   tweet.lod = 'lo1';
+        //   tweet.obj = undefined;
+        //   tweet.el = undefined;
+        // });
         object.position.set(x, y, z);
         //sceneGL.add(object);
         //layer.ribbonMesh.add(object);
@@ -934,10 +945,10 @@ angular.module('parserApp.display3dService', [])
         layer.lodHolder.add(object);
         // console.log(layer.lodHolder);
         //THREE.SceneUtils.attach(object, sceneGL, layer.ribbonMesh);
-      // } else {
-      //   // the non-primary squares don't need to worry about it
-      //   return;
-      // }
+      } else {
+        // the non-primary squares don't need to worry about it
+        return;
+      }
       tweet.lod = 'lo1';
     }
 

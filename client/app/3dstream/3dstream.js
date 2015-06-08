@@ -424,7 +424,7 @@ angular.module('parserApp')
         }
       } else {
         runFakeTweets = true;
-        intervalID = setInterval(addFakeTweet, 5);
+        intervalID = setInterval(addFakeTweet, 200);
       }
       
     };

@@ -41,6 +41,11 @@ angular.module('parserApp.display3dService', [])
     return loMesh;
   };
 
+  var makeLoResGeo = function () {
+    var loGeo = new THREE.PlaneGeometry(140, 140);
+    return loGeo;
+  };
+
   var getCameraDistanceFrom = function(camera,x,y,z) {
     var cameraDistance = new THREE.Vector3();
     var zTarget = new THREE.Vector3(x,y,z);
@@ -89,6 +94,7 @@ angular.module('parserApp.display3dService', [])
   return {
     makeLoResElement: makeLoResElement,
     makeLoResMesh: makeLoResMesh,
+    makeLoResGeo: makeLoResGeo,
     getCameraDistanceFrom: getCameraDistanceFrom,
     getDisplayWidthAtPoint: getDisplayWidthAtPoint,
     currentBGColor: currentBGColor,
@@ -456,8 +462,40 @@ angular.module('parserApp.display3dService', [])
       var lodLevel;
 
       var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, x, y, z );
+      var layerDistance = displayHelpers.getCameraDistanceFrom( camera, controls.target.x, controls.target.y, layerObj.z );
 
-      if (tweetDistance > lod0Distance) {
+
+      if (layerDistance > lod1Distance) {
+
+        layerObj.lod = 'lo1'
+        lodLevel = 'lo1';
+
+        if (layerObj.lodHolder && layerObj.lodHolder.children[0]) {
+          layerObj.lodHolder.children[0].geometry.dispose();
+        }
+
+        
+        sceneGL.remove(layerObj.lodHolder);
+        layerObj.lodHolder = undefined;
+        layerObj.lodHolder = new THREE.Object3D();
+        // gets all the previous tweets
+        var combinedMat = [layerObj.tweetMaterialNeutral, layerObj.tweetMaterialPos, layerObj.tweetMaterialNeg];
+        var prevTweetsObj = mergeTweets(layerObj.tweets, layerObj);
+        var score = +elData.score.split(": ")[1];
+        var matIndex = getMatIndexFromScore(score);
+        var newPlaneMesh = displayHelpers.makeLoResMesh(layersSeparated, elData, layerObj, 'p');
+        newPlaneMesh.position.set(x,y,z);
+        newPlaneMesh.updateMatrix();
+        prevTweetsObj.geometry.merge(newPlaneMesh.geometry, newPlaneMesh.matrix, matIndex);
+        newPlaneMesh.geometry.dispose();
+        newPlaneMesh = undefined;
+        var obj = new THREE.Mesh(prevTweetsObj.geometry, new THREE.MeshFaceMaterial(combinedMat));
+        obj.position.set(xStart,yStart,z);
+        layerObj.lodHolder.add(obj);
+        sceneGL.add(layerObj.lodHolder);
+
+
+      } else if (tweetDistance > lod0Distance) {
         lodLevel = 'lo';
         object = displayHelpers.makeLoResMesh(layersSeparated, elData, layerObj, 'pb');
         object.position.x = x;
@@ -488,6 +526,18 @@ angular.module('parserApp.display3dService', [])
 
   };
 
+  var getMatIndexFromScore = function (score) {
+    var matIndex;
+    if (score > 0) {
+      matIndex = 1;
+    } else if (score < 0) {
+      matIndex = 2;
+    } else {
+      matIndex = 0;
+    }
+    return matIndex;
+  };
+
   var mergeTweets = function (tweetsToMerge, layer) {
     var combinedGeo = new THREE.Geometry();
     //var combinedMat = [];
@@ -500,26 +550,25 @@ angular.module('parserApp.display3dService', [])
     for (var i = 0; i < tweetsToMerge.length; i++) {
       var tweet = tweetsToMerge[i];
       if (tweet !== null) {
-        tweet.position.copy(tweet.obj.position);
+        if (tweet.obj) {
+          tweet.position.copy(tweet.obj.position);
+        }
         var tmpRows = rows;
         var x = Math.floor(i / tmpRows) * xSpacing;
         var y = 0 - (i % tmpRows) * ySpacing;
         // console.log('index: ' + tweet.index + ' ypos: ' + y);
         var score = +tweet.elData.score.split(': ')[1];
-        var matIndex;
-        if (score > 0) {
-          matIndex = 1;
-        } else if (score < 0) {
-          matIndex = 2;
-        } else {
-          matIndex = 0;
-        }
+        var matIndex = getMatIndexFromScore(score);
         sceneGL.remove(tweet.obj);
-        tweet.obj.geometry.dispose();
+        if (tweet.obj) {
+          tweet.obj.geometry.dispose();
+        }
         var newPlaneMesh = displayHelpers.makeLoResMesh(layersSeparated, tweet.elData, layer, 'p');
         newPlaneMesh.position.set(x,y,0);
         newPlaneMesh.updateMatrix();
         combinedGeo.merge(newPlaneMesh.geometry, newPlaneMesh.matrix, matIndex);
+        newPlaneMesh.geometry.dispose();
+        newPlaneMesh = undefined;
         //combinedMat.push(tweet.obj.material);
         sceneGL.remove(tweet.obj);
         tweet.obj = undefined;
@@ -660,11 +709,13 @@ angular.module('parserApp.display3dService', [])
         var layerDistance = displayHelpers.getCameraDistanceFrom( camera, controls.target.x, controls.target.y, layers[layerIndex].z );
 
         // whole layer swaps
-        if (layerDistance > lod1Distance) {
+        if (layerDistance > lod1Distance && layers[layerIndex].lod !== 'lo1') {
           // switch whole layer to LOD1
+          console.log('swap to LO1');
           swapLayerLOD(layers[layerIndex], 'lo1');
         } else if (layerDistance <= lod1Distance && layers[layerIndex].lod === 'lo1') {
           // switch whole layer to lo
+          console.log('swap to LO');
           swapLayerLOD(layers[layerIndex], 'lo');
         }
 

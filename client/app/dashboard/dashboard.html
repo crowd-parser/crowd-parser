@@ -50,6 +50,51 @@
       <button ng-click="fbLogin()" class="fb-login-button-custom"><i class="fa fa-facebook"></i> Log in with Facebook</button>
   </div>
 
+  <!-- 
+  *
+  *
+  * Dashboard for users who have purchased keywords. 
+  *
+  *
+  -->
+
+  <div ng-show="purchasingUser" class="purchasing-user-container">
+    <h1>Hello, {{purchasingUserDetails.name}}!</h1>
+
+    <div class="user-keywords">
+      <h2>My keywords:</h2> 
+      <span class="user-keyword" ng-repeat="keyword in purchasingUserKeywords">{{keyword.purchased_keyword}}</span>
+
+      <br><br>
+      <div><a href="/3dstream">View my keyword results in 3D!</a></div>
+    </div>
+
+    <h3>Number of keywords remaining: {{purchasingUserDetails.number_of_keywords}}</h3>
+
+    <form onsubmit="return false" ng-submit="userKeywordSubmit()" ng-hide="purchasingUserDetails.number_of_keywords <= 0">
+      <input type="text" class="form-control" ng-model="userKeywordInput" placeholder="Add a new keyword" required />
+      <button class="btn btn-primary keyword-submit">Submit</button>
+    </form>
+
+    <hr>
+
+    <div class="share-keywords">
+      <h2>Share the keywords you've added!</h2>
+
+      <a class="sbg-button sbg-button-facebook"  data-sbg-network="facebook"  data-sbg-url="https://crowdparser.org"  data-sbg-title="Crowd Parser"  data-sbg-summary="Look at the keywords I added to Crowd Parser!"  data-sbg-image="http://i288.photobucket.com/albums/ll175/michaelcheng429/crowdparserlogogh_zpshipsbtrg.png"  data-sbg-width="600"  data-sbg-height="368" >
+        <i class="sbg-button-icon fa fa-facebook"></i>
+      </a>
+
+      <a class="sbg-button sbg-button-twitter"  data-sbg-network="twitter"  data-sbg-text="Look at the keywords I added to Crowd Parser! https://crowdparser.org/3dstream http://bit.ly/1eUSMZO"  data-sbg-via=""  data-sbg-hashtags=""  data-sbg-width="600"  data-sbg-height="258" >
+        <i class="sbg-button-icon fa fa-twitter"></i>
+      </a>
+
+      <a class="sbg-button sbg-button-google-plus"  data-sbg-network="google-plus"  data-sbg-url="https://crowdparser.org/3dstream"  data-sbg-width="500"  data-sbg-height="505" >
+        <i class="sbg-button-icon fa fa-google-plus"></i>
+      </a>
+    </div>
+  </div>
+
   <!--
   *
   *
@@ -59,7 +104,11 @@
   *
   -->
 
-  <form stripe-form="stripeCallback" class="stripe-form" ng-show="loggedIn && !purchasingUser" onsubmit="return false">
+  <form stripe-form="stripeCallback" class="stripe-form" ng-show="loggedIn && !purchasingUser || purchasingUserDetails.number_of_keywords <= 0" onsubmit="return false">
+
+    <div class="alert alert-warning" ng-show="purchasingUserDetails.number_of_keywords <= 0">You are out of keywords! <br>
+    Would you like to purchase more?</div>
+
     <h2>Purchase Keywords</h2>
 
     <div class="purchase-options" ng-init="selectedOption;">
@@ -95,43 +144,5 @@
 
     <img src="assets/images/stripe-secure.png" alt="stripe-secure">
   </form>
-
-  <!-- 
-  *
-  *
-  * Dashboard for users who have purchased keywords. 
-  *
-  *
-  -->
-
-  <div ng-show="purchasingUser" class="purchasing-user-container">
-    <h1>Purchasing User Dashboard</h1>
-
-    <div>Name: {{purchasingUserDetails.name}}</div>
-    <div>My keywords: <div ng-repeat="keyword in purchasingUserKeywords">{{keyword.purchased_keyword}}</div></div>
-
-    <div>Number of keywords remaining: {{purchasingUserDetails.number_of_keywords}}</div>
-
-    <form onsubmit="return false" ng-submit="userKeywordSubmit()">
-      <input type="text" class="form-control" ng-model="userKeywordInput" placeholder="add a keyword" required />
-      <button class="btn btn-primary">Submit</button>
-    </form>
-
-    <div class="share-keywords">
-      <h2>Share the keywords you've added!</h2>
-
-      <a class="sbg-button sbg-button-facebook"  data-sbg-network="facebook"  data-sbg-url="https://crowdparser.org"  data-sbg-title="Crowd Parser"  data-sbg-summary="Look at the keywords I added to Crowd Parser!"  data-sbg-image="http://i288.photobucket.com/albums/ll175/michaelcheng429/crowdparserlogogh_zpshipsbtrg.png"  data-sbg-width="600"  data-sbg-height="368" >
-        <i class="sbg-button-icon fa fa-facebook"></i>
-      </a>
-
-      <a class="sbg-button sbg-button-twitter"  data-sbg-network="twitter"  data-sbg-text="Look at the keywords I added to Crowd Parser! https://crowdparser.org/3dstream http://bit.ly/1eUSMZO"  data-sbg-via=""  data-sbg-hashtags=""  data-sbg-width="600"  data-sbg-height="258" >
-        <i class="sbg-button-icon fa fa-twitter"></i>
-      </a>
-
-      <a class="sbg-button sbg-button-google-plus"  data-sbg-network="google-plus"  data-sbg-url="https://crowdparser.org/3dstream"  data-sbg-width="500"  data-sbg-height="505" >
-        <i class="sbg-button-icon fa fa-google-plus"></i>
-      </a>
-    </div>
-  </div>
   
 </div>

@@ -139,6 +139,33 @@
   margin-bottom: 8px;
 }
 
+.user-keywords {
+  background: #FFF;
+  padding: 20px;
+  padding-top: 1px;
+  margin: 20px 0;
+}
+
+.user-keyword {
+  background: #92CDCF;
+  color: #FFF;
+  font-size: 30px;
+  padding: 6px 14px;
+  margin: 12px;
+  border-radius: 6px;
+}
+
+.keyword-submit {
+  display: block;
+  color: #FFF;
+  background: #445878;
+  font-size: 20px;
+  margin: 0 auto;
+  margin-top: 10px;
+  border-radius: 0;
+}
+
 .share-keywords {
   font-size: 50px;
+  margin-bottom: 20px;
 }

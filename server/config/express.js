@@ -14,6 +14,7 @@ var cookieParser = require('cookie-parser');
 var errorHandler = require('errorhandler');
 var path = require('path');
 var config = require('./environment');
+var session = require('express-session');
 
 module.exports = function(app) {
   var env = app.get('env');
@@ -26,6 +27,11 @@ module.exports = function(app) {
   app.use(bodyParser.json());
   app.use(methodOverride());
   app.use(cookieParser());
+  app.use(session({
+    secret: 'secret',
+    resave: false,
+    saveUninitialized: true
+  }));
   
   if ('production' === env) {
     // app.use(favicon(path.join(config.root, 'public', 'favicon.ico')));

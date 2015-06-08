@@ -105,17 +105,24 @@
   -->
 
   <div ng-show="purchasingUser" class="purchasing-user-container">
-    <h1>Purchasing User Dashboard</h1>
+    <h1>Hello, {{purchasingUserDetails.name}}!</h1>
 
-    <div>Name: {{purchasingUserDetails.name}}</div>
-    <div>My keywords: <div ng-repeat="keyword in purchasingUserKeywords">{{keyword.purchased_keyword}}</div></div>
+    <div class="user-keywords">
+      <h2>My keywords:</h2> 
+      <span class="user-keyword" ng-repeat="keyword in purchasingUserKeywords">{{keyword.purchased_keyword}}</span>
 
-    <div>Number of keywords remaining: {{purchasingUserDetails.number_of_keywords}}</div>
+      <br><br>
+      <div><a href="/3dstream">View my keyword results in 3D!</a></div>
+    </div>
+
+    <h3>Number of keywords remaining: {{purchasingUserDetails.number_of_keywords}}</h3>
 
     <form onsubmit="return false" ng-submit="userKeywordSubmit()">
-      <input type="text" class="form-control" ng-model="userKeywordInput" placeholder="add a keyword" required />
-      <button class="btn btn-primary">Submit</button>
+      <input type="text" class="form-control" ng-model="userKeywordInput" placeholder="Add a new keyword" required />
+      <button class="btn btn-primary keyword-submit">Submit</button>
     </form>
+
+    <hr>
 
     <div class="share-keywords">
       <h2>Share the keywords you've added!</h2>

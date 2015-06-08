@@ -1,0 +1,2 @@
+Mon Jun 08 2015 18:37:01 GMT-0500 (CDT) - Error updating user keyword count! - Error: ER_BAD_FIELD_ERROR: Unknown column 'undefined' in 'where clause'
+

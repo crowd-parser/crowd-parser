@@ -117,6 +117,7 @@ angular.module('parserApp.display3dService', [])
 
   var lod0Distance = 1000;
   var lod1Distance = 2000;
+  var lod2Distance = 5000;
 
   var frontLayerZ = 300;
   var layerSpacing = 300;
@@ -515,7 +516,6 @@ angular.module('parserApp.display3dService', [])
 
         // if we have enough columns to make n x n blocks
         if ((index+1) % (rows*2) === 0) {
-          console.log(index);
 
           // make a new LOD holder for layer (it is hard to get an old one to rerender for some reason)
           var tmpArray = [];
@@ -530,17 +530,6 @@ angular.module('parserApp.display3dService', [])
           for (var m = 0; m < tmpArray.length; m++) {
             layerObj.lodHolder.children.push(tmpArray[m]);
           }
-
-
-          // var combinedGeo = new THREE.Geometry();
-          // //var combinedMat = [];
-          // var combinedMat = [layerObj.tweetMaterialNeutral, layerObj.tweetMaterialPos, layerObj.tweetMaterialNeg];
-          // var newPlaneMesh;
-          // var tmpX;
-          // var tmpY;
-          // var tmpRows;
-          // var score;
-          // var matIndex;
 
           for (var i = layerObj.lastDisplayedTweet; i < layerObj.tweets.length; i++) {
             var n = 2; // merge an n x n square
@@ -793,7 +782,12 @@ angular.module('parserApp.display3dService', [])
         var layerDistance = displayHelpers.getCameraDistanceFrom( camera, controls.target.x, controls.target.y, layers[layerIndex].z );
 
         // whole layer swaps
-        if (layerDistance > lod1Distance && layers[layerIndex].lod !== 'lo1') {
+        // if (layerDistance > lod2Distance && layers[layerIndex].lod !== 'lo2') {
+        //   // switch whole layer to LOD2
+        //   console.log('swap to LO2');
+        //   swapLayerLOD(layers[layerIndex], 'lo2');
+        // } else
+         if (layerDistance > lod1Distance && layers[layerIndex].lod !== 'lo1') {
           // switch whole layer to LOD1
           console.log('swap to LO1');
           swapLayerLOD(layers[layerIndex], 'lo1');
@@ -826,13 +820,9 @@ angular.module('parserApp.display3dService', [])
       layer.lodHolder = undefined;
     }
     layer.lodHolder = new THREE.Object3D();
-    if (swapTo === 'lo') {
-      for (var t = 0; t < layer.tweets.length; t++) {
-        var tweet = layer.tweets[t];
-        swapLOD(tweet, swapTo, layer);
-      }
-    } else if (swapTo === 'lo1') {
-      swapLOD(layer.tweets[0], swapTo, layer);
+    for (var t = 0; t < layer.tweets.length; t++) {
+      var tweet = layer.tweets[t];
+      swapLOD(tweet, swapTo, layer);
     }
     sceneGL.add(layer.lodHolder);
     layer.lod = swapTo;
@@ -900,28 +890,21 @@ angular.module('parserApp.display3dService', [])
 
     // 'lo1' = 4 square geom merged into 1
     if (swapTo === 'lo1' && tweet.lod === 'lo') { // from lo - need another condition if from lo2
-      //console.log('swapping to lo1, index ' + index + ' layer ' + layer.title);
-      var tweetsToMerge = [];
-      var tweetsInLayer = layer.tweets.length;
-      if (row % 2 === 0 && col % 2 === 0) {
-        //console.log ('merging ' + index + ', ' + (index+1) + ', ' + (index+rows) + ', ' + (index+rows+1));
+      var n = 2;
+      if (row % n === 0 && col % n === 0) {
         // this is a primary box, 1 merge per primary
-        tweetsToMerge.push(tweet);
-        if (index+1 < tweetsInLayer && row + 1 < 25) {
-          tweetsToMerge.push(layer.tweets[index+1]); // tweet below
-        } else {
-          tweetsToMerge.push(null);
+        var tweetsToMerge = [];
+        for (var colIndex = 0; colIndex < n; colIndex++) {
+          for (var rowIndex = 0; rowIndex < n; rowIndex++) {
+            var currentIndex = index + rowIndex + (rows * colIndex);
+            if (currentIndex < layer.tweets.length && row + rowIndex < rows) {
+              tweetsToMerge.push(layer.tweets[currentIndex]);
+            } else {
+              tweetsToMerge.push(null);
+            }
+          }
         }
-        if (index+rows < tweetsInLayer) {
-          tweetsToMerge.push(layer.tweets[index+rows]); // tweet to right
-        } else {
-          tweetsToMerge.push(null);
-        }
-        if (index+rows+1 < tweetsInLayer && row + 1 < 25) {
-          tweetsToMerge.push(layer.tweets[index+rows+1]); // tweet 1 below and 1 right
-        } else {
-          tweetsToMerge.push(null);
-        }
+
         object = mergeTweets(tweetsToMerge, layer);
         // set necessary values for non-primary squares - need to make sure this is done AFTER merging
         for (var j = 1; j < tweetsToMerge.length; j++) {
@@ -932,24 +915,17 @@ angular.module('parserApp.display3dService', [])
             tweetsToMerge[j].el = undefined;
           }
         }
-        // object = mergeTweets(layer.tweets, layer);
-        // layer.tweets.forEach(function (tweet) {
-        //   tweet.lod = 'lo1';
-        //   tweet.obj = undefined;
-        //   tweet.el = undefined;
-        // });
         object.position.set(x, y, z);
-        //sceneGL.add(object);
-        //layer.ribbonMesh.add(object);
-        //layer.ribbonMesh.updateMatrixWorld();
         layer.lodHolder.add(object);
-        // console.log(layer.lodHolder);
-        //THREE.SceneUtils.attach(object, sceneGL, layer.ribbonMesh);
       } else {
         // the non-primary squares don't need to worry about it
         return;
       }
       tweet.lod = 'lo1';
+    }
+
+    if (swapTo === 'lo2' && tweet.lod === 'lo1') {
+
     }
 
 
@@ -1063,8 +1039,6 @@ angular.module('parserApp.display3dService', [])
       cameraY = 0;
       rows = 25;
     }
-    
-    ribbonHeight = rows * (ySpacing + 50);
 
     sceneCSS = new THREE.Scene();
     sceneGL = new THREE.Scene();
@@ -1072,9 +1046,6 @@ angular.module('parserApp.display3dService', [])
 
     camera.position.z = cameraZ !== undefined ? cameraZ : 1000;
     camera.position.y = cameraY !== undefined ? cameraY : 200;
-
-    xStart = 0 - (displayHelpers.getDisplayWidthAtPoint(camera,0,0,0) / 2) + xSpacing/2;
-    yStart = ((rows-1)*ySpacing)/2;
 
     rendererCSS = new THREE.CSS3DRenderer();
     rendererCSS.domElement.style.position = 'absolute';
@@ -1126,7 +1097,7 @@ angular.module('parserApp.display3dService', [])
       }
     });
 
-    initRepeatable(25);
+    initRepeatable(15);
   };
 
   var initRepeatable = function (numRows) {
@@ -1134,11 +1105,17 @@ angular.module('parserApp.display3dService', [])
     layers = [];
     layersSeparated = true;
 
+    rows = numRows;
+    
+    ribbonHeight = rows * (ySpacing + 50);
+
     makeLayers();
 
     controls.maxDistance = 40000;
-    xStart = 0 - (displayHelpers.getDisplayWidthAtPoint(camera,0,0,0) / 2);
     camera.position.z = numRows * 250;
+
+    xStart = 0 - (displayHelpers.getDisplayWidthAtPoint(camera,0,0,0) / 2) + xSpacing/2;
+    yStart = ((rows-1)*ySpacing)/2;
 
     prevCameraPosition = new THREE.Vector3();
     prevCameraPosition.copy(camera.position);

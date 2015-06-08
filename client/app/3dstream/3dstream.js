@@ -401,7 +401,7 @@ angular.module('parserApp')
     var endTime;
 
     var addFakeTweet = function () {
-      if ($scope.tweetCount >= 1000) {
+      if ($scope.tweetCount >= 1500) {
         runFakeTweets = false;
         if (!endTime) {
           endTime = new Date();
@@ -433,7 +433,7 @@ angular.module('parserApp')
       } else {
         runFakeTweets = true;
         timeStart = new Date();
-        intervalID = setInterval(addFakeTweet, 1);
+        intervalID = setInterval(addFakeTweet, 2);
       }
       
     };

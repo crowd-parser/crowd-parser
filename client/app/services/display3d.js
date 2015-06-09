@@ -1227,7 +1227,7 @@ angular.module('parserApp.display3dService', [])
           lastTweet.position.copy(lastTweet.obj.position);
         }
         var lastTweetPosition = lastTweet.position;
-        var rightEdge = displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, controls.target.y, controls.target.z)/2 + camera.position.x;
+        var rightEdge = displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, controls.target.y, frontLayerZ)/2 + camera.position.x;
         if ((lastTweetPosition.x + xSpacing) > rightEdge) {
           var distanceToGo = (lastTweetPosition.x + xSpacing) - rightEdge;
           scrollSpeed = 10 * distanceToGo/100;
@@ -1278,34 +1278,6 @@ angular.module('parserApp.display3dService', [])
             layer.tweets[t].hidden = false;
           }
         }
-
-
-        // layer.tweets.forEach(function (tweet) {
-        //   var screenWidth = displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, controls.target.y, layer.z);
-        //   var screenHeight = displayHelpers.getDisplayHeightAtPoint(camera, controls.target.x, controls.target.y, layer.z);
-        //   var leftEdge = controls.target.x - screenWidth/2;
-        //   var rightEdge = controls.target.x + screenWidth/2;
-        //   var topEdge = controls.target.y + screenHeight/2;
-        //   var bottomEdge = controls.target.y - screenHeight/2;
-        //   // if not on screen
-        //   if (tweet.position.x < leftEdge - screenWidth/4 ||
-        //       tweet.position.x > rightEdge + screenWidth/4 ||
-        //       tweet.position.y > topEdge + screenHeight/4 ||
-        //       tweet.position.y < bottomEdge - screenHeight/4) {
-        //     // and tweet.obj exists
-        //     if (tweet.obj !== undefined) {
-        //       // make invisible? delete?
-        //       sceneGL.remove(tweet.obj);
-        //       if (tweet.obj.geometry) {
-        //         tweet.obj.geometry.dispose();
-        //       }
-        //     }
-        //   } else { // it is on screen
-        //     if (tweet.obj === undefined) { // need some more conditions to avoid panicking about non-rendered tweets at lod1 and lod2
-        //       // bring it back somehow...
-        //     }
-        //   }
-        // });
       });
     }
 
@@ -1317,17 +1289,17 @@ angular.module('parserApp.display3dService', [])
     //   //   layers[i].ribbonMesh.position.x -= scrollSpeed;
     //   // }
     // }
-    // if (rightHover || (rightAutoScroll && !neverAutoScroll)) {
-    //   if (rightHover) {
-    //     scrollSpeed = baseScrollSpeed;
-    //   }
-    //   camera.position.x += scrollSpeed;
-    //   controls.target.x += scrollSpeed;
-    //   // for (var i = 0; i < layers.length; i++) {
-    //   //   layers[i].ribbonMesh.position.x += scrollSpeed;
-    //   //   layers[i].titleObj.position.x -= scrollSpeed;
-    //   // }
-    // }
+    if (rightHover || (rightAutoScroll && !neverAutoScroll)) {
+      if (rightHover) {
+        scrollSpeed = baseScrollSpeed;
+      }
+      camera.position.x += scrollSpeed;
+      controls.target.x += scrollSpeed;
+      // for (var i = 0; i < layers.length; i++) {
+      //   layers[i].ribbonMesh.position.x += scrollSpeed;
+      //   layers[i].titleObj.position.x -= scrollSpeed;
+      // }
+    }
     TWEEN.update();
     controls.update();
       render();

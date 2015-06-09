@@ -873,16 +873,26 @@ angular.module('parserApp.display3dService', [])
           // switch whole layer to lo
           console.log('swap to LO');
           swapLayerLOD(layers[layerIndex], 'lo');
+          layers[layerIndex].lod = 'individual';
         }
 
         // individual tweet swaps
-        if (layerDistance <= lod1Distance && tweetDistance > lod0Distance && tweet.el && !tweet.hidden) {
+        if (layerDistance <= lod1Distance && tweetDistance > lod0Distance && tweet.el) {
           // switch to lo from hi
-          swapLOD(tweet, 'lo', layers[layerIndex]);
+          if (tweet.hidden) { // if tweet is hidden, just swap the lod property so it knows what lod it should be at when it comes back
+            tweet.lod = 'lo';
+          } else {
+            swapLOD(tweet, 'lo', layers[layerIndex]);
+          }
           layers[layerIndex].lod = 'individual';
-        } else if (layerDistance <= lod1Distance && tweetDistance <= lod0Distance && !tweet.el && !tweet.hidden) {
+          console.log(layers[layerIndex].lod);
+        } else if (layerDistance <= lod1Distance && tweetDistance <= lod0Distance && !tweet.el) {
           // switch to hi from lo
-          swapLOD(tweet, 'hi', layers[layerIndex]);
+          if (tweet.hidden) {
+            tweet.lod = 'hi';
+          } else {
+            swapLOD(tweet, 'hi', layers[layerIndex]);
+          }
           layers[layerIndex].lod = 'individual';
         }
 
@@ -903,6 +913,8 @@ angular.module('parserApp.display3dService', [])
       var tweet = layer.tweets[t];
       if (!tweet.hidden) {
         swapLOD(tweet, swapTo, layer);
+      } else {
+        tweet.lod = swapTo;
       }
     }
     layer.lodHolder.position.z = layer.z;
@@ -1242,6 +1254,8 @@ angular.module('parserApp.display3dService', [])
     if (cameraMoved && tick % 4 === 0) {
       var i;
       var t;
+      var thisTweet;
+      var tmp;
 
       layers.forEach(function (layer) {
         var screenCheck = getIndexesOffScreen(layer);
@@ -1250,32 +1264,51 @@ angular.module('parserApp.display3dService', [])
         var offScreenIndexes = Object.keys(screenCheck.offScreen);
         for (i = 0; i < offScreenIndexes.length; i++) {
           t = +offScreenIndexes[i];
+          thisTweet = layer.tweets[t];
+          // debugging
+          if (layer.title === 'word' && t === 0) {
+            console.log(layer.lod);
+            console.log(thisTweet.hidden);
+          }
           // if this tweet holds a renderable obj (in zoomed-out lods, many do not)
-          if (layer.tweets[t].obj) {
+          if (thisTweet.obj) {
             var corners = blockCorners(t, layer);
             if (corners && corners[0] in screenCheck.offScreen &&
               corners[1] in screenCheck.offScreen && corners[2] in screenCheck.offScreen) {
               killTweetObj(t, layer);
-              layer.tweets[t].hidden = true;
+              thisTweet.hidden = true;
             }
           } else {
-            layer.tweets[t].hidden = true;
+            thisTweet.hidden = true;
           }
         }
+
 
         // restore everything onscreen that has no obj
         var onScreenIndexes = Object.keys(screenCheck.onScreen);
         for (i = 0; i < onScreenIndexes.length; i++) {
           t = +onScreenIndexes[i];
+          thisTweet = layer.tweets[t];
+          // debugging
+          if (layer.title === 'word' && t === 0) {
+            console.log(layer.lod);
+            console.log(thisTweet.hidden);
+          }
           // if this tweet SHOULD hold a renderable obj when onscreen
-          if ( isAnchor(t, layer) && layer.tweets[t].hidden ) {
+          if ( isAnchor(t, layer) && thisTweet.hidden ) {
             if (layer.lod === 'lo2' || layer.lod === 'lo1') {
-              layer.tweets[t].lod = 'x';
-              layer.tweets[t].hidden = false;
-              swapLOD(layer.tweets[t], layer.lod, layer);
+              thisTweet.lod = 'x';
+              thisTweet.hidden = false;
+              swapLOD(thisTweet, layer.lod, layer);
+            } else if (layer.lod === 'individual' && thisTweet.hidden) {
+                console.log(thisTweet.index);
+                tmp = thisTweet.lod;
+                thisTweet.lod = 'x';
+                thisTweet.hidden = false;
+                swapLOD(thisTweet, tmp, layer);
             }
           } else {
-            layer.tweets[t].hidden = false;
+            thisTweet.hidden = false;
           }
         }
       });

@@ -399,7 +399,7 @@ angular.module('parserApp')
     };
 
     var endTime;
-    var total = 2500;
+    var total = 25;
 
     var addFakeTweet = function (last) {
       if ($scope.tweetCount >= total) {

@@ -49,6 +49,11 @@ angular.module('parserApp', [
         templateUrl: 'app/dashboard/dashboard.html',
         controller: 'DashboardCtrl'
       })
+      .state('keywords-list', {
+        url: '/keywords-list',
+        templateUrl: 'app/keywords-list/keywords-list.html',
+        controller: 'KeywordsListCtrl'
+      })
       .state('privacy-policy', {
         url: '/wp4fb/privacy-policy',
         templateUrl: 'app/privacy-policy/privacy-policy.html'

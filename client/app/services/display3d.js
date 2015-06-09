@@ -1083,33 +1083,73 @@ angular.module('parserApp.display3dService', [])
 
     if (cameraMoved && tick % 30 === 0) {
       layers.forEach(function (layer) {
-        layer.tweets.forEach(function (tweet) {
-          var screenWidth = displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, controls.target.y, layer.z);
-          var screenHeight = displayHelpers.getDisplayHeightAtPoint(camera, controls.target.x, controls.target.y, layer.z);
-          var leftEdge = controls.target.x - screenWidth/2;
-          var rightEdge = controls.target.x + screenWidth/2;
-          var topEdge = controls.target.y + screenHeight/2;
-          var bottomEdge = controls.target.y - screenHeight/2;
-          // if not on screen
-          if (tweet.position.x < leftEdge - screenWidth/4 ||
-              tweet.position.x > rightEdge + screenWidth/4 ||
-              tweet.position.y > topEdge + screenHeight/4 ||
-              tweet.position.y < bottomEdge - screenHeight/4) {
-            console.log('offscreen');
-            // and tweet.obj exists
-            if (tweet.obj !== undefined) {
-              // make invisible? delete?
-              sceneGL.remove(tweet.obj);
-              if (tweet.obj.geometry) {
-                tweet.obj.geometry.dispose();
-              }
+        var screenWidth = displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, controls.target.y, layer.z);
+        var screenHeight = displayHelpers.getDisplayHeightAtPoint(camera, controls.target.x, controls.target.y, layer.z);
+        var leftEdge = controls.target.x - screenWidth/2;
+        var rightEdge = controls.target.x + screenWidth/2;
+        var topEdge = controls.target.y + screenHeight/2;
+        var bottomEdge = controls.target.y - screenHeight/2;
+        var leftIndexCutoff = (((leftEdge) - xStart) / xSpacing) * rows;
+        var rightIndexCutoff = (((rightEdge) - xStart) / xSpacing) * rows;
+        if (leftIndexCutoff > layer.tweets.length) {
+          leftIndexCutoff = layer.tweets.length;
+        }
+        var i;
+        for (i = 0; i < leftIndexCutoff; i++) {
+          if (layer.tweets[i].obj) {
+            layer.lodHolder.remove(layer.tweets[i].obj);
+            sceneGL.remove(layer.tweets[i].obj);
+            sceneCSS.remove(layer.tweets[i].obj);
+            if (layer.tweets[i].obj.geometry) {
+              layer.tweets[i].obj.geometry.dispose();
             }
-          } else { // it is on screen
-            if (tweet.obj === undefined) { // need some more conditions to avoid panicking about non-rendered tweets at lod1 and lod2
-              // bring it back somehow...
-            }
+            layer.tweets[i].obj = undefined;
           }
-        });
+        }
+        if (rightIndexCutoff < 0) {
+          rightIndexCutoff = 0;
+        }
+        for (i = Math.floor(rightIndexCutoff); i < layer.tweets.length; i++) {
+          if (!layer.tweets[i]) {
+            console.log(i);
+          }
+          if (layer.tweets[i].obj) {
+            layer.lodHolder.remove(layer.tweets[i].obj);
+            sceneGL.remove(layer.tweets[i].obj);
+            sceneCSS.remove(layer.tweets[i].obj);
+            if (layer.tweets[i].obj.geometry) {
+              layer.tweets[i].obj.geometry.dispose();
+            }
+            layer.tweets[i].obj = undefined;
+          }
+        }
+        // layer.tweets.forEach(function (tweet) {
+        //   var screenWidth = displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, controls.target.y, layer.z);
+        //   var screenHeight = displayHelpers.getDisplayHeightAtPoint(camera, controls.target.x, controls.target.y, layer.z);
+        //   var leftEdge = controls.target.x - screenWidth/2;
+        //   var rightEdge = controls.target.x + screenWidth/2;
+        //   var topEdge = controls.target.y + screenHeight/2;
+        //   var bottomEdge = controls.target.y - screenHeight/2;
+        //   // if not on screen
+        //   if (tweet.position.x < leftEdge - screenWidth/4 ||
+        //       tweet.position.x > rightEdge + screenWidth/4 ||
+        //       tweet.position.y > topEdge + screenHeight/4 ||
+        //       tweet.position.y < bottomEdge - screenHeight/4) {
+        //     console.log('offscreen');
+        //     // and tweet.obj exists
+        //     if (tweet.obj !== undefined) {
+        //       // make invisible? delete?
+        //       sceneGL.remove(tweet.obj);
+        //       if (tweet.obj.geometry) {
+        //         tweet.obj.geometry.dispose();
+        //       }
+        //     }
+        //   } else { // it is on screen
+        //     if (tweet.obj === undefined) { // need some more conditions to avoid panicking about non-rendered tweets at lod1 and lod2
+        //       // bring it back somehow...
+        //     }
+        //   }
+        // });
       });
     }
 

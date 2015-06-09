@@ -184,6 +184,13 @@
   border-radius: 0;
 }
 
+.keyword-submit-warning {
+  display: inline-block;
+  font-size: 13px;
+  padding: 5px 10px;
+  margin-top: 8px;
+}
+
 .share-keywords {
   font-size: 50px;
   margin-bottom: 20px;

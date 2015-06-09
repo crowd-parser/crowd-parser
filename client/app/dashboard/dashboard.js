@@ -13,7 +13,6 @@ angular.module('parserApp')
 
         $scope.loggedIn = Auth.loggedIn;
         $scope.purchasingUser = Auth.purchasingUser;
-        $scope.purchasingUserDetails = $scope.purchasingUserDetails;
       });
     }, 500);
 
@@ -115,9 +114,18 @@ angular.module('parserApp')
 
         FB.getLoginStatus(function(response) {
           var fb_id = response.authResponse.userID.toString();
+          var name;
+          var email;
 
-          var name = $scope.purchasingUserDetails.name || $scope.purchasingUsername;
-          var email = $scope.purchasingUserDetails.email || $scope.purchasingEmail;
+          if ($scope.purchasingUserDetails) {
+
+            name = $scope.purchasingUserDetails.name || $scope.purchasingUsername;
+            email = $scope.purchasingUserDetails.email || $scope.purchasingEmail;
+          } else {
+            name = $scope.purchasingUsername;
+            email = $scope.purchasingEmail;
+          }
+
           
           var purchaseDetails = {
             fb_id: fb_id,

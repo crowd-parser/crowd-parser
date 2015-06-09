@@ -5,13 +5,13 @@
   <h1>Our keywords</h1>
 
   <ul ng-repeat="ourKeyword in ourKeywords">
-    <li>{{ourKeyword.keyword}}</li>
+    <li>{{ourKeyword.keyword}} - {{ourKeyword.count}}</li>
   </ul>
 
   <h1>User keywords</h1>
 
   <ul ng-repeat="userKeyword in userKeywords">
-    <li>{{userKeyword.name}} - {{userKeyword.purchased_keyword}}</li>
+    <li>{{userKeyword.name}} - {{userKeyword.purchased_keyword}} - {{userKeyword.count}}</li>
   </ul>
   
 </div>

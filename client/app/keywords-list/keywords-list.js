@@ -5,16 +5,42 @@ angular.module('parserApp')
 
     $http.get('/auth/adminlogin/showAllKeywords')
       .success(function(response) {
+
+        var ourKeywords = response;
         
-        $scope.ourKeywords = response;
-        console.log(JSON.stringify(response));
+        ourKeywords.forEach(function(item) {
+
+          $http.get('/statistics/getKeywordCount/' + item.keyword)
+            .success(function(data) {
+
+              if (data.length > 0) {
+
+                item.count = data[0].id;
+                $scope.ourKeywords = ourKeywords;
+              }
+              
+            });
+        });
+
       });
 
     $http.get('/checkout/getAllUserKeywordsWithNames')
       .success(function(response) {
 
-        $scope.userKeywords = response;
+        var userKeywords = response;
+                
+        userKeywords.forEach(function(item) {
 
-        console.log(JSON.stringify(response));
+          $http.get('/statistics/getKeywordCount/' + item.purchased_keyword)
+            .success(function(data) {
+              
+              if (data.length > 0) {
+
+                item.count = data[0].id;
+              }
+              
+              $scope.userKeywords = userKeywords;
+            });
+        });
       });
   });

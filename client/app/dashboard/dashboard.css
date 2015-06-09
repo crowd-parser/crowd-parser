@@ -146,6 +146,11 @@
   margin: 20px 0;
 }
 
+.user-keywords p {
+  font-size: 13px;
+  font-style: italic;
+}
+
 .user-keyword {
   background: #92CDCF;
   color: #FFF;
@@ -153,6 +158,20 @@
   padding: 6px 14px;
   margin: 12px;
   border-radius: 6px;
+}
+
+.user-keyword-unfinished {
+  background: #fcf8e3;
+  color: #c09853;
+  font-size: 30px;
+  padding: 6px 14px;
+  margin: 12px;
+  border: 1px solid #c09853;
+  border-radius: 6px;
+}
+
+.user-keyword-key {
+  font-size: 15px;
 }
 
 .keyword-submit {

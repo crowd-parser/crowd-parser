@@ -110,14 +110,16 @@
 
     <div class="user-keywords">
       <h2>My keywords:</h2> 
-      <span class="user-keyword" ng-repeat="keyword in purchasingUserKeywords">{{keyword.purchased_keyword}}</span>
+      <span class="{{keyword.finished_processing === 'true' ? 'user-keyword' : 'user-keyword-unfinished'}}" ng-repeat="keyword in purchasingUserKeywords">{{keyword.purchased_keyword}}</span>
 
       <br><br>
       <div>
         <a href="/3dstream">View my keyword results in 3D!</a>
-        <div>Note: It can take some time to process keywords through millions of tweets, <br>
+        <p>Note: It can take some time to process keywords through millions of tweets, <br>
         so if you don't see your keyword on the 3D page, check back again a little later. <br>
-        Thanks for understanding!</div>
+        Thanks for understanding!</p>
+
+        <span class="user-keyword user-keyword-key">processed</span> <span class="user-keyword-unfinished user-keyword-key">not finished processing</span>
       </div>
     </div>
 

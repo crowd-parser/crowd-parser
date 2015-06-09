@@ -398,21 +398,30 @@ angular.module('parserApp')
       return text;
     };
 
+    var endTime;
+
     var addFakeTweet = function () {
-      if ($scope.tweetCount >= 600) {
-        $scope.stopTweets();
+      if ($scope.tweetCount >= 3000) {
+        runFakeTweets = false;
+        if (!endTime) {
+          endTime = new Date();
+          console.log(endTime - timeStart);
+        }
       }
       if (runFakeTweets === true) {
         var fakeTweet = {};
         fakeTweet.baseLayerResults = { positiveWords: [], negativeWords: [], score: fakeScore() };
         fakeTweet.emoticonLayerResults = { positiveWords: [], negativeWords: [], score: fakeScore() };
-        fakeTweet.username = 'user' + Math.round(1000 * Math.random());
+        //fakeTweet.username = 'user' + Math.round(1000 * Math.random());
+        fakeTweet.username = 'user' + $scope.tweetCount;
         fakeTweet.text = fakeText();
         $scope.tweetData.push(fakeTweet);
         Display3d.addTweet(fakeTweet, $scope.tweetCount);
         $scope.tweetCount++;
       }
     };
+
+    var timeStart;
 
     $scope.streamFakeTweets = function () {
       // stop any existing stream
@@ -424,7 +433,8 @@ angular.module('parserApp')
         }
       } else {
         runFakeTweets = true;
-        intervalID = setInterval(addFakeTweet, 5);
+        timeStart = new Date();
+        intervalID = setInterval(addFakeTweet, 2);
       }
       
     };

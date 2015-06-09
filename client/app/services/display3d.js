@@ -703,7 +703,6 @@ angular.module('parserApp.display3dService', [])
         var tmpRows = Math.sqrt(tweetsToMerge.length);
         var x = Math.floor(i / tmpRows) * xSpacing;
         var y = 0 - (i % tmpRows) * ySpacing;
-        // console.log('index: ' + tweet.index + ' ypos: ' + y);
         var score = +tweet.elData.score.split(': ')[1];
         var matIndex = getMatIndexFromScore(score);
         sceneGL.remove(tweet.obj);
@@ -932,10 +931,13 @@ angular.module('parserApp.display3dService', [])
 
     // 'hi' = css div
     if (swapTo === 'hi') {
-      //console.log('swapping to hi');
       el = makeTweetElement(tweet.elData, layer);
-      sceneGL.remove(tweet.obj);
-      tweet.obj.geometry.dispose();
+      if (tweet.obj) {
+        sceneGL.remove(tweet.obj);
+        if (tweet.obj.geometry) {
+          tweet.obj.geometry.dispose();
+        }
+      }
       object = new THREE.CSS3DObject( el );
       object.position.x = x;
       object.position.y = y;
@@ -946,7 +948,6 @@ angular.module('parserApp.display3dService', [])
 
     // 'lo' = single webgl square
     if (swapTo === 'lo') {
-      //console.log('swapping to lo for index:' + tweet.index);
       if (tweet.el) { // swapping from hi
         sceneCSS.remove(tweet.obj);
       } else { // swapping from lo1
@@ -987,7 +988,6 @@ angular.module('parserApp.display3dService', [])
           if (tweetsToMerge[j] !== null) {
             tweetsToMerge[j].lod = 'lo1';
             tweetsToMerge[j].obj = undefined;
-            //console.log('swapTo post merge set to undefined, tweet index: ' + tweetsToMerge[j].index);
             tweetsToMerge[j].el = undefined;
           }
         }
@@ -1022,7 +1022,6 @@ angular.module('parserApp.display3dService', [])
           if (tweetsToMerge[j] !== null) {
             tweetsToMerge[j].lod = 'lo2';
             tweetsToMerge[j].obj = undefined;
-            //console.log('swapTo post merge set to undefined, tweet index: ' + tweetsToMerge[j].index);
             tweetsToMerge[j].el = undefined;
           }
         }
@@ -1051,6 +1050,122 @@ angular.module('parserApp.display3dService', [])
     layer.tweets[i].obj = undefined;
   };
 
+var blockCorners = function (i, layer) {
+  i = +i;
+  var n;
+  if (layer.lod === 'lo2') {
+    n = lod2Size;
+  } else if (layer.lod === 'lo1') {
+    n = lod1Size;
+  } else {
+    return undefined;
+  }
+  var rowsInBlock = n-1;
+  for (var j = 1; j < n; j++) {
+    if ((i+j) % rows === 0) { // if it moved up to the top of the next column
+      rowsInBlock = j-1;
+      break;
+    }
+  }
+  var corner1 = i + rowsInBlock;
+  var cols = n;
+  var corner2 = i + rows * cols;
+  while (cols > 0 && corner2 > layer.tweets.length - 1) {
+    cols --;
+    corner2 = i + rows * cols;
+  }
+  cols = n;
+  var corner3 = i + rows*n + rowsInBlock;
+  while (cols > 0 && corner3 > layer.tweets.length - 1) {
+    cols --;
+    corner3 = i + rows * cols + rowsInBlock;
+  }
+  return [corner1, corner2, corner3];
+};
+
+  // get all indexes that are not on screen
+  var getIndexesOffScreen = function(layer) {
+    var offScreen = {};
+    var onScreen = {};
+
+    var screenWidth = displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, controls.target.y, layer.z);
+    var screenHeight = displayHelpers.getDisplayHeightAtPoint(camera, controls.target.x, controls.target.y, layer.z);
+    var leftEdge = controls.target.x - screenWidth/2;
+    var rightEdge = controls.target.x + screenWidth/2;
+    var topEdge = controls.target.y + screenHeight/2;
+    var bottomEdge = controls.target.y - screenHeight/2;
+    // TODO: cutoffs should be smart and look at layer.lod to find bottom and right bounds of groups
+    var leftIndexCutoff = (((leftEdge) - xStart) / xSpacing) * rows;
+    var rightIndexCutoff = (((rightEdge) - xStart) / xSpacing) * rows;
+    var topRowCutoff = (yStart - topEdge) / ySpacing;
+    var bottomRowCutoff = (yStart - bottomEdge) / ySpacing;
+
+    // Pick offscreen by index
+    var i;
+    var row;
+    // left edge pick
+    if (leftIndexCutoff > layer.tweets.length) {
+      leftIndexCutoff = layer.tweets.length;
+    }
+    for (i = 0; i < leftIndexCutoff; i++) {
+      offScreen[i] = true;
+    }
+    // right edge pick
+    if (rightIndexCutoff < 0) {
+      rightIndexCutoff = 0;
+    }
+    for (i = Math.floor(rightIndexCutoff); i < layer.tweets.length; i++) {
+      offScreen[i] = true;
+    }
+    // top edge pick (by row)
+    if (topRowCutoff > rows) {
+      topRowCutoff = rows;
+    }
+    for (row = 0; row < topRowCutoff; row++) {
+      // every index in that row
+      for (i = row; i < layer.tweets.length; i += rows) {
+        offScreen[i] = true;
+      }
+    }
+    // bottom edge pick (by row)
+    if (bottomRowCutoff < 0) {
+      bottomRowCutoff = 0;
+    }
+    for (row = Math.floor(bottomRowCutoff); row < rows; row++) {
+      // every index in that row
+      for (i = row; i < layer.tweets.length; i += rows) {
+        offScreen[i] = true;
+      }
+    }
+
+    // what is onscreen
+    if (bottomRowCutoff > rows) {
+      bottomRowCutoff = rows;
+    }
+    if (rightIndexCutoff > layer.tweets.length) {
+      rightIndexCutoff = layer.tweets.length;
+    }
+    if (leftIndexCutoff < 0) {
+      leftIndexCutoff = 0;
+    }
+    if (topRowCutoff < 0) {
+      topRowCutoff = 0;
+    }
+    for (row = topRowCutoff; row < bottomRowCutoff; row++) {
+      for (i = row; i < rightIndexCutoff; i += rows) {
+        if (i > leftIndexCutoff) {
+          onScreen[i] = true;
+        }
+      }
+    }
+
+    return {
+      offScreen: offScreen,
+      onScreen: onScreen
+    };
+  };
+
+  // Main animation function, runs 60 times a second (or less, if throttled)
   var animate = function() {
     var cameraMoved = false;
 
@@ -1093,67 +1208,17 @@ angular.module('parserApp.display3dService', [])
 
     if (cameraMoved && tick % 30 === 0) {
       layers.forEach(function (layer) {
-        var screenWidth = displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, controls.target.y, layer.z);
-        var screenHeight = displayHelpers.getDisplayHeightAtPoint(camera, controls.target.x, controls.target.y, layer.z);
-        var leftEdge = controls.target.x - screenWidth/2;
-        var rightEdge = controls.target.x + screenWidth/2;
-        var topEdge = controls.target.y + screenHeight/2;
-        var bottomEdge = controls.target.y - screenHeight/2;
-        var leftIndexCutoff = (((leftEdge) - xStart) / xSpacing) * rows;
-        var rightIndexCutoff = (((rightEdge) - xStart) / xSpacing) * rows;
-        var topRowCutoff = (yStart - topEdge) / ySpacing;
-        var bottomRowCutoff = (yStart - bottomEdge) / ySpacing;
-
-        // Cull offscreen by index
-        var i;
-        var row;
-        // left edge cull
-        if (leftIndexCutoff > layer.tweets.length) {
-          leftIndexCutoff = layer.tweets.length;
-        }
-        for (i = 0; i < leftIndexCutoff; i++) {
-          if (layer.tweets[i].obj) {
-            killTweetObj(i, layer);
-          }
-        }
-        // right edge cull
-        if (rightIndexCutoff < 0) {
-          rightIndexCutoff = 0;
-        }
-        for (i = Math.floor(rightIndexCutoff); i < layer.tweets.length; i++) {
-          if (!layer.tweets[i]) {
-            console.log(i);
-          }
-          if (layer.tweets[i].obj) {
-            killTweetObj(i, layer);
-          }
-        }
-        // top edge cull (by row)
-        if (topRowCutoff > rows) {
-          topRowCutoff = rows;
-        }
-        for (row = 0; row < topRowCutoff; row++) {
-          // every index in that row
-          for (i = row; i < layer.tweets.length; i += rows) {
-            if (layer.tweets[i].obj) {
-              killTweetObj(i, layer);
+        var screenCheck = getIndexesOffScreen(layer);
+        var offScreenIndexes = Object.keys(screenCheck.offScreen);
+        for (var i = 0; i < offScreenIndexes.length; i++) {
+          var t = +offScreenIndexes[i];
+          if (layer.tweets[t].obj) {
+            var corners = blockCorners(t, layer);
+            if (corners[0] in screenCheck.offScreen && corners[1] in screenCheck.offScreen && corners[2] in screenCheck.offScreen) {
+              killTweetObj(t, layer);
             }
           }
         }
-        // bottom edge cull (by row)
-        console.log(bottomRowCutoff);
-        // if (bottomRowCutoff < 0) {
-        //   bottomRowCutoff = 0;
-        // }
-        for (row = Math.floor(bottomRowCutoff); row < rows; row++) {
-          // every index in that row
-          for (i = row; i < layer.tweets.length; i += rows) {
-            if (layer.tweets[i].obj) {
-              killTweetObj(i, layer);
-            }
-          }
-        }
-
 
 
         // layer.tweets.forEach(function (tweet) {
@@ -1168,7 +1233,6 @@ angular.module('parserApp.display3dService', [])
         //       tweet.position.x > rightEdge + screenWidth/4 ||
         //       tweet.position.y > topEdge + screenHeight/4 ||
         //       tweet.position.y < bottomEdge - screenHeight/4) {
-        //     console.log('offscreen');
         //     // and tweet.obj exists
         //     if (tweet.obj !== undefined) {
         //       // make invisible? delete?

@@ -205,7 +205,7 @@ angular.module('parserApp.display3dService', [])
       }
       
       // Tween individual tweets if at two closest LODs
-      if (layers[i].lod === 'hi' || layers[i].lod === 'lo') {
+      if (layers[i].lod === 'individual') {
         layers[i].tweets.forEach(function(tweet) {
           // tweet position
           tweet.transition = true;
@@ -277,7 +277,8 @@ angular.module('parserApp.display3dService', [])
         .start();
 
       // Tween individual tweets if at two closest LODs
-      if (layers[i].lod === 'hi' || layers[i].lod === 'lo') {
+      if (layers[i].lod === 'individual') {
+        console.log('hi');
         layers[i].tweets.forEach(function(tweet) {
           tweet.transition = true;
           new TWEEN.Tween( tweet.obj.position )

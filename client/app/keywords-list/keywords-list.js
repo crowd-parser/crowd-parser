@@ -40,7 +40,21 @@ angular.module('parserApp')
               if (data.length > 0) {
 
                 item.count = data[0].id;
-                $scope.ourKeywords = ourKeywords;
+
+                $http.get('/statistics/getKeywordPositiveSentiment/' + item.keyword)
+                  .success(function(response) {
+
+                    item.positiveSentiment = Math.round(response[0]['COUNT(*)'] / item.count * 100);
+
+                    $http.get('/statistics/getKeywordNegativeSentiment/' + item.keyword)
+                      .success(function(response) {
+
+                        item.negativeSentiment = Math.round(response[0]['COUNT(*)'] / item.count * 100);
+
+                        $scope.ourKeywords = ourKeywords;
+                      });
+                  });
+
               }
               
             });

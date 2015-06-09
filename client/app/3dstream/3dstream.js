@@ -401,7 +401,7 @@ angular.module('parserApp')
     var endTime;
 
     var addFakeTweet = function () {
-      if ($scope.tweetCount >= 3000) {
+      if ($scope.tweetCount >= 400) {
         runFakeTweets = false;
         if (!endTime) {
           endTime = new Date();

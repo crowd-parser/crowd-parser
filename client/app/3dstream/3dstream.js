@@ -399,7 +399,7 @@ angular.module('parserApp')
     };
 
     var endTime;
-    var total = 3000;
+    var total = 20000;
 
     var addFakeTweet = function (last) {
       if ($scope.tweetCount >= total) {
@@ -448,11 +448,14 @@ angular.module('parserApp')
       for (var i = 0; i < chunkSize; i++) {
         if ($scope.tweetCount + 1 >= total) {
           addFakeTweet(true);
+          runFakeTweets = false;
+          if (intervalID) {
+            clearInterval(intervalID);
+          }
         } else {
           addFakeTweet();
         }
       }
-      console.log('tweet count: ' + $scope.tweetCount);
       //endTime = new Date();
       //console.log(endTime - timeStart);
     };

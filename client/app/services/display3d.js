@@ -1024,7 +1024,6 @@ angular.module('parserApp.display3dService', [])
     if (swapTo === 'lo2') { 
       var n = lod2Size;
       if (row % n === 0 && col % n === 0) {
-        console.log('swapping tweet: ' + index);
         // this is a primary box, 1 merge per primary
         var tweetsToMerge = [];
         for (var colIndex = 0; colIndex < n; colIndex++) {
@@ -1428,7 +1427,7 @@ angular.module('parserApp.display3dService', [])
       }
     });
 
-    initRepeatable(25);
+    initRepeatable(100);
   };
 
   var initRepeatable = function (numRows) {

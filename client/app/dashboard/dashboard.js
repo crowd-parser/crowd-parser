@@ -13,6 +13,7 @@ angular.module('parserApp')
 
         $scope.loggedIn = Auth.loggedIn;
         $scope.purchasingUser = Auth.purchasingUser;
+        $scope.purchasingUserDetails = $scope.purchasingUserDetails;
       });
     }, 500);
 

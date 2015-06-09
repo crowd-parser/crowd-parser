@@ -1,0 +1,17 @@
+<div ng-include="'components/navbar/navbar.html'"></div>
+
+<div class="container about-container keywords-list-container">
+  
+  <h1>Our keywords</h1>
+
+  <ul ng-repeat="ourKeyword in ourKeywords">
+    <li>{{ourKeyword.keyword}}</li>
+  </ul>
+
+  <h1>User keywords</h1>
+
+  <ul ng-repeat="userKeyword in userKeywords">
+    <li>{{userKeyword.name}} - {{userKeyword.purchased_keyword}}</li>
+  </ul>
+  
+</div>

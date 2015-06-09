@@ -223,7 +223,13 @@ router.get('/getAllUserKeywordsWithNames', function(req, res) {
 
   db.db.query('SELECT purchasing_users.name, purchased_keywords.purchased_keyword FROM purchasing_users JOIN purchased_keywords ON purchasing_users.id=purchased_keywords.purchasing_user', function(err, response) {
 
-    console.log(err, response);
+    if (err) {
+      handleError(res, err, 'Error getting keywords with user names!');
+    } else {
+      
+      res.send(response);
+    }
+
   });
 });
 

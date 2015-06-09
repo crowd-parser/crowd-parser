@@ -153,6 +153,21 @@ router.post('/testKeywordSearch', function(req, res, next) {
   });
 });
 
+router.post('/testUserKeywordAdd', function(req, res, next) {
+  var name = req.body.name;
+  db.processAuthorizedUserKeyword(name, function(err, name) {
+    if(err){
+      console.log(err);
+      res.send(false);
+      return;
+    }
+      res.send(name);
+  }, function(){
+    console.log("test keyword search done");
+  });
+});
+
+
 
 
 router.post('/addNewLayer', function(req, res, next) {

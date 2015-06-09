@@ -386,7 +386,6 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
       if(typeof previouslyFilteredByThisKeyword === "string"){
 
         exports.io.sockets.in(ifSoAlsoClientID).emit('tweet keyword response', tweetPackages);
-        console.log(tweetPackages);
 
         console.log("=====KEYWORD EMIT " + ifSoAlsoClientID +"==============");
       }else{
@@ -512,6 +511,7 @@ exports.setUniqueTweetIdOnAll = function(cb, finalcb){
           funcList.push(exports.setColumnToUnique.bind(exports, "layer_"+list[i], "tweet_id"));
         }
         exports.asyncMap(funcList, function(){
+          exports.setColumnToUnique("keywords", "keyword");
           finalcb();
         })
       });
@@ -747,6 +747,26 @@ exports.addKeywordsTable = function(callback){
   });
 };
 
+exports.processAuthorizedUserKeyword = function(keyword, finalCB){
+    if(!keyword || typeof keyword != "string"){
+      console.log("NO KEYWORD");
+      finalCB(true, false);
+      return;
+    }
+
+    exports.addNewKeyword(keyword, function(){
+       exports.filterALLTweetsByKeyword(keyword,function(err, rows, fields){
+          if(err){
+            console.log(err);
+            finalCB(err, false);
+            return;
+          }
+          exports.db.query("UPDATE purchased_keywords SET finished_processing = true WHERE purchased_keyword = ?",[keyword], finalCB );
+      });
+    });
+};
+
+
 exports.addNewKeyword = function(keyword, callback){
   theCache.keywordList = null;
   if(!keyword){
@@ -783,6 +803,7 @@ exports.redoKeyword = function(keyword, callback, _finalCB){
   }
 
 //keyword = exports.db.escapeId(keyword);//TODO
+// exports.genericDescribeTable("purchased_keywords");
 
   this.genericDropTable("tweets_containing_"+keyword, function(){
     exports.addNewKeyword(keyword, function(){
@@ -910,7 +931,8 @@ exports.addForeignKey = function(thisTable, thisTableColumn, thatTable, thatTabl
 
 exports.setColumnToUnique = function(tableName, columnName, callback){
 
-  this.db.query("ALTER IGNORE TABLE "+ tableName+" ADD UNIQUE INDEX un_cn (" +columnName+ ")", callback);
+  //set session old_alter_table=1
+  this.db.query("ALTER TABLE "+ tableName+" ADD UNIQUE (" +columnName+ "(20))", callback);
 };
 
 
@@ -1219,7 +1241,7 @@ exports.genericDropTable = function(tableName, callback){
   exports.getCurrentDatabaseName( function(dbName){
 
     if(dbName === 'production'){
-      if(tableName === "tweets" || tableName === "layers" || tableName === "keywords"  ){
+      if(tableName === "tweets" || tableName === "layers" || tableName === "keywords" || tableName === "purchased_keywords"  ){
         console.log("ERROR: ATTEMPTED TO DROP PROTECTED TABLE ON PRODUCTION, NOT ALLOWED");
         callback();
         return;
@@ -1231,12 +1253,7 @@ exports.genericDropTable = function(tableName, callback){
       theCache.keywordList = null;
     }
 
-
-    callback();
-
-    exports.db.query("DROP TABLE " + tableName, function(err, status, fields){
-      console.log(err);
-    });
+    exports.db.query("DROP TABLE " + tableName, callback);
   });
 
 };
@@ -1329,7 +1346,10 @@ exports.tellMeWhenDatabaseIsLive = function(callback){
 
 //================ TESTING ======================
 exports.genericDescribeTable = function(name, callback){
-  this.db.query("DESCRIBE " + name, callback);
+  this.db.query("DESCRIBE " + name, function(err, rows, fields){
+    console.log("DESCRIBE:",rows);
+    callback(err, rows);
+  });
 };
 
 exports.ADDALLTHETWEETS = function(callback){

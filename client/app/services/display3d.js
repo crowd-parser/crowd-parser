@@ -1232,7 +1232,7 @@ angular.module('parserApp.display3dService', [])
     prevCameraPosition.copy(camera.position);
 
     // auto scroll if tweets are falling off the right
-    if (cameraMoved && !leftHover && !rightHover) {
+    if (!leftHover && !rightHover) {
       if (layers[0].tweets.length) {
         var lastTweet = layers[0].tweets[layers[0].tweets.length-1];
         if (lastTweet.obj) {
@@ -1265,11 +1265,6 @@ angular.module('parserApp.display3dService', [])
         for (i = 0; i < offScreenIndexes.length; i++) {
           t = +offScreenIndexes[i];
           thisTweet = layer.tweets[t];
-          // debugging
-          if (layer.title === 'word' && t === 0) {
-            console.log(layer.lod);
-            console.log(thisTweet.hidden);
-          }
           // if this tweet holds a renderable obj (in zoomed-out lods, many do not)
           if (thisTweet.obj) {
             var corners = blockCorners(t, layer);
@@ -1289,11 +1284,6 @@ angular.module('parserApp.display3dService', [])
         for (i = 0; i < onScreenIndexes.length; i++) {
           t = +onScreenIndexes[i];
           thisTweet = layer.tweets[t];
-          // debugging
-          if (layer.title === 'word' && t === 0) {
-            console.log(layer.lod);
-            console.log(thisTweet.hidden);
-          }
           // if this tweet SHOULD hold a renderable obj when onscreen
           if ( isAnchor(t, layer) && thisTweet.hidden ) {
             if (layer.lod === 'lo2' || layer.lod === 'lo1') {

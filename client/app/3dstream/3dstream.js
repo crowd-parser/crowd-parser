@@ -399,7 +399,7 @@ angular.module('parserApp')
     };
 
     var endTime;
-    var total = 25;
+    var total = 3000;
 
     var addFakeTweet = function (last) {
       if ($scope.tweetCount >= total) {
@@ -440,6 +440,39 @@ angular.module('parserApp')
       }
       endTime = new Date();
       console.log(endTime - timeStart);
+    };
+
+    var chunk = function (chunkSize) {
+      runFakeTweets = true;
+      timeStart = new Date();
+      for (var i = 0; i < chunkSize; i++) {
+        if ($scope.tweetCount + 1 >= total) {
+          addFakeTweet(true);
+        } else {
+          addFakeTweet();
+        }
+      }
+      console.log('tweet count: ' + $scope.tweetCount);
+      //endTime = new Date();
+      //console.log(endTime - timeStart);
+    };
+
+    $scope.chunkStreamFakeTweets = function () {
+      // stop any existing stream
+      socket.emit('twitter stop continuous stream');
+      if (runFakeTweets) {
+        runFakeTweets = false;
+        if (intervalID) {
+          clearInterval(intervalID);
+        }
+      } else {
+        runFakeTweets = true;
+        timeStart = new Date();
+        intervalID = setInterval(function () {
+          chunk(100);
+        }, 200);
+      }
+      
     };
 
     $scope.streamFakeTweets = function () {

@@ -113,7 +113,12 @@
       <span class="user-keyword" ng-repeat="keyword in purchasingUserKeywords">{{keyword.purchased_keyword}}</span>
 
       <br><br>
-      <div><a href="/3dstream">View my keyword results in 3D!</a></div>
+      <div>
+        <a href="/3dstream">View my keyword results in 3D!</a>
+        <div>Note: It can take some time to process keywords through millions of tweets, <br>
+        so if you don't see your keyword on the 3D page, check back again a little later. <br>
+        Thanks for understanding!</div>
+      </div>
     </div>
 
     <h3>Number of keywords remaining: {{purchasingUserDetails.number_of_keywords}}</h3>
@@ -185,5 +190,11 @@
 
     <img src="assets/images/stripe-secure.png" alt="stripe-secure">
   </form>
+
+  <h1>Support</h1>
+
+  <p>If you have any questions, feel free to contact us at any time by using the email link below!</p>
+
+  <a href="mailto:cheng.c.mike@gmail.com" target="_top">Email</a>
   
 </div>

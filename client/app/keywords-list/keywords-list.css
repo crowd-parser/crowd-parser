@@ -11,8 +11,20 @@
   margin-bottom: -10px;
 }
 
+.all-tweets-stats .sentiment-percentage {
+  font-size: 50px;
+}
+
 .sentiment-percentage {
   display: inline-block;
-  font-size: 30px;
-  padding: 5px 12px;
+  font-size: 22px;
+  padding: 3px 1px;
+}
+
+.our-keyword-section {
+  display: inline-block;
+  background: #FFF;
+  width: 33%;
+  padding: 10px;
+  border: 1px solid #000;
 }

@@ -165,6 +165,8 @@ router.get('/getUserKeywords/:id', function(req, res) {
   });
 });
 
+var keywordAdded = false;
+
 router.post('/userAddKeyword', function(req, res) {
 
   if (req.body.fbToken !== req.session.fbToken) {

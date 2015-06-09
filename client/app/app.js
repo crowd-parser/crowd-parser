@@ -40,10 +40,6 @@ angular.module('parserApp', [
         url: '/about',
         templateUrl: 'app/about/about.html'
       })
-      .state('statistics', {
-        url: '/statistics',
-        templateUrl: 'app/statistics/statistics.html'
-      })
       .state('dashboard', {
         url: '/dashboard',
         templateUrl: 'app/dashboard/dashboard.html',

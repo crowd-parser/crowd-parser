@@ -1041,6 +1041,16 @@ angular.module('parserApp.display3dService', [])
     tweet.el = el;
   };
 
+  var killTweetObj = function (i, layer) {
+    layer.lodHolder.remove(layer.tweets[i].obj);
+    sceneGL.remove(layer.tweets[i].obj);
+    sceneCSS.remove(layer.tweets[i].obj);
+    if (layer.tweets[i].obj.geometry) {
+      layer.tweets[i].obj.geometry.dispose();
+    }
+    layer.tweets[i].obj = undefined;
+  };
+
   var animate = function() {
     var cameraMoved = false;
 
@@ -1091,21 +1101,22 @@ angular.module('parserApp.display3dService', [])
         var bottomEdge = controls.target.y - screenHeight/2;
         var leftIndexCutoff = (((leftEdge) - xStart) / xSpacing) * rows;
         var rightIndexCutoff = (((rightEdge) - xStart) / xSpacing) * rows;
+        var topRowCutoff = (yStart - topEdge) / ySpacing;
+        var bottomRowCutoff = (yStart - bottomEdge) / ySpacing;
+
+        // Cull offscreen by index
+        var i;
+        var row;
+        // left edge cull
         if (leftIndexCutoff > layer.tweets.length) {
           leftIndexCutoff = layer.tweets.length;
         }
-        var i;
         for (i = 0; i < leftIndexCutoff; i++) {
           if (layer.tweets[i].obj) {
-            layer.lodHolder.remove(layer.tweets[i].obj);
-            sceneGL.remove(layer.tweets[i].obj);
-            sceneCSS.remove(layer.tweets[i].obj);
-            if (layer.tweets[i].obj.geometry) {
-              layer.tweets[i].obj.geometry.dispose();
-            }
-            layer.tweets[i].obj = undefined;
+            killTweetObj(i, layer);
           }
         }
+        // right edge cull
         if (rightIndexCutoff < 0) {
           rightIndexCutoff = 0;
         }
@@ -1114,15 +1125,37 @@ angular.module('parserApp.display3dService', [])
             console.log(i);
           }
           if (layer.tweets[i].obj) {
-            layer.lodHolder.remove(layer.tweets[i].obj);
-            sceneGL.remove(layer.tweets[i].obj);
-            sceneCSS.remove(layer.tweets[i].obj);
-            if (layer.tweets[i].obj.geometry) {
-              layer.tweets[i].obj.geometry.dispose();
-            }
-            layer.tweets[i].obj = undefined;
+            killTweetObj(i, layer);
           }
         }
+        // top edge cull (by row)
+        if (topRowCutoff > rows) {
+          topRowCutoff = rows;
+        }
+        for (row = 0; row < topRowCutoff; row++) {
+          // every index in that row
+          for (i = row; i < layer.tweets.length; i += rows) {
+            if (layer.tweets[i].obj) {
+              killTweetObj(i, layer);
+            }
+          }
+        }
+        // bottom edge cull (by row)
+        console.log(bottomRowCutoff);
+        // if (bottomRowCutoff < 0) {
+        //   bottomRowCutoff = 0;
+        // }
+        for (row = Math.floor(bottomRowCutoff); row < rows; row++) {
+          // every index in that row
+          for (i = row; i < layer.tweets.length; i += rows) {
+            if (layer.tweets[i].obj) {
+              killTweetObj(i, layer);
+            }
+          }
+        }
+
+
+
         // layer.tweets.forEach(function (tweet) {
         //   var screenWidth = displayHelpers.getDisplayWidthAtPoint(camera, controls.target.x, controls.target.y, layer.z);
         //   var screenHeight = displayHelpers.getDisplayHeightAtPoint(camera, controls.target.x, controls.target.y, layer.z);

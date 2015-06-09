@@ -177,7 +177,7 @@ router.post('/userAddKeyword', function(req, res) {
       res.send('Error! Missing ID/keyword.');
     }
 
-    db.db.query('SELECT number_of_keywords, finished_processing FROM purchasing_users WHERE id=' + req.body.id, function(err, response) {
+    db.db.query('SELECT number_of_keywords FROM purchasing_users WHERE id=' + req.body.id, function(err, response) {
 
       if (err) {
 

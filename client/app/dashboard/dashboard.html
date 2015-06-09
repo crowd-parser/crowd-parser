@@ -126,7 +126,7 @@
     <h3>Number of keywords remaining: {{purchasingUserDetails.number_of_keywords}}</h3>
 
     <form onsubmit="return false" ng-submit="userKeywordSubmit()" ng-hide="purchasingUserDetails.number_of_keywords <= 0">
-      <input type="text" class="form-control" ng-model="userKeywordInput" placeholder="Add a new keyword" required />
+      <input type="text" class="form-control keyword-input" ng-model="userKeywordInput" placeholder="Add a new keyword" required />
       <button class="btn btn-primary keyword-submit">Submit</button>
       <div class="alert alert-danger keyword-submit-warning">Please keep your keywords clean and appropriate. <br>
       We will remove words that might offend users.</div>

@@ -401,7 +401,7 @@ angular.module('parserApp')
     var endTime;
 
     var addFakeTweet = function () {
-      if ($scope.tweetCount >= 1500) {
+      if ($scope.tweetCount >= 3000) {
         runFakeTweets = false;
         if (!endTime) {
           endTime = new Date();
@@ -412,7 +412,8 @@ angular.module('parserApp')
         var fakeTweet = {};
         fakeTweet.baseLayerResults = { positiveWords: [], negativeWords: [], score: fakeScore() };
         fakeTweet.emoticonLayerResults = { positiveWords: [], negativeWords: [], score: fakeScore() };
-        fakeTweet.username = 'user' + Math.round(1000 * Math.random());
+        //fakeTweet.username = 'user' + Math.round(1000 * Math.random());
+        fakeTweet.username = 'user' + $scope.tweetCount;
         fakeTweet.text = fakeText();
         $scope.tweetData.push(fakeTweet);
         Display3d.addTweet(fakeTweet, $scope.tweetCount);

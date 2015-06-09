@@ -120,6 +120,7 @@ angular.module('parserApp.display3dService', [])
   var lod2Distance = 5000;
 
   var lod1Size = 4;
+  var lod2Size = 16;
 
   var frontLayerZ = 300;
   var layerSpacing = 300;
@@ -278,7 +279,6 @@ angular.module('parserApp.display3dService', [])
 
       // Tween individual tweets if at two closest LODs
       if (layers[i].lod === 'individual') {
-        console.log('hi');
         layers[i].tweets.forEach(function(tweet) {
           tweet.transition = true;
           new TWEEN.Tween( tweet.obj.position )
@@ -518,7 +518,59 @@ angular.module('parserApp.display3dService', [])
       var layerDistance = displayHelpers.getCameraDistanceFrom( camera, controls.target.x, controls.target.y, layerObj.z );
 
 
-      if (layerDistance > lod1Distance) {
+      if (layerDistance > lod2Distance) {
+
+        layerObj.lod = 'lo2';
+        layerObj.lastDisplayedTweet = layerObj.lastDisplayedTweet || -1;
+        lodLevel = 'lo2';
+
+        var thisTweet = {
+          obj: object,
+          el: tweet,
+          elData: elData,
+          lod: lodLevel,
+          index: index,
+          position: new THREE.Vector3(x, y, z),
+        };
+
+        layerObj.tweets.push(thisTweet);
+
+        // if we have enough columns to make n x n blocks
+        if ((index+1) % (rows*lod2Size) === 0) {
+
+          // make a new LOD holder for layer (it is hard to get an old one to rerender for some reason)
+          refreshLODHolder(layerObj);
+
+          for (var i = layerObj.lastDisplayedTweet+1; i < layerObj.tweets.length; i++) {
+            var n = lod2Size; // merge an n x n square
+            var row = i % rows;
+            var col = Math.floor(i/rows);
+            if (row % n === 0 && col % n === 0) {
+              var tweetsToMerge = [];
+              for (var colIndex = 0; colIndex < n; colIndex++) {
+                for (var rowIndex = 0; rowIndex < n; rowIndex++) {
+                  var currentIndex = i + rowIndex + (rows * colIndex);
+                  if (currentIndex < layerObj.tweets.length && row + rowIndex < rows) {
+                    tweetsToMerge.push(layerObj.tweets[currentIndex]);
+                  } else {
+                    tweetsToMerge.push(null);
+                  }
+                }
+              }
+              var combinedMesh = mergeTweets(tweetsToMerge, layerObj);
+              combinedMesh.position.x = tweetsToMerge[0].position.x;
+              combinedMesh.position.y = tweetsToMerge[0].position.y;
+              tweetsToMerge[0].obj = combinedMesh;
+              layerObj.lodHolder.add(combinedMesh);
+              layerObj.lastDisplayedTweet = i;
+            }
+          }
+          layerObj.lodHolder.position.z = layerObj.z;
+          sceneGL.add(layerObj.lodHolder);
+        }
+
+
+      } else if (layerDistance > lod1Distance) {
 
         layerObj.lod = 'lo1';
         layerObj.lastDisplayedTweet = layerObj.lastDisplayedTweet || -1;
@@ -566,7 +618,6 @@ angular.module('parserApp.display3dService', [])
             }
           }
           layerObj.lodHolder.position.z = layerObj.z;
-          console.log(layerObj.lodHolder.position);
           sceneGL.add(layerObj.lodHolder);
         }
 
@@ -795,12 +846,11 @@ angular.module('parserApp.display3dService', [])
         var layerDistance = displayHelpers.getCameraDistanceFrom( camera, controls.target.x, controls.target.y, layers[layerIndex].z );
 
         // whole layer swaps
-        // if (layerDistance > lod2Distance && layers[layerIndex].lod !== 'lo2') {
-        //   // switch whole layer to LOD2
-        //   console.log('swap to LO2');
-        //   swapLayerLOD(layers[layerIndex], 'lo2');
-        // } else
-         if (layerDistance > lod1Distance && layers[layerIndex].lod !== 'lo1') {
+        if (layerDistance > lod2Distance && layers[layerIndex].lod !== 'lo2') {
+          // switch whole layer to LOD2
+          console.log('swap to LO2');
+          swapLayerLOD(layers[layerIndex], 'lo2');
+        } else if (layerDistance <= lod2Distance && layerDistance > lod1Distance && layers[layerIndex].lod !== 'lo1') {
           // switch whole layer to LOD1
           console.log('swap to LO1');
           swapLayerLOD(layers[layerIndex], 'lo1');
@@ -854,6 +904,7 @@ angular.module('parserApp.display3dService', [])
 
     if (tweet.obj) {
       tweet.position.copy(tweet.obj.position);
+      tweet.position.z = layer.z;
     }
     x = tweet.position.x;
     y = tweet.position.y;
@@ -890,8 +941,9 @@ angular.module('parserApp.display3dService', [])
         sceneCSS.remove(tweet.obj);
       } else { // swapping from lo1
         if (tweet.obj) { // only primary box in a merge group should have an obj
-          layer.ribbonMesh.remove(tweet.obj);
-          tweet.obj.geometry.dispose();
+          // console.dir(tweet);
+          // layer.lodHolder.remove(tweet.obj);
+          // tweet.obj.geometry.dispose();
         }
       }
       object = displayHelpers.makeLoResMesh(layersSeparated, tweet.elData, layer, 'pb');
@@ -903,7 +955,7 @@ angular.module('parserApp.display3dService', [])
     }
 
     // 'lo1' = 4 square geom merged into 1
-    if (swapTo === 'lo1' && tweet.lod === 'lo') { // from lo - need another condition if from lo2
+    if (swapTo === 'lo1') { // from lo - need another condition if from lo2
       var n = lod1Size;
       if (row % n === 0 && col % n === 0) {
         // this is a primary box, 1 merge per primary
@@ -938,7 +990,39 @@ angular.module('parserApp.display3dService', [])
       tweet.lod = 'lo1';
     }
 
-    if (swapTo === 'lo2' && tweet.lod === 'lo1') {
+    if (swapTo === 'lo2' && tweet.lod === 'lo1') { // from lo1 - need another condition if from lo3
+      var n = lod2Size;
+      if (row % n === 0 && col % n === 0) {
+        // this is a primary box, 1 merge per primary
+        var tweetsToMerge = [];
+        for (var colIndex = 0; colIndex < n; colIndex++) {
+          for (var rowIndex = 0; rowIndex < n; rowIndex++) {
+            var currentIndex = index + rowIndex + (rows * colIndex);
+            if (currentIndex < layer.tweets.length && row + rowIndex < rows) {
+              tweetsToMerge.push(layer.tweets[currentIndex]);
+            } else {
+              tweetsToMerge.push(null);
+            }
+          }
+        }
+
+        object = mergeTweets(tweetsToMerge, layer);
+        // set necessary values for non-primary squares - need to make sure this is done AFTER merging
+        for (var j = 1; j < tweetsToMerge.length; j++) {
+          if (tweetsToMerge[j] !== null) {
+            tweetsToMerge[j].lod = 'lo2';
+            tweetsToMerge[j].obj = undefined;
+            //console.log('swapTo post merge set to undefined, tweet index: ' + tweetsToMerge[j].index);
+            tweetsToMerge[j].el = undefined;
+          }
+        }
+        object.position.set(x, y, 0);
+        layer.lodHolder.add(object);
+      } else {
+        // the non-primary squares don't need to worry about it
+        return;
+      }
+      tweet.lod = 'lo2';
 
     }
 
@@ -1111,7 +1195,7 @@ angular.module('parserApp.display3dService', [])
       }
     });
 
-    initRepeatable(15);
+    initRepeatable(25);
   };
 
   var initRepeatable = function (numRows) {
@@ -1128,7 +1212,7 @@ angular.module('parserApp.display3dService', [])
     controls.maxDistance = numRows * 1000;
     camera.position.z = numRows * 250;
 
-    xStart = 0 - (displayHelpers.getDisplayWidthAtPoint(camera,0,0,0) / 2) + xSpacing/2;
+    xStart = 0 - (displayHelpers.getDisplayWidthAtPoint(camera,0,0,frontLayerZ) / 2) + xSpacing/2;
     yStart = ((rows-1)*ySpacing)/2;
 
     prevCameraPosition = new THREE.Vector3();

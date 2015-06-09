@@ -33,7 +33,8 @@
         <button ng-class="{ 'button-3d-disabled': grayedOut(), 'button-3d': !grayedOut() }" ng-disabled="grayedOut()" type="notSubmit" ng-click="requestTweetsByKeyword(keywordStream)">Search Database</button>
         <button class="button-3d" type="notSubmit" ng-click="getRestTweets()">Get {{numTweetsToGet}} New Tweets</button>
         <button class="button-3d" type="notSubmit" ng-click="startLiveStream()">Live Stream: {{receivingTweets}}</button>
-        <button class="button-3d" type="notSubmit" ng-click="streamFakeTweets()">Fake Tweets</button>
+        <button class="button-3d" type="notSubmit" ng-click="streamFakeTweets()">Fake Tweets (Stream)</button>
+        <button class="button-3d" type="notSubmit" ng-click="batchFakeTweets()">Fake Tweets (All)</button>
       </form>
     </div>
   </div>

@@ -477,7 +477,7 @@ angular.module('parserApp.display3dService', [])
     }
   };
 
-  var addTweet = function(rawTweet, index) {
+  var addTweet = function(rawTweet, index, lastTweet) {
 
     layers.forEach(function(layerObj) {
 
@@ -547,8 +547,8 @@ angular.module('parserApp.display3dService', [])
 
         layerObj.tweets.push(thisTweet);
 
-        // if we have enough columns to make n x n blocks
-        if ((index+1) % (rows*lod2Size) === 0) {
+        // if we have enough columns to make n x n blocks OR this is last tweet
+        if (((index+1) % (rows*lod2Size) === 0) || lastTweet) {
 
           // make a new LOD holder for layer (it is hard to get an old one to rerender for some reason)
           refreshLODHolder(layerObj);
@@ -601,7 +601,7 @@ angular.module('parserApp.display3dService', [])
         layerObj.tweets.push(thisTweet);
 
         // if we have enough columns to make n x n blocks
-        if ((index+1) % (rows*lod1Size) === 0) {
+        if (((index+1) % (rows*lod1Size) === 0) || lastTweet) {
 
           // make a new LOD holder for layer (it is hard to get an old one to rerender for some reason)
           refreshLODHolder(layerObj);
@@ -1239,7 +1239,7 @@ angular.module('parserApp.display3dService', [])
     }
 
     // cull and restore
-    if (cameraMoved && tick % 30 === 0) {
+    if (cameraMoved && tick % 4 === 0) {
       var i;
       var t;
 

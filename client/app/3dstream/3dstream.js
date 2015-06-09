@@ -399,9 +399,10 @@ angular.module('parserApp')
     };
 
     var endTime;
+    var total = 2500;
 
-    var addFakeTweet = function () {
-      if ($scope.tweetCount >= 400) {
+    var addFakeTweet = function (last) {
+      if ($scope.tweetCount >= total) {
         runFakeTweets = false;
         if (!endTime) {
           endTime = new Date();
@@ -416,12 +417,30 @@ angular.module('parserApp')
         fakeTweet.username = 'user' + $scope.tweetCount;
         fakeTweet.text = fakeText();
         $scope.tweetData.push(fakeTweet);
-        Display3d.addTweet(fakeTweet, $scope.tweetCount);
+        if (last) {
+          Display3d.addTweet(fakeTweet, $scope.tweetCount, true);
+        } else {
+          Display3d.addTweet(fakeTweet, $scope.tweetCount);
+        }
         $scope.tweetCount++;
       }
     };
 
     var timeStart;
+
+    $scope.batchFakeTweets = function () {
+      runFakeTweets = true;
+      timeStart = new Date();
+      for (var i = 0; i < total; i++) {
+        if (i === total-1) {
+          addFakeTweet(true);
+        } else{
+          addFakeTweet();
+        }
+      }
+      endTime = new Date();
+      console.log(endTime - timeStart);
+    };
 
     $scope.streamFakeTweets = function () {
       // stop any existing stream

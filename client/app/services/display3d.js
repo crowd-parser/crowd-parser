@@ -523,6 +523,7 @@ angular.module('parserApp.display3dService', [])
       var tweet;
       var object;
       var lodLevel;
+      var hidden = false;
 
       var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, x, y, z );
       var layerDistance = displayHelpers.getCameraDistanceFrom( camera, controls.target.x, controls.target.y, layerObj.z );
@@ -540,6 +541,7 @@ angular.module('parserApp.display3dService', [])
           elData: elData,
           lod: lodLevel,
           index: index,
+          hidden: hidden,
           position: new THREE.Vector3(x, y, z),
         };
 
@@ -592,6 +594,7 @@ angular.module('parserApp.display3dService', [])
           elData: elData,
           lod: lodLevel,
           index: index,
+          hidden: hidden,
           position: new THREE.Vector3(x, y, z),
         };
 
@@ -646,6 +649,7 @@ angular.module('parserApp.display3dService', [])
           elData: elData,
           lod: lodLevel,
           index: index,
+          hidden: hidden,
           position: new THREE.Vector3(x, y, z),
         });
 
@@ -665,6 +669,7 @@ angular.module('parserApp.display3dService', [])
           elData: elData,
           lod: lodLevel,
           index: index,
+          hidden: hidden,
           position: new THREE.Vector3(x, y, z),
         });
       }
@@ -706,7 +711,7 @@ angular.module('parserApp.display3dService', [])
         var score = +tweet.elData.score.split(': ')[1];
         var matIndex = getMatIndexFromScore(score);
         sceneGL.remove(tweet.obj);
-        if (tweet.obj) {
+        if (tweet.obj && tweet.obj.geometry) {
           tweet.obj.geometry.dispose();
         }
         var newPlaneMesh = displayHelpers.makeLoResMesh(layersSeparated, tweet.elData, layer, 'p');
@@ -844,6 +849,7 @@ angular.module('parserApp.display3dService', [])
     for (var layerIndex = 0; layerIndex < layers.length; layerIndex++) {
       for (var t = 0; t < layers[layerIndex].tweets.length; t++) {
         var tweet = layers[layerIndex].tweets[t];
+
         if (!tweet.obj) {
         }
         if (tweet.obj) {
@@ -870,15 +876,16 @@ angular.module('parserApp.display3dService', [])
         }
 
         // individual tweet swaps
-        if (layerDistance <= lod1Distance && tweetDistance > lod0Distance && tweet.el) {
+        if (layerDistance <= lod1Distance && tweetDistance > lod0Distance && tweet.el && !tweet.hidden) {
           // switch to lo from hi
           swapLOD(tweet, 'lo', layers[layerIndex]);
           layers[layerIndex].lod = 'individual';
-        } else if (layerDistance <= lod1Distance && tweetDistance <= lod0Distance && !tweet.el) {
+        } else if (layerDistance <= lod1Distance && tweetDistance <= lod0Distance && !tweet.el && !tweet.hidden) {
           // switch to hi from lo
           swapLOD(tweet, 'hi', layers[layerIndex]);
           layers[layerIndex].lod = 'individual';
         }
+
       }
     }
   };
@@ -894,7 +901,9 @@ angular.module('parserApp.display3dService', [])
     layer.lodHolder = new THREE.Object3D();
     for (var t = 0; t < layer.tweets.length; t++) {
       var tweet = layer.tweets[t];
-      swapLOD(tweet, swapTo, layer);
+      if (!tweet.hidden) {
+        swapLOD(tweet, swapTo, layer);
+      }
     }
     layer.lodHolder.position.z = layer.z;
     sceneGL.add(layer.lodHolder);
@@ -941,7 +950,7 @@ angular.module('parserApp.display3dService', [])
       object = new THREE.CSS3DObject( el );
       object.position.x = x;
       object.position.y = y;
-      object.position.z = z;
+      object.position.z = layer.z;
       sceneCSS.add( object );
       tweet.lod = 'hi';
     }
@@ -960,13 +969,13 @@ angular.module('parserApp.display3dService', [])
       object = displayHelpers.makeLoResMesh(layersSeparated, tweet.elData, layer, 'pb');
       object.position.x = x;
       object.position.y = y;
-      object.position.z = z;
+      object.position.z = layer.z;
       sceneGL.add( object );
       tweet.lod = 'lo';
     }
 
     // 'lo1' = 4 square geom merged into 1
-    if (swapTo === 'lo1') { // from lo - need another condition if from lo2
+    if (swapTo === 'lo1') { 
       var n = lod1Size;
       if (row % n === 0 && col % n === 0) {
         // this is a primary box, 1 merge per primary
@@ -1000,9 +1009,10 @@ angular.module('parserApp.display3dService', [])
       tweet.lod = 'lo1';
     }
 
-    if (swapTo === 'lo2' && tweet.lod === 'lo1') { // from lo1 - need another condition if from lo3
+    if (swapTo === 'lo2') { 
       var n = lod2Size;
       if (row % n === 0 && col % n === 0) {
+        console.log('swapping tweet: ' + index);
         // this is a primary box, 1 merge per primary
         var tweetsToMerge = [];
         for (var colIndex = 0; colIndex < n; colIndex++) {
@@ -1050,38 +1060,60 @@ angular.module('parserApp.display3dService', [])
     layer.tweets[i].obj = undefined;
   };
 
-var blockCorners = function (i, layer) {
-  i = +i;
-  var n;
-  if (layer.lod === 'lo2') {
-    n = lod2Size;
-  } else if (layer.lod === 'lo1') {
-    n = lod1Size;
-  } else {
-    return undefined;
-  }
-  var rowsInBlock = n-1;
-  for (var j = 1; j < n; j++) {
-    if ((i+j) % rows === 0) { // if it moved up to the top of the next column
-      rowsInBlock = j-1;
-      break;
+  var isAnchor = function (i, layer) {
+
+    var row = i % rows;
+    var col = Math.floor(i/rows);
+    var n;
+
+    if (layer.lod === 'lo2') {
+      n = lod2Size;
+    } else if (layer.lod === 'lo1') {
+      n = lod1Size;
+    } else {
+      n = 1;
     }
-  }
-  var corner1 = i + rowsInBlock;
-  var cols = n;
-  var corner2 = i + rows * cols;
-  while (cols > 0 && corner2 > layer.tweets.length - 1) {
-    cols --;
-    corner2 = i + rows * cols;
-  }
-  cols = n;
-  var corner3 = i + rows*n + rowsInBlock;
-  while (cols > 0 && corner3 > layer.tweets.length - 1) {
-    cols --;
-    corner3 = i + rows * cols + rowsInBlock;
-  }
-  return [corner1, corner2, corner3];
-};
+
+    if (row % n === 0 && col % n === 0) {
+      return true;
+    } else {
+      return false;
+    }
+
+  };
+
+  var blockCorners = function (i, layer) {
+    i = +i;
+    var n;
+    if (layer.lod === 'lo2') {
+      n = lod2Size;
+    } else if (layer.lod === 'lo1') {
+      n = lod1Size;
+    } else {
+      return undefined;
+    }
+    var rowsInBlock = n-1;
+    for (var j = 1; j < n; j++) {
+      if ((i+j) % rows === 0) { // if it moved up to the top of the next column
+        rowsInBlock = j-1;
+        break;
+      }
+    }
+    var corner1 = i + rowsInBlock;
+    var cols = n;
+    var corner2 = i + rows * cols;
+    while (cols > 0 && corner2 > layer.tweets.length - 1) {
+      cols --;
+      corner2 = i + rows * cols;
+    }
+    cols = n;
+    var corner3 = i + rows*n + rowsInBlock;
+    while (cols > 0 && corner3 > layer.tweets.length - 1) {
+      cols --;
+      corner3 = i + rows * cols + rowsInBlock;
+    }
+    return [corner1, corner2, corner3];
+  };
 
   // get all indexes that are not on screen
   var getIndexesOffScreen = function(layer) {
@@ -1151,9 +1183,9 @@ var blockCorners = function (i, layer) {
     if (topRowCutoff < 0) {
       topRowCutoff = 0;
     }
-    for (row = topRowCutoff; row < bottomRowCutoff; row++) {
+    for (row = Math.floor(topRowCutoff); row < bottomRowCutoff; row++) {
       for (i = row; i < rightIndexCutoff; i += rows) {
-        if (i > leftIndexCutoff) {
+        if (i >= leftIndexCutoff) {
           onScreen[i] = true;
         }
       }
@@ -1206,17 +1238,44 @@ var blockCorners = function (i, layer) {
       }
     }
 
+    // cull and restore
     if (cameraMoved && tick % 30 === 0) {
+      var i;
+      var t;
+
       layers.forEach(function (layer) {
         var screenCheck = getIndexesOffScreen(layer);
+
+        // cull everything offscreen
         var offScreenIndexes = Object.keys(screenCheck.offScreen);
-        for (var i = 0; i < offScreenIndexes.length; i++) {
-          var t = +offScreenIndexes[i];
+        for (i = 0; i < offScreenIndexes.length; i++) {
+          t = +offScreenIndexes[i];
+          // if this tweet holds a renderable obj (in zoomed-out lods, many do not)
           if (layer.tweets[t].obj) {
             var corners = blockCorners(t, layer);
-            if (corners[0] in screenCheck.offScreen && corners[1] in screenCheck.offScreen && corners[2] in screenCheck.offScreen) {
+            if (corners && corners[0] in screenCheck.offScreen &&
+              corners[1] in screenCheck.offScreen && corners[2] in screenCheck.offScreen) {
               killTweetObj(t, layer);
+              layer.tweets[t].hidden = true;
             }
+          } else {
+            layer.tweets[t].hidden = true;
+          }
+        }
+
+        // restore everything onscreen that has no obj
+        var onScreenIndexes = Object.keys(screenCheck.onScreen);
+        for (i = 0; i < onScreenIndexes.length; i++) {
+          t = +onScreenIndexes[i];
+          // if this tweet SHOULD hold a renderable obj when onscreen
+          if ( isAnchor(t, layer) && layer.tweets[t].hidden ) {
+            if (layer.lod === 'lo2' || layer.lod === 'lo1') {
+              layer.tweets[t].lod = 'x';
+              layer.tweets[t].hidden = false;
+              swapLOD(layer.tweets[t], layer.lod, layer);
+            }
+          } else {
+            layer.tweets[t].hidden = false;
           }
         }
 

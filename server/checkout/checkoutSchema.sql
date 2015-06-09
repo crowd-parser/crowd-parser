@@ -1,3 +1,3 @@
 create table purchasing_users( id INT NOT NULL AUTO_INCREMENT, fb_id VARCHAR(200) NOT NULL, name VARCHAR(200) NOT NULL, email VARCHAR(200) NOT NULL, number_of_keywords INT NOT NULL, PRIMARY KEY (id)) ENGINE=INNODB;
 
-create table purchased_keywords( id INT NOT NULL AUTO_INCREMENT, purchasing_user INT NOT NULL, PRIMARY KEY (id), FOREIGN KEY (purchasing_user) REFERENCES purchasing_users(id), purchased_keyword VARCHAR(200) NOT NULL) ENGINE=INNODB;
+create table purchased_keywords( id INT NOT NULL AUTO_INCREMENT, purchasing_user INT NOT NULL, PRIMARY KEY (id), FOREIGN KEY (purchasing_user) REFERENCES purchasing_users(id), purchased_keyword VARCHAR(200) NOT NULL, finished_processing VARCHAR(50) DEFAULT 'false') ENGINE=INNODB;

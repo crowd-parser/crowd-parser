@@ -153,7 +153,7 @@ router.get('/getUserKeywords/:id', function(req, res) {
 
   var id = req.params.id;
 
-  db.db.query('SELECT purchased_keyword FROM purchased_keywords WHERE purchasing_user=' + id, function(err, response) {
+  db.db.query('SELECT purchased_keyword, finished_processing FROM purchased_keywords WHERE purchasing_user=' + id, function(err, response) {
     
     if (err) {
 
@@ -177,7 +177,7 @@ router.post('/userAddKeyword', function(req, res) {
       res.send('Error! Missing ID/keyword.');
     }
 
-    db.db.query('SELECT number_of_keywords FROM purchasing_users WHERE id=' + req.body.id, function(err, response) {
+    db.db.query('SELECT number_of_keywords, finished_processing FROM purchasing_users WHERE id=' + req.body.id, function(err, response) {
 
       if (err) {
 
@@ -226,7 +226,7 @@ router.get('/getAllUserKeywordsWithNames', function(req, res) {
     if (err) {
       handleError(res, err, 'Error getting keywords with user names!');
     } else {
-      
+
       res.send(response);
     }
 

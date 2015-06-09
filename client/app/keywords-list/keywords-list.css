@@ -1,3 +1,18 @@
-.keywords-list-container {
-  text-align: left;
+.keywords-list-container img {
+  height: 40px;
+  width: 40px;
+}
+
+.spinner-container p {
+  color: #92CDCF;
+}
+
+.keywords-list-container h2 {
+  margin-bottom: -10px;
+}
+
+.sentiment-percentage {
+  display: inline-block;
+  font-size: 30px;
+  padding: 5px 12px;
 }

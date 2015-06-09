@@ -2,20 +2,29 @@
 
 <div class="container about-container keywords-list-container">
 
-  <h1>Tweets count: {{totalSentiment.count}}</h1>
-  <h2>Positive sentiment: {{totalSentiment.positiveSentiment}}%</h2>
-  <h2>Negative sentiment: {{totalSentiment.negativeSentiment}}%</h2>
+  <!-- <div class="spinner-container">
+    <img src="../assets/images/spinner.gif" alt="spinner">
+    <p>Loading stats...</p>
+  </div> -->
+
+  <div class="all-tweets-stats">
+    <h1>All tweets: {{totalSentiment.count}}</h1>
+    <div class="alert alert-success sentiment-percentage">{{totalSentiment.positiveSentiment}}%</div>&nbsp;&nbsp;&nbsp;
+    <div class="alert alert-danger sentiment-percentage">{{totalSentiment.negativeSentiment}}%</div>
+  </div>
   
   <h1>Our keywords</h1>
 
-  <ul ng-repeat="ourKeyword in ourKeywords">
-    <li>{{ourKeyword.keyword}} - {{ourKeyword.count}}, Positive: {{ourKeyword.positiveSentiment}} | Negative: {{ourKeyword.negativeSentiment}}</li>
-  </ul>
+  <div ng-repeat="ourKeyword in ourKeywords">
+    <h2>{{ourKeyword.keyword}} - {{ourKeyword.count}} tweets</h2><br>
+    <div class="alert alert-success sentiment-percentage">{{ourKeyword.positiveSentiment}}%</div>&nbsp;&nbsp;&nbsp;
+    <div class="alert alert-danger sentiment-percentage">{{ourKeyword.negativeSentiment}}%</div>
+  </div>
 
   <h1>User keywords</h1>
 
-  <ul ng-repeat="userKeyword in userKeywords">
-    <li>{{userKeyword.name}} - {{userKeyword.purchased_keyword}} - {{userKeyword.count}}</li>
-  </ul>
+  <div ng-repeat="userKeyword in userKeywords">
+    {{userKeyword.name}} | {{userKeyword.purchased_keyword}} - {{userKeyword.count}} tweets
+  </div>
   
 </div>

@@ -59,7 +59,6 @@ angular.module('parserApp')
               
             });
         });
-
       });
 
     $http.get('/checkout/getAllUserKeywordsWithNames')

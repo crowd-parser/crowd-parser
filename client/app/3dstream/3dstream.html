@@ -5,8 +5,9 @@
     <div class="keyword-menu">
       <div class="keyword-menu-title" ng-click="toggleKeywordMenu()">Search Database for...</div>
       <div class = "keyword-menu-container">
-        <div class="keyword-menu-item" ng-show="showKeywordMenu" ng-click="requestTweetsByKeyword(keyword.keyword)"  ng-repeat="keyword in allKeywords | orderBy : 'count'">{{keyword.keyword}} ({{keyword.count}} tweets)</div>
+        <div class="keyword-menu-item" ng-show="showKeywordMenu" ng-click="requestTweetsByKeyword(keyword.keyword); toggleKeywordMenu();"  ng-repeat="keyword in allKeywords | orderBy : 'count'">{{keyword.keyword}} ({{keyword.count}} tweets)</div>
       </div>
+      <div ng-show="gettingKeywordTweets">Received {{keywordStreamCount.received}} out of {{keywordStreamCount.expected}}</div>
     </div>
     <div class="layer-menu">
       <table>
@@ -34,8 +35,7 @@
       <form>
 <!--         <input type="text" class="form-control" ng-model="keywordStream" placeholder="enter a keyword"> -->
 
-<!--         <button ng-class="{ 'button-3d-disabled': grayedOut(), 'button-3d': !grayedOut() }" ng-disabled="grayedOut()" type="notSubmit" ng-click="requestTweetsByKeyword(keywordStream)">Search Database for {{keywordMenu}}</button>
-        <span>Received {{keywordStreamCount.received}} out of {{keywordStreamCount.expected}}</span> -->
+<!--         <button ng-class="{ 'button-3d-disabled': grayedOut(), 'button-3d': !grayedOut() }" ng-disabled="grayedOut()" type="notSubmit" ng-click="requestTweetsByKeyword(keywordStream)">Search Database for {{keywordMenu}}</button> -->
 <!--         <button class="button-3d" type="notSubmit" ng-click="getRestTweets()">Get {{numTweetsToGet}} New Tweets</button> -->
         <button class="button-3d bottom-button" id="flatten-separate-3d" ng-click="toggleFlatten();">{{flattenText}} All Layers</button>
         <button class="button-3d bottom-button" type="notSubmit" ng-click="autoScrollToggle()">Autoscroll: {{autoScroll}}</button>

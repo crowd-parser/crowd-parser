@@ -13,7 +13,7 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 	var _this = this;
   // mouse button pushed - 0 left, 1 middle, 2 right
-	var STATE = { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
+	var STATE = { NONE: -1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_PAN: 3, TOUCH_ZOOM_PAN: 4 };
 
   // camera
 	this.object = object;
@@ -533,9 +533,11 @@ THREE.TrackballControls = function ( object, domElement ) {
 		switch ( event.touches.length ) {
 
 			case 1:
-				_state = STATE.TOUCH_ROTATE;
-				_moveCurr.copy( getMouseOnCircle( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
-				_movePrev.copy(_moveCurr);
+				_state = STATE.TOUCH_PAN;
+        var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
+        var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
+        _panStart.copy( getMouseOnScreen( x, y ) );
+        _panEnd.copy( _panStart );
 				break;
 
 			case 2:
@@ -569,8 +571,9 @@ THREE.TrackballControls = function ( object, domElement ) {
 		switch ( event.touches.length ) {
 
 			case 1:
-				_movePrev.copy(_moveCurr);
-				_moveCurr.copy( getMouseOnCircle(  event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+        var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
+        var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
+        _panEnd.copy( getMouseOnScreen( x, y ) );
 				break;
 
 			case 2:
@@ -597,8 +600,10 @@ THREE.TrackballControls = function ( object, domElement ) {
 		switch ( event.touches.length ) {
 
 			case 1:
-				_movePrev.copy(_moveCurr);
-				_moveCurr.copy( getMouseOnCircle(  event.touches[ 0 ].pageX, event.touches[ 0 ].pageY ) );
+        var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
+        var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
+        _panEnd.copy( getMouseOnScreen( x, y ) );
+        _panStart.copy( _panEnd );
 				break;
 
 			case 2:

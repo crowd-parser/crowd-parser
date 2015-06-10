@@ -29,7 +29,6 @@ angular.module('parserApp')
     var intervalID;
     var timeoutPromise;
 
-    socket.connect();
     // Get keywords from DB to populate menu
     // Our keywords
     $http.get('/auth/adminlogin/showAllKeywords')
@@ -145,14 +144,14 @@ angular.module('parserApp')
     // type in new url, use back button, refresh)
     window.onbeforeunload = function () {
       Display3d.clear();
-      socket.disconnect();
+      socket.removeAllListeners();
       //socket.emit('twitter stop continuous stream');
     };
 
     // option 2: user uses angular routes
     $scope.$on('$locationChangeStart', function () {
       Display3d.clear();
-      socket.disconnect();
+      socket.removeAllListeners();
       //socket.emit('twitter stop continuous stream');
     });
 

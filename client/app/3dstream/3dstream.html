@@ -28,8 +28,13 @@
   <div class="keyword-form-3d form-inline">
     <div class="form-holder">
       <form>
-        <input type="text" class="form-control" ng-model="keywordStream" placeholder="enter a keyword">
+<!--         <input type="text" class="form-control" ng-model="keywordStream" placeholder="enter a keyword"> -->
 
+        <div class="keyword-menu">
+          <select name="keywordSelect">
+            <option ng-repeat="ourKeyword in ourKeywords">{{ourKeyword.keyword}} - {{ourKeyword.count}}</option>
+          </select>
+        </div>
         <button ng-class="{ 'button-3d-disabled': grayedOut(), 'button-3d': !grayedOut() }" ng-disabled="grayedOut()" type="notSubmit" ng-click="requestTweetsByKeyword(keywordStream)">Search Database</button>
         <span>Received {{keywordStreamCount.received}} out of {{keywordStreamCount.expected}}</span>
 <!--         <button class="button-3d" type="notSubmit" ng-click="getRestTweets()">Get {{numTweetsToGet}} New Tweets</button> -->

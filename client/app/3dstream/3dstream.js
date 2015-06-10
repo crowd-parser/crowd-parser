@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('parserApp')
-  .controller('3dStreamCtrl', function ($scope, $state, $location, $timeout, Twitter, Display3d, Modal) {
+  .controller('3dStreamCtrl', function ($scope, $state, $location, $timeout, $http, Twitter, Display3d, Modal) {
     var socket = Twitter.socket;
     $scope.tweetData = [];
     $scope.tweetCount = 0;
@@ -16,6 +16,8 @@ angular.module('parserApp')
     $scope.gettingKeywordTweets = false;
     $scope.keywordTimeout = false;
     $scope.flattenText = 'Flatten';
+    $scope.ourKeywords = [];
+    $scope.userKeywords = [];
     $scope.keywordStreamCount = {
       received: 0,
       expected: 0,
@@ -26,6 +28,50 @@ angular.module('parserApp')
     var intervalID;
     var timeoutPromise;
 
+
+    // Get keywords from DB to populate menu
+    // Our keywords
+    $http.get('/auth/adminlogin/showAllKeywords')
+      .success(function(response) {
+
+        var ourKeywords = response;
+        
+        ourKeywords.forEach(function(item) {
+
+          $http.get('/statistics/getKeywordCount/' + item.keyword)
+            .success(function(data) {
+
+              if (data.length > 0) {
+
+                item.count = data[0].id;
+                $scope.ourKeywords = ourKeywords;
+              }
+              
+            });
+        });
+
+      });
+
+    // User keywords
+    $http.get('/checkout/getAllUserKeywordsWithNames')
+      .success(function(response) {
+
+        var userKeywords = response;
+                
+        userKeywords.forEach(function(item) {
+
+          $http.get('/statistics/getKeywordCount/' + item.purchased_keyword)
+            .success(function(data) {
+              
+              if (data.length > 0) {
+
+                item.count = data[0].id;
+              }
+              
+              $scope.userKeywords = userKeywords;
+            });
+        });
+      });
 
     // Gray out button when waiting for keyword tweets to come in from DB
     $scope.grayedOut = function () {

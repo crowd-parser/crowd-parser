@@ -126,7 +126,6 @@ angular.module('parserApp')
             email = $scope.purchasingEmail;
           }
 
-          
           var purchaseDetails = {
             fb_id: fb_id,
             name: name,
@@ -143,6 +142,10 @@ angular.module('parserApp')
           })
             .success(function(data) {
               console.log('SERVER SUCCESS', data);
+
+              checkIfPurchased(fb_id);
+            })
+            .error(function(data) {
 
               checkIfPurchased(fb_id);
             });

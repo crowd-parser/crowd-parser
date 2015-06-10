@@ -29,7 +29,7 @@ angular.module('parserApp')
     var intervalID;
     var timeoutPromise;
 
-
+    socket.connect();
     // Get keywords from DB to populate menu
     // Our keywords
     $http.get('/auth/adminlogin/showAllKeywords')
@@ -66,10 +66,18 @@ angular.module('parserApp')
             .success(function(data) {
 
               if (data.length > 0) {
+
                 if (!(item.purchased_keyword in $scope.wordLookup)) {
                   $scope.allKeywords.push({keyword: item.purchased_keyword, name: item.name, count: data[0].id});
                   $scope.wordLookup[item.purchased_keyword] = item.purchased_keyword;
                 }
+
+                for (var i = 0; i < $scope.allKeywords.length; i++) {
+                  if ($scope.allKeywords[i].keyword === item.purchased_keyword) {
+                    $scope.allKeywords[i].name = item.name;
+                  }
+                }
+
               }
               
             });
@@ -137,12 +145,14 @@ angular.module('parserApp')
     // type in new url, use back button, refresh)
     window.onbeforeunload = function () {
       Display3d.clear();
+      socket.disconnect();
       //socket.emit('twitter stop continuous stream');
     };
 
     // option 2: user uses angular routes
     $scope.$on('$locationChangeStart', function () {
       Display3d.clear();
+      socket.disconnect();
       //socket.emit('twitter stop continuous stream');
     });
 
@@ -340,6 +350,7 @@ angular.module('parserApp')
       Display3d.reinit(32);
 
       socketWithRoom(function () {
+        console.log('making request for tweet keyword');
         socket.emit('tweet keyword', keyword, $scope.clientID);
       });
     };
@@ -359,8 +370,9 @@ angular.module('parserApp')
         // start a timeout timer (cancel any existing one first)
         if (timeoutPromise) {
 
-          console.log('getting new emit, cancelling ' + timeoutPromise);
+          console.log('getting new emit, cancelling ' + JSON.stringify(timeoutPromise));
           $timeout.cancel(timeoutPromise);
+
         }
 
         timeoutPromise = $timeout( function() { 

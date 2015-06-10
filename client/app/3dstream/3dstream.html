@@ -5,7 +5,9 @@
     <div class="keyword-menu">
       <div class="keyword-menu-title" ng-click="toggleKeywordMenu()">Search Database for...</div>
       <div class = "keyword-menu-container">
-        <div class="keyword-menu-item" ng-show="showKeywordMenu" ng-click="requestTweetsByKeyword(keyword.keyword); toggleKeywordMenu();"  ng-repeat="keyword in allKeywords | orderBy : 'count'">{{keyword.keyword}} ({{keyword.count}} tweets)</div>
+        <div class="keyword-menu-item" ng-show="showKeywordMenu"><a href="../dashboard">( Sponsor a new keyword )</a></div>
+        <div class="keyword-menu-item" ng-show="showKeywordMenu" ng-click="requestTweetsByKeyword(keyword.keyword); toggleKeywordMenu();"  ng-repeat="keyword in allKeywords | orderBy : 'count'">{{keyword.keyword}} ({{keyword.count}} tweets)
+        <div class="keyword-sponsor" ng-show="keyword.name">Sponsored by {{keyword.name}}</div></div>
       </div>
       <div class="keyword-menu-progress" ng-show="gettingKeywordTweets">Received {{keywordStreamCount.received}} out of {{keywordStreamCount.expected}}</div>
     </div>

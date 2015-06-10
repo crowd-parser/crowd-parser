@@ -387,13 +387,25 @@ canvas {  }
   padding: 5px 10px;
   cursor: pointer;
 }
+
 .keyword-menu-item:hover {
   background-color: rgba(0,120,160,0.75);
   color: rgba(180,220,255,1);
 }
+
 .keyword-menu-item:active {
   color: #000000;
   background-color: rgba(0,190,255,0.75);
+}
+
+.keyword-menu-item a {
+  color: #acd;
+  text-decoration: none;
+}
+
+.keyword-sponsor {
+  color: #ccc;
+  font-size: 0.7em;
 }
 
 .negative-word {

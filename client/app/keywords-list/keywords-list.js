@@ -3,6 +3,11 @@
 angular.module('parserApp')
   .controller('KeywordsListCtrl', function ($scope, $http) {
 
+    setTimeout(function() {
+
+      $('.be-patient').hide();
+    }, 5000);
+
     $scope.totalSentiment = {
       count: '',
       positiveSentiment: '',
@@ -74,6 +79,20 @@ angular.module('parserApp')
               if (data.length > 0) {
 
                 item.count = data[0].id;
+
+                $http.get('/statistics/getKeywordPositiveSentiment/' + item.purchased_keyword)
+                  .success(function(response) {
+
+                    item.positiveSentiment = Math.round(response[0]['COUNT(*)'] / item.count * 100);
+
+                    $http.get('/statistics/getKeywordNegativeSentiment/' + item.purchased_keyword)
+                      .success(function(response) {
+
+                        item.negativeSentiment = Math.round(response[0]['COUNT(*)'] / item.count * 100);
+
+                        $scope.userKeywords = userKeywords;
+                      });
+                  });
               }
               
               $scope.userKeywords = userKeywords;

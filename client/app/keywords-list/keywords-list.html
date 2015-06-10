@@ -2,10 +2,7 @@
 
 <div class="container about-container keywords-list-container">
 
-  <!-- <div class="spinner-container">
-    <img src="../assets/images/spinner.gif" alt="spinner">
-    <p>Loading stats...</p>
-  </div> -->
+  <p class="be-patient">Statistics might take some time to load. Thanks for your patience!</p>
 
   <div class="all-tweets-stats">
     <h1>All tweets: {{totalSentiment.count}}</h1>
@@ -17,15 +14,19 @@
 
   <div class="our-keyword-section" ng-repeat="ourKeyword in ourKeywords">
     <h2>{{ourKeyword.keyword}} - {{ourKeyword.count}} tweets</h2><br>
+    
     <div class="alert alert-success sentiment-percentage" style="width: {{ourKeyword.positiveSentiment}}%">{{ourKeyword.positiveSentiment}}%</div>
     <div class="alert alert-danger sentiment-percentage" style="width: {{ourKeyword.negativeSentiment}}%">{{ourKeyword.negativeSentiment}}%</div>
   </div>
 
   <h1>User keywords</h1>
 
-  <div class="our-keyword-section" ng-repeat="userKeyword in userKeywords">
+  <div class="our-keyword-section user-keyword-section" ng-repeat="userKeyword in userKeywords">
     <div>{{userKeyword.name}}</div>
     <h2>{{userKeyword.purchased_keyword}} - {{userKeyword.count}} tweets</h2>
+
+    <div class="alert alert-success sentiment-percentage" style="width: {{userKeyword.positiveSentiment}}%">{{userKeyword.positiveSentiment}}%</div>
+    <div class="alert alert-danger sentiment-percentage" style="width: {{userKeyword.negativeSentiment}}%">{{userKeyword.negativeSentiment}}%</div>
   </div>
   
 </div>

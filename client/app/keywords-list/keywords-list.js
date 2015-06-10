@@ -6,7 +6,7 @@ angular.module('parserApp')
     setTimeout(function() {
 
       $('.be-patient').hide();
-    }, 5000);
+    }, 10000);
 
     $scope.totalSentiment = {
       count: '',

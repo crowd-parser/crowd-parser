@@ -46,11 +46,9 @@ app.use(wwwRedirect);
 require('./ioroutes')(io, T);
 
 require('./config/express')(app);
+
 require('./routes')(app);
 
-// Set up database
-app.database = require('./database/database.js');
-app.database.trigger();
 
 // Start server
 server.listen(config.port, config.ip, function () {

@@ -98,6 +98,7 @@ var connectionLoop = function(){
          exports.startStayAlive();
 
            var testIO = function(_exports){
+            console.log("testIO");
              exports = exports || _exports;
              if(!exports.io){
                setTimeout(testIO, 150);
@@ -255,24 +256,76 @@ exports.processLayersForExistingTweets = function(layerNameList, startId, stopId
 };
 
 
-exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callback){
-  if(typeof clientID === "number"){
-    clientID = clientID.toString();
-  }
-  exports.getKeywordNames(function(keywords){
-    console.log("KEYWORDS:", keywords);
-    if(keywords.indexOf(keyword) < 0){
-      console.log("DID NOT FIND KEYWORD");
-      callback(true, false);
-      return;
-    }else{
-      callback(false, keyword);
-    }
+// exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callback, finalCB){
+//   if(typeof clientID === "number"){
+//     clientID = clientID.toString();
+//   }
+//   exports.getKeywordNames(function(keywords){
+//     console.log("KEYWORDS:", keywords);
+//     if(keywords.indexOf(keyword) < 0){
+//       console.log("DID NOT FIND KEYWORD");
+//       callback(true, false);
+//       return;
+//     }else{
+//       callback(false, keyword);
+//     }
+// //========================
+//   var startId = 1;
+//   var stopId;
 
-    var tableName = "tweets_containing_"+keyword;
+//    var tableName = "tweets_containing_"+keyword;
+
+//     exports.getTableLength(tableName, function(clientID, err, length){
+//       var chunk = 1000;
+//       stopId = length;
+
+//       if(clientID === undefined){
+//         console.log("ERR: clientID is undefined, using 1 by default");
+//         clientID = "1";
+//       }
+//       exports.io.sockets.in(clientID).emit('tweet keyword response', length);
+
+//     var recurseThroughIds = function(i){
+//             if(i >= stopId){
+//               finalCB();
+//               return;
+//             }
+
+//             chunk = Math.min(chunk, stopId - i);
+//              exports.db.query("SELECT * FROM tweets WHERE id BETWEEN " + (i + 1) + " AND " + (i+chunk) , function(err, finalArr){
+//               console.log("processKeywordsForExistingTweets 10000 CHUNK");
+//               console.log("FIRST ID IN CHUNK",finalArr[0]["id"]);
+
+//                   var eye = i;
+//                   var funcList = [];
+//                       funcList.push(exports.packageTweetsToSendToClient.bind(exports, finalArr, exports.errCB, keyword, clientID));
+
+//                     var recurseFinalCB = function(recurseThroughIds,eye,chunk,err,results){
+
+//                         console.log("STREAMLINE KEYWORD RETURN FOR ID: ", eye);
+//                         recurseThroughIds(eye+=chunk);
+
+//                     }.bind(exports, recurseThroughIds, eye, chunk);
+
+//                     exports.asyncMap(funcList, recurseFinalCB);
+
+
+//             });
+//           };//end of recurse through ids;
+//           //start the whole chain
+//   recurseThroughIds(startId-1);
+
+//   });
+//   });
+// }
+
+//=========================== OLD VERSION ====================
+
+//==================
+/*    var tableName = "tweets_containing_"+keyword;
 
     exports.getTableLength(tableName, function(clientID, err, length){
-      var chunk = 100;
+      var chunk = 1000;
 
       //send length:
       if(clientID === undefined){
@@ -281,11 +334,13 @@ exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callbac
       }
       exports.io.sockets.in(clientID).emit('tweet keyword response', length);
 
+
+
       for(var i = 0; i < length; i+=chunk){
         chunk = Math.min(chunk, length - i);
          exports.db.query("SELECT tweet_id FROM " + tableName + " WHERE id BETWEEN " + (i + 1) + " AND " + (i+chunk) , function(err, rows){
-          console.log("PULL 100 KEYWORD MATCHES");
-          console.log("AN ID SAMPLE",rows[0]);
+          console.log("PULL 1000 KEYWORD MATCHES");
+
           var finalArr = [];
           for(var j = 0; j < rows.length; j++){
             finalArr.push(rows[j]["tweet_id"]);
@@ -298,7 +353,7 @@ exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callbac
     }.bind(exports, clientID));
 
   });
-};
+};*/
 
 
 exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilteredByThisKeyword, ifSoAlsoClientID){

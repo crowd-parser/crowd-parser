@@ -229,8 +229,10 @@ angular.module('parserApp.display3dService', [])
         layers[i].tweets.forEach(function(tweet) {
           // if tweet has an obj representing it
           if (tweet.obj) {
-            tweet.transition = true;
             new TWEEN.Tween( tweet.obj.position )
+              .onStart( function () {
+                tweet.transition = true;
+              })
               .to( {z: frontLayerZ - layerSpacing*i}, 1000 )
               .easing( TWEEN.Easing.Exponential.InOut )
               .onComplete( function() {
@@ -303,10 +305,13 @@ angular.module('parserApp.display3dService', [])
       // Tween individual tweets if at two closest LODs
       if (layers[i].lod === 'individual') {
         layers[i].tweets.forEach(function(tweet) {
-          tweet.transition = true;
+          //tweet.transition = true;
           // if tweet has an obj representing it
           if (tweet.obj) {
             new TWEEN.Tween( tweet.obj.position )
+              .onStart( function () {
+                tweet.transition = true;
+              })
               .to( {z: frontLayerZ - 2*i}, 1000 )
               .easing( TWEEN.Easing.Exponential.InOut )
               .onComplete( function () {
@@ -942,6 +947,7 @@ angular.module('parserApp.display3dService', [])
 
   var swapLOD = function (tweet, swapTo, layer) {
 
+
     var el, object;
 
     var index = tweet.index;
@@ -965,8 +971,13 @@ angular.module('parserApp.display3dService', [])
 
     // don't do anything if the tweet is tweening
     if (tweet.transition || layer.transition) {
+      if (swapTo === 'lo2' && tweet.index === 0) {
+        console.log(tweet.transition);
+        console.log(layer.transition);
+      }
       return;
     }
+
 
     // 'hi' = css div
     if (swapTo === 'hi') {
@@ -1042,6 +1053,7 @@ angular.module('parserApp.display3dService', [])
     if (swapTo === 'lo2') { 
       var n = lod2Size;
       if (row % n === 0 && col % n === 0) {
+        console.log('swapping to lo2 for index ' + index);
         // this is a primary box, 1 merge per primary
         var tweetsToMerge = [];
         for (var colIndex = 0; colIndex < n; colIndex++) {
@@ -1303,12 +1315,12 @@ angular.module('parserApp.display3dService', [])
           thisTweet = layer.tweets[t];
           // if this tweet SHOULD hold a renderable obj when onscreen
           if ( isAnchor(t, layer) && thisTweet.hidden ) {
+            //console.log('attempting to restore: ' + thisTweet.index + ' t: ' + t);
             if (layer.lod === 'lo2' || layer.lod === 'lo1') {
               thisTweet.lod = 'x';
               thisTweet.hidden = false;
               swapLOD(thisTweet, layer.lod, layer);
             } else if (layer.lod === 'individual' && thisTweet.hidden) {
-                console.log(thisTweet.index);
                 tmp = thisTweet.lod;
                 thisTweet.lod = 'x';
                 thisTweet.hidden = false;

@@ -155,6 +155,14 @@ angular.module('parserApp.display3dService', [])
     console.log('calling clear');
     if (layers !== undefined) {
       layers.forEach( function (layer) {
+        if (layer.lodHolder) {
+          layer.lodHolder.children.forEach( function (obj) {
+            sceneGL.remove(obj);
+            obj.geometry.dispose();
+          });
+          sceneGL.remove(layer.lodHolder);
+          layer.lodHolder = undefined;
+        }
         sceneGL.remove(layer.ribbonMesh);
         layer.ribbonMesh = undefined;
         sceneGL.remove(layer.titleMesh);
@@ -184,6 +192,7 @@ angular.module('parserApp.display3dService', [])
         layer = undefined;
       });
     }
+    console.dir(sceneGL.children);
   };
 
   var updateLayers = function (layersVisible) {
@@ -218,15 +227,19 @@ angular.module('parserApp.display3dService', [])
       // Tween individual tweets if at two closest LODs
       if (layers[i].lod === 'individual') {
         layers[i].tweets.forEach(function(tweet) {
-          // tweet position
-          tweet.transition = true;
-          new TWEEN.Tween( tweet.obj.position )
-            .to( {z: frontLayerZ - layerSpacing*i}, 1000 )
-            .easing( TWEEN.Easing.Exponential.InOut )
-            .onComplete( function() {
-              tweet.transition = false;
-            })
-            .start();
+          // if tweet has an obj representing it
+          if (tweet.obj) {
+            tweet.transition = true;
+            new TWEEN.Tween( tweet.obj.position )
+              .to( {z: frontLayerZ - layerSpacing*i}, 1000 )
+              .easing( TWEEN.Easing.Exponential.InOut )
+              .onComplete( function() {
+                tweet.transition = false;
+              })
+              .start();
+          } else { // tweet is hidden or LOD merged into another tweet
+            //tweet.position.z = frontLayerZ - layerSpacing*i;
+          }
           // tweet opacity css
           if (layers[i].visible && tweet.el && tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
             new TWEEN.Tween( {val: 0} )
@@ -291,14 +304,19 @@ angular.module('parserApp.display3dService', [])
       if (layers[i].lod === 'individual') {
         layers[i].tweets.forEach(function(tweet) {
           tweet.transition = true;
-          new TWEEN.Tween( tweet.obj.position )
-            .to( {z: frontLayerZ - 2*i}, 1000 )
-            .easing( TWEEN.Easing.Exponential.InOut )
-            .onComplete( function () {
-              tweet.transition = false;
-            })
-            .start();
-
+          // if tweet has an obj representing it
+          if (tweet.obj) {
+            new TWEEN.Tween( tweet.obj.position )
+              .to( {z: frontLayerZ - 2*i}, 1000 )
+              .easing( TWEEN.Easing.Exponential.InOut )
+              .onComplete( function () {
+                tweet.transition = false;
+              })
+              .start();
+          } else { // if tweet is LOD'd out, hidden offscreen
+            // update its position
+            // tweet.position.z = frontLayerZ - 2*i;
+          }
           if (tweet.el && tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
             new TWEEN.Tween( {val: 0.8} )
               .to ( {val: 0}, 1000 )

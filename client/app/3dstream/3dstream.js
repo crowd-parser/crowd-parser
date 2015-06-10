@@ -9,6 +9,7 @@ angular.module('parserApp')
     $scope.numTweetsToGet = 50;
     $scope.receivingTweets = 'OFF';
     $scope.clientID = undefined;
+    $scope.showKeywordMenu = false;
     $scope.showLayerMenu = false;
     $scope.layers = [];
     $scope.radio = {};
@@ -16,8 +17,8 @@ angular.module('parserApp')
     $scope.gettingKeywordTweets = false;
     $scope.keywordTimeout = false;
     $scope.flattenText = 'Flatten';
-    $scope.ourKeywords = [];
-    $scope.userKeywords = [];
+    $scope.allKeywords = [];
+    $scope.wordLookup = {};
     $scope.keywordStreamCount = {
       received: 0,
       expected: 0,
@@ -42,9 +43,10 @@ angular.module('parserApp')
             .success(function(data) {
 
               if (data.length > 0) {
-
-                item.count = data[0].id;
-                $scope.ourKeywords = ourKeywords;
+                if (!(item.keyword in $scope.wordLookup)) {
+                  $scope.allKeywords.push({keyword: item.keyword, count: data[0].id});
+                  $scope.wordLookup[item.keyword] = item.keyword;
+                }
               }
               
             });
@@ -62,16 +64,18 @@ angular.module('parserApp')
 
           $http.get('/statistics/getKeywordCount/' + item.purchased_keyword)
             .success(function(data) {
-              
-              if (data.length > 0) {
 
-                item.count = data[0].id;
+              if (data.length > 0) {
+                if (!(item.purchased_keyword in $scope.wordLookup)) {
+                  $scope.allKeywords.push({keyword: item.purchased_keyword, name: item.name, count: data[0].id});
+                  $scope.wordLookup[item.purchased_keyword] = item.purchased_keyword;
+                }
               }
               
-              $scope.userKeywords = userKeywords;
             });
         });
       });
+
 
     // Gray out button when waiting for keyword tweets to come in from DB
     $scope.grayedOut = function () {
@@ -155,6 +159,11 @@ angular.module('parserApp')
     // toggle layer menu dropdown
     $scope.toggleLayerMenu = function () {
       $scope.showLayerMenu = !$scope.showLayerMenu;
+    };
+
+    // toggle layer menu dropdown
+    $scope.toggleKeywordMenu = function () {
+      $scope.showKeywordMenu = !$scope.showKeywordMenu;
     };
 
     // helper function to get clientID if we don't have one
@@ -375,7 +384,11 @@ angular.module('parserApp')
           var tweetObj = tweetsFromDB[tweetIDs[i]];
           var tweetFormatted = formatTweetObject(tweetObj, tweetIDs[i]);
           $scope.tweetData.push(tweetFormatted);
-          Display3d.addTweet(tweetFormatted, $scope.tweetCount);
+          if (tweetIDs.length < 100) {
+            Display3d.addTweet(tweetFormatted, $scope.tweetCount, true);
+          } else {
+            Display3d.addTweet(tweetFormatted, $scope.tweetCount);
+          }
           $scope.tweetCount++;
         }
         $scope.keywordStreamCount.received = $scope.tweetCount;

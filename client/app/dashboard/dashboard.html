@@ -110,7 +110,7 @@
 
     <div class="user-keywords">
       <h2>My keywords:</h2> 
-      <span class="{{keyword.finished_processing === 'true' ? 'user-keyword' : 'user-keyword-unfinished'}}" ng-repeat="keyword in purchasingUserKeywords">{{keyword.purchased_keyword}}</span>
+      <span class="{{keyword.finished_processing === '1' ? 'user-keyword' : 'user-keyword-unfinished'}}" ng-repeat="keyword in purchasingUserKeywords">{{keyword.purchased_keyword}}</span>
 
       <br><br>
       <div>
@@ -126,8 +126,10 @@
     <h3>Number of keywords remaining: {{purchasingUserDetails.number_of_keywords}}</h3>
 
     <form onsubmit="return false" ng-submit="userKeywordSubmit()" ng-hide="purchasingUserDetails.number_of_keywords <= 0">
-      <input type="text" class="form-control" ng-model="userKeywordInput" placeholder="Add a new keyword" required />
+      <input type="text" class="form-control keyword-input" ng-model="userKeywordInput" placeholder="Add a new keyword" required />
       <button class="btn btn-primary keyword-submit">Submit</button>
+      <div class="alert alert-danger keyword-submit-warning">Please keep your keywords clean and appropriate. <br>
+      We will remove words that might offend users.</div>
     </form>
 
     <hr>

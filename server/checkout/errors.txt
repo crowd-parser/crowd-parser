@@ -1,0 +1,2 @@
+Tue Jun 09 2015 13:45:55 GMT-0500 (CDT) - Error getting user's number of keywords from database! - Error: ER_BAD_FIELD_ERROR: Unknown column 'finished_processing' in 'field list'
+

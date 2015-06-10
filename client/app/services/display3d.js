@@ -1262,7 +1262,7 @@ angular.module('parserApp.display3dService', [])
 
     // auto scroll if tweets are falling off the right
     if (!leftHover && !rightHover) {
-      if (layers[0].tweets.length) {
+      if (layers[0].tweets && layers[0].tweets.length) {
         var lastTweet = layers[0].tweets[layers[0].tweets.length-1];
         if (lastTweet.obj) {
           lastTweet.position.copy(lastTweet.obj.position);

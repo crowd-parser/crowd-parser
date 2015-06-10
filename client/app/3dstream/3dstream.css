@@ -335,6 +335,57 @@ canvas {  }
   box-shadow: 0px 0px 20px rgba(0,180,255,0.5);
 }
 
+.keyword-menu {
+  position: relative;
+  box-sizing: border-box;
+  margin-left: 20px;
+  margin-right:5px;
+  float: left;
+  width: 220px;
+  color: rgba(127,220,255,0.75);
+  background: rgba(0,40,50,0.75) url('../../assets/images/select_arrow.png') no-repeat 96% 0;
+  outline: 1px solid rgba(0,200,255,0.75);
+  border: 0px;
+  padding: 5px 10px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.keyword-menu-title {
+  position: relative;
+  width: 100%;
+  height: 20px;
+  color: rgba(127,220,255,0.75);
+  background: transparent;
+}
+
+.keyword-menu-container {
+  position: relative;
+  top: 10px;
+  width: 100%;
+  overflow: auto;
+  max-height: 200px;
+  margin: 0;
+}
+
+.keyword-menu-item {
+  position: relative;
+  color: rgba(127,220,255,0.75);
+  background: rgba(0,40,50,0.75);
+  outline: 1px solid rgba(0,200,255,0.75);
+  border: 0px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.keyword-menu-item:hover {
+  background-color: rgba(0,120,160,0.75);
+  color: rgba(180,220,255,1);
+}
+.keyword-menu-item:active {
+  color: #000000;
+  background-color: rgba(0,190,255,0.75);
+}
+
 .negative-word {
   font-weight: bold;
   color: rgb(180,0,0);

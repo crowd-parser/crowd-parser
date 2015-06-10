@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('parserApp')
-  .controller('3dStreamCtrl', function ($scope, $state, $location, $timeout, Twitter, Display3d, Modal) {
+  .controller('3dStreamCtrl', function ($scope, $state, $location, $timeout, $http, Twitter, Display3d, Modal) {
     var socket = Twitter.socket;
     $scope.tweetData = [];
     $scope.tweetCount = 0;
@@ -9,6 +9,7 @@ angular.module('parserApp')
     $scope.numTweetsToGet = 50;
     $scope.receivingTweets = 'OFF';
     $scope.clientID = undefined;
+    $scope.showKeywordMenu = false;
     $scope.showLayerMenu = false;
     $scope.layers = [];
     $scope.radio = {};
@@ -16,11 +17,64 @@ angular.module('parserApp')
     $scope.gettingKeywordTweets = false;
     $scope.keywordTimeout = false;
     $scope.flattenText = 'Flatten';
+    $scope.allKeywords = [];
+    $scope.wordLookup = {};
+    $scope.keywordStreamCount = {
+      received: 0,
+      expected: 0,
+    };
     var liveStreamStarted = false;
     var expectedKeywordTweets = 0;
     var runFakeTweets = false;
     var intervalID;
     var timeoutPromise;
+
+
+    // Get keywords from DB to populate menu
+    // Our keywords
+    $http.get('/auth/adminlogin/showAllKeywords')
+      .success(function(response) {
+
+        var ourKeywords = response;
+        
+        ourKeywords.forEach(function(item) {
+
+          $http.get('/statistics/getKeywordCount/' + item.keyword)
+            .success(function(data) {
+
+              if (data.length > 0) {
+                if (!(item.keyword in $scope.wordLookup)) {
+                  $scope.allKeywords.push({keyword: item.keyword, count: data[0].id});
+                  $scope.wordLookup[item.keyword] = item.keyword;
+                }
+              }
+              
+            });
+        });
+
+      });
+
+    // User keywords
+    $http.get('/checkout/getAllUserKeywordsWithNames')
+      .success(function(response) {
+
+        var userKeywords = response;
+                
+        userKeywords.forEach(function(item) {
+
+          $http.get('/statistics/getKeywordCount/' + item.purchased_keyword)
+            .success(function(data) {
+
+              if (data.length > 0) {
+                if (!(item.purchased_keyword in $scope.wordLookup)) {
+                  $scope.allKeywords.push({keyword: item.purchased_keyword, name: item.name, count: data[0].id});
+                  $scope.wordLookup[item.purchased_keyword] = item.purchased_keyword;
+                }
+              }
+              
+            });
+        });
+      });
 
 
     // Gray out button when waiting for keyword tweets to come in from DB
@@ -105,6 +159,11 @@ angular.module('parserApp')
     // toggle layer menu dropdown
     $scope.toggleLayerMenu = function () {
       $scope.showLayerMenu = !$scope.showLayerMenu;
+    };
+
+    // toggle layer menu dropdown
+    $scope.toggleKeywordMenu = function () {
+      $scope.showKeywordMenu = !$scope.showKeywordMenu;
     };
 
     // helper function to get clientID if we don't have one
@@ -278,7 +337,7 @@ angular.module('parserApp')
       $scope.tweetData = [];
       $scope.tweetCount = 0;
       Display3d.clear();
-      Display3d.reinit(25);
+      Display3d.reinit(32);
 
       socketWithRoom(function () {
         socket.emit('tweet keyword', keyword, $scope.clientID);
@@ -292,36 +351,48 @@ angular.module('parserApp')
 
       // if server is telling how many tweets to expect
       if (typeof tweetsFromDB !== 'object') {
+
         expectedKeywordTweets = +tweetsFromDB;
+        $scope.keywordStreamCount.expected = +tweetsFromDB;
+
       } else {
         // start a timeout timer (cancel any existing one first)
         if (timeoutPromise) {
+
           console.log('getting new emit, cancelling ' + timeoutPromise);
           $timeout.cancel(timeoutPromise);
         }
+
         timeoutPromise = $timeout( function() { 
           console.log('timed out, displaying keyword tweets');
           $scope.gettingKeywordTweets = false;
-          displayAllTweets();
-         }, 3000);
+          //displayAllTweets();
+         }, 5000);
+
         timeoutPromise.then(
           function() {
             console.log('timeout promise resolved');
           },
           function() {
-            console.log('timeout promise rejected');
+            console.log('timeout canceled');
           }
         );
+
         // still getting tweets, store tweets
         var tweetIDs = Object.keys(tweetsFromDB);
-        console.log(tweetIDs.length);
         for (var i = 0; i < tweetIDs.length; i++) {
           var tweetObj = tweetsFromDB[tweetIDs[i]];
           var tweetFormatted = formatTweetObject(tweetObj, tweetIDs[i]);
           $scope.tweetData.push(tweetFormatted);
+          if (tweetIDs.length < 100) {
+            Display3d.addTweet(tweetFormatted, $scope.tweetCount, true);
+          } else {
+            Display3d.addTweet(tweetFormatted, $scope.tweetCount);
+          }
           $scope.tweetCount++;
-          // Display3d.addTweet(tweetFormatted, $scope.tweetCount);
         }
+        $scope.keywordStreamCount.received = $scope.tweetCount;
+
         console.log($scope.tweetCount);
         // if we got all the tweets we were expecting
         if ($scope.tweetCount >= expectedKeywordTweets) {
@@ -332,7 +403,7 @@ angular.module('parserApp')
           }
           console.log('received all keyword tweets');
           $scope.gettingKeywordTweets = false;
-          displayAllTweets();
+          //displayAllTweets();
         }
       }
     });
@@ -399,9 +470,10 @@ angular.module('parserApp')
     };
 
     var endTime;
+    var total = 20000;
 
-    var addFakeTweet = function () {
-      if ($scope.tweetCount >= 3000) {
+    var addFakeTweet = function (last) {
+      if ($scope.tweetCount >= total) {
         runFakeTweets = false;
         if (!endTime) {
           endTime = new Date();
@@ -416,12 +488,66 @@ angular.module('parserApp')
         fakeTweet.username = 'user' + $scope.tweetCount;
         fakeTweet.text = fakeText();
         $scope.tweetData.push(fakeTweet);
-        Display3d.addTweet(fakeTweet, $scope.tweetCount);
+        if (last) {
+          Display3d.addTweet(fakeTweet, $scope.tweetCount, true);
+        } else {
+          Display3d.addTweet(fakeTweet, $scope.tweetCount);
+        }
         $scope.tweetCount++;
       }
     };
 
     var timeStart;
+
+    $scope.batchFakeTweets = function () {
+      runFakeTweets = true;
+      timeStart = new Date();
+      for (var i = 0; i < total; i++) {
+        if (i === total-1) {
+          addFakeTweet(true);
+        } else{
+          addFakeTweet();
+        }
+      }
+      endTime = new Date();
+      console.log(endTime - timeStart);
+    };
+
+    var chunk = function (chunkSize) {
+      runFakeTweets = true;
+      timeStart = new Date();
+      for (var i = 0; i < chunkSize; i++) {
+        if ($scope.tweetCount + 1 >= total) {
+          addFakeTweet(true);
+          runFakeTweets = false;
+          if (intervalID) {
+            clearInterval(intervalID);
+          }
+        } else {
+          addFakeTweet();
+        }
+      }
+      //endTime = new Date();
+      //console.log(endTime - timeStart);
+    };
+
+    $scope.chunkStreamFakeTweets = function () {
+      // stop any existing stream
+      socket.emit('twitter stop continuous stream');
+      if (runFakeTweets) {
+        runFakeTweets = false;
+        if (intervalID) {
+          clearInterval(intervalID);
+        }
+      } else {
+        runFakeTweets = true;
+        timeStart = new Date();
+        intervalID = setInterval(function () {
+          chunk(100);
+        }, 200);
+      }
+      
+    };
 
     $scope.streamFakeTweets = function () {
       // stop any existing stream

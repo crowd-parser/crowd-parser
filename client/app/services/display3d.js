@@ -1427,7 +1427,7 @@ angular.module('parserApp.display3dService', [])
       }
     });
 
-    initRepeatable(100);
+    initRepeatable(25);
   };
 
   var initRepeatable = function (numRows) {

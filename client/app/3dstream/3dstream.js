@@ -16,6 +16,10 @@ angular.module('parserApp')
     $scope.gettingKeywordTweets = false;
     $scope.keywordTimeout = false;
     $scope.flattenText = 'Flatten';
+    $scope.keywordStreamCount = {
+      received: 0,
+      expected: 0,
+    };
     var liveStreamStarted = false;
     var expectedKeywordTweets = 0;
     var runFakeTweets = false;
@@ -278,7 +282,7 @@ angular.module('parserApp')
       $scope.tweetData = [];
       $scope.tweetCount = 0;
       Display3d.clear();
-      Display3d.reinit(25);
+      Display3d.reinit(32);
 
       socketWithRoom(function () {
         socket.emit('tweet keyword', keyword, $scope.clientID);
@@ -292,36 +296,44 @@ angular.module('parserApp')
 
       // if server is telling how many tweets to expect
       if (typeof tweetsFromDB !== 'object') {
+
         expectedKeywordTweets = +tweetsFromDB;
+        $scope.keywordStreamCount.expected = +tweetsFromDB;
+
       } else {
         // start a timeout timer (cancel any existing one first)
         if (timeoutPromise) {
+
           console.log('getting new emit, cancelling ' + timeoutPromise);
           $timeout.cancel(timeoutPromise);
         }
+
         timeoutPromise = $timeout( function() { 
           console.log('timed out, displaying keyword tweets');
           $scope.gettingKeywordTweets = false;
-          displayAllTweets();
-         }, 3000);
+          //displayAllTweets();
+         }, 5000);
+
         timeoutPromise.then(
           function() {
             console.log('timeout promise resolved');
           },
           function() {
-            console.log('timeout promise rejected');
+            console.log('timeout canceled');
           }
         );
+
         // still getting tweets, store tweets
         var tweetIDs = Object.keys(tweetsFromDB);
-        console.log(tweetIDs.length);
         for (var i = 0; i < tweetIDs.length; i++) {
           var tweetObj = tweetsFromDB[tweetIDs[i]];
           var tweetFormatted = formatTweetObject(tweetObj, tweetIDs[i]);
           $scope.tweetData.push(tweetFormatted);
+          Display3d.addTweet(tweetFormatted, $scope.tweetCount);
           $scope.tweetCount++;
-          // Display3d.addTweet(tweetFormatted, $scope.tweetCount);
         }
+        $scope.keywordStreamCount.received = $scope.tweetCount;
+
         console.log($scope.tweetCount);
         // if we got all the tweets we were expecting
         if ($scope.tweetCount >= expectedKeywordTweets) {
@@ -332,7 +344,7 @@ angular.module('parserApp')
           }
           console.log('received all keyword tweets');
           $scope.gettingKeywordTweets = false;
-          displayAllTweets();
+          //displayAllTweets();
         }
       }
     });

@@ -31,11 +31,12 @@
         <input type="text" class="form-control" ng-model="keywordStream" placeholder="enter a keyword">
 
         <button ng-class="{ 'button-3d-disabled': grayedOut(), 'button-3d': !grayedOut() }" ng-disabled="grayedOut()" type="notSubmit" ng-click="requestTweetsByKeyword(keywordStream)">Search Database</button>
-        <button class="button-3d" type="notSubmit" ng-click="getRestTweets()">Get {{numTweetsToGet}} New Tweets</button>
+        <span>Received {{keywordStreamCount.received}} out of {{keywordStreamCount.expected}}</span>
+<!--         <button class="button-3d" type="notSubmit" ng-click="getRestTweets()">Get {{numTweetsToGet}} New Tweets</button> -->
         <button class="button-3d" type="notSubmit" ng-click="startLiveStream()">Live Stream: {{receivingTweets}}</button>
         <button class="button-3d" type="notSubmit" ng-click="streamFakeTweets()">Fake Tweets (Stream)</button>
         <button class="button-3d" type="notSubmit" ng-click="chunkStreamFakeTweets()">Fake Tweets (Chunk Stream)</button>
-        <button class="button-3d" type="notSubmit" ng-click="batchFakeTweets()">Fake Tweets (All)</button>
+<!--         <button class="button-3d" type="notSubmit" ng-click="batchFakeTweets()">Fake Tweets (All)</button> -->
       </form>
     </div>
   </div>

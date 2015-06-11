@@ -395,7 +395,8 @@ angular.module('parserApp')
           var tweetObj = tweetsFromDB[tweetIDs[i]];
           var tweetFormatted = formatTweetObject(tweetObj, tweetIDs[i]);
           $scope.tweetData.push(tweetFormatted);
-          if (tweetIDs.length + $scope.tweetCount >= expectedKeywordTweets) {
+          if ($scope.tweetCount+1 >= expectedKeywordTweets) {
+            console.log($scope.tweetCount);
             Display3d.addTweet(tweetFormatted, $scope.tweetCount, true);
           } else {
             Display3d.addTweet(tweetFormatted, $scope.tweetCount);

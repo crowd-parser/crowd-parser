@@ -14,6 +14,17 @@ module.exports = function(io, T) {
 
   var clientIDGenerator = 0;
 
+  var setSocketOnDatabase = function(){
+    if(!db){
+      setTimeout(setSocketOnDatabase.bind(exports), 150);
+      return;
+    }
+    db.io = io;
+  };
+
+  setSocketOnDatabase();
+
+
   io.on('connection', function(socket) {
 
     // for tracking "rooms" different clients are in
@@ -49,15 +60,6 @@ module.exports = function(io, T) {
     //this adds the io object to the datbase module so it can fire tweet emits on completion.
     //db.io = io;
 
-    var setSocketOnDatabase = function(){
-      if(!db){
-        setTimeout(setSocketOnDatabase.bind(exports), 50);
-        return;
-      }
-      db.io = io;
-    };
-
-      setSocketOnDatabase();
 
 
 

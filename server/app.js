@@ -7,9 +7,12 @@
 var fs = require('fs');
 
 // Log any unhandled errors
-// process.on('uncaughtException', function(err){
-//   fs.appendFile(__dirname + '/server/server.log', new Date() + '  |  ' + err + '\n');
-// });
+
+if(process.env.DATABASE_PROD === "production"){
+  process.on('uncaughtException', function(err){
+    fs.appendFile(__dirname + '/server/server.log', new Date() + '  |  ' + err + '\n');
+  });
+}
 
 // Set default node environment to development
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
@@ -46,11 +49,9 @@ app.use(wwwRedirect);
 require('./ioroutes')(io, T);
 
 require('./config/express')(app);
+
 require('./routes')(app);
 
-// Set up database
-app.database = require('./database/database.js');
-app.database.trigger();
 
 // Start server
 server.listen(config.port, config.ip, function () {

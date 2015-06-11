@@ -9,6 +9,8 @@ module.exports = function(string) {
     string = string.text;
   }
 
+  string = emojiConverter.restoreEmojisInTweet(string);
+
   // Initialize results object with what we want in theh end
   var results = {
     positiveWords: [],
@@ -33,21 +35,21 @@ module.exports = function(string) {
 
       // If emoji is in the positive emoticons list, add to positive words array
       if (itemCode in em.positive) {
-        results.positiveWords.push(item);
+        results.positiveWords.push(emojiConverter.convertEmojisInTweet(item));
 
         // Increment the final score of the string
         results.score++;
 
       // If emoji is in the negative emoticons list, add to negative words array
       } else if (toCodePoint(item) in em.negative) {
-        results.negativeWords.push(item);
+        results.negativeWords.push(emojiConverter.convertEmojisInTweet(item));
 
         // Decrement the final score of the string
         results.score--;
 
       } else {
         // If not in either table, store it in 'unknown' array so we know what we missed
-        results.unknown.push(item);
+        results.unknown.push(emojiConverter.convertEmojisInTweet(item));
       }
     });
   }

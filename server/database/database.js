@@ -98,7 +98,7 @@ var connectionLoop = function(){
          exports.startStayAlive();
 
            var testIO = function(_exports){
-            console.log("testIO");
+
              exports = exports || _exports;
              if(!exports.io){
                setTimeout(testIO, 150);
@@ -256,68 +256,87 @@ exports.processLayersForExistingTweets = function(layerNameList, startId, stopId
 };
 
 
-// exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callback, finalCB){
-//   if(typeof clientID === "number"){
-//     clientID = clientID.toString();
-//   }
-//   exports.getKeywordNames(function(keywords){
-//     console.log("KEYWORDS:", keywords);
-//     if(keywords.indexOf(keyword) < 0){
-//       console.log("DID NOT FIND KEYWORD");
-//       callback(true, false);
-//       return;
-//     }else{
-//       callback(false, keyword);
-//     }
-// //========================
-//   var startId = 1;
-//   var stopId;
-
-//    var tableName = "tweets_containing_"+keyword;
-
-//     exports.getTableLength(tableName, function(clientID, err, length){
-//       var chunk = 1000;
-//       stopId = length;
-
-//       if(clientID === undefined){
-//         console.log("ERR: clientID is undefined, using 1 by default");
-//         clientID = "1";
-//       }
-//       exports.io.sockets.in(clientID).emit('tweet keyword response', length);
-
-//     var recurseThroughIds = function(i){
-//             if(i >= stopId){
-//               finalCB();
-//               return;
-//             }
-
-//             chunk = Math.min(chunk, stopId - i);
-//              exports.db.query("SELECT * FROM tweets WHERE id BETWEEN " + (i + 1) + " AND " + (i+chunk) , function(err, finalArr){
-//               console.log("processKeywordsForExistingTweets 10000 CHUNK");
-//               console.log("FIRST ID IN CHUNK",finalArr[0]["id"]);
-
-//                   var eye = i;
-//                   var funcList = [];
-//                       funcList.push(exports.packageTweetsToSendToClient.bind(exports, finalArr, exports.errCB, keyword, clientID));
-
-//                     var recurseFinalCB = function(recurseThroughIds,eye,chunk,err,results){
-
-//                         console.log("STREAMLINE KEYWORD RETURN FOR ID: ", eye);
-//                         recurseThroughIds(eye+=chunk);
-
-//                     }.bind(exports, recurseThroughIds, eye, chunk);
-
-//                     exports.asyncMap(funcList, recurseFinalCB);
+exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callback, finalCB){
+  if(typeof clientID === "number"){
+    clientID = clientID.toString();
+  }
+  exports.getKeywordNames(function(keywords){
+    console.log("KEYWORDS:", keywords);
+    if(keywords.indexOf(keyword) < 0){
+      console.log("DID NOT FIND KEYWORD");
+      callback(true, false);
+      return;
+    }else{
+      callback(false, keyword);
+    }
+//========================
+  var startId = 1;
 
 
-//             });
-//           };//end of recurse through ids;
-//           //start the whole chain
-//   recurseThroughIds(startId-1);
+   var tableName = "tweets_containing_"+keyword;
 
-//   });
-//   });
-// }
+    exports.getTableLength(tableName, function(err, length){
+      exports.io.sockets.in(clientID).emit('tweet keyword response', length);
+
+
+    exports.genericGetMaxValue(tableName, "id", function(err, maxId){
+      if(err){
+        console.log(err);
+      }
+      var chunk = 1000;
+
+
+
+      if(clientID === undefined){
+        console.log("ERR: clientID is undefined, using 1 by default");
+        clientID = "1";
+      }
+
+
+    var recurseThroughIds = function(i){
+            if(i >= maxId){
+              finalCB();
+              return;
+            }
+
+            chunk = Math.min(chunk, maxId - i);
+
+             exports.db.query("SELECT tweet_id FROM " + tableName + " WHERE id BETWEEN " + (i + 1) + " AND " + (i+chunk) , function(err, _finalArr){
+              if(err){
+                console.log(err);
+              }
+
+                var recurseFinalCB = function(recurseThroughIds,err,results){
+
+                    recurseThroughIds();
+
+                }.bind(exports, recurseThroughIds.bind(exports, i + chunk));
+
+
+
+              if(_finalArr.length > 0){
+                var finalArr = [];
+
+                console.log("FIRST ID IN KEYWORD CHUNK OF 1000",_finalArr[0]["tweet_id"]);
+
+                for(var j = 0; j < _finalArr.length; j++){
+                  finalArr.push(_finalArr[j]["tweet_id"]);
+                }
+
+                exports.packageTweetsToSendToClient(finalArr, recurseFinalCB, keyword, clientID);
+              }else{
+                recurseFinalCB();
+              }
+
+            });
+          };//end of recurse through ids;
+          //start the whole chain
+  recurseThroughIds(startId-1);
+
+  });
+  });
+ });
+}
 
 //=========================== OLD VERSION ====================
 
@@ -357,7 +376,8 @@ exports.processLayersForExistingTweets = function(layerNameList, startId, stopId
 
 
 exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilteredByThisKeyword, ifSoAlsoClientID){
-  exports.queueLength--;
+
+
   //grab tweets in idRange
   //var fullPackage = {<anId>:{tweet: obj, layers: {layerName:obj, layerName:obj, layerName: obj},
   var tweetPackages = {}
@@ -1271,6 +1291,17 @@ if(!Array.isArray(_listOfObjects)){
   };
 };
 
+exports.genericGetMaxValue = function(tableName, columnName, cb ){
+
+  exports.db.query("SELECT MAX("+columnName+") FROM "+tableName, function(err, maxRows){
+    if(err){
+      console.log(err);
+    }
+    console.log("MAX ID for " + tableName +" "+ columnName +": " + maxRows[0]["MAX(id)"]);
+    cb(err, maxRows[0]["MAX(id)"]);
+  });
+
+};
 
 
 //===============================================

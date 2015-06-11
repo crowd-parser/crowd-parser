@@ -160,6 +160,10 @@ angular.module('parserApp')
 
     $scope.userKeywordSubmit = function() {
 
+      if ($scope.userKeywordInput === undefined) {
+        return;
+      }
+
       var fbToken = localStorage.getItem('fbToken');
 
       var userKeyword = $scope.userKeywordInput;

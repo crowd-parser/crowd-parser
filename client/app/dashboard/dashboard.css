@@ -200,3 +200,8 @@
   font-size: 50px;
   margin-bottom: 20px;
 }
+
+.checkout-container .dropdown-image {
+  width: 300px;
+  margin-bottom: -28px;
+}

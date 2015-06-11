@@ -1,2 +1,10 @@
 Tue Jun 09 2015 13:45:55 GMT-0500 (CDT) - Error getting user's number of keywords from database! - Error: ER_BAD_FIELD_ERROR: Unknown column 'finished_processing' in 'field list'
 
+Wed Jun 10 2015 19:01:20 GMT-0500 (CDT) - Error inserting keyword into database! - Error: ER_BAD_NULL_ERROR: Column 'purchased_keyword' cannot be null
+
+Wed Jun 10 2015 19:05:10 GMT-0500 (CDT) - Error inserting keyword into database! - Error: ER_BAD_NULL_ERROR: Column 'purchased_keyword' cannot be null
+
+Wed Jun 10 2015 19:07:22 GMT-0500 (CDT) - Error inserting keyword into database! - Error: ER_BAD_NULL_ERROR: Column 'purchased_keyword' cannot be null
+
+Wed Jun 10 2015 19:08:02 GMT-0500 (CDT) - Error inserting keyword into database! - Error: ER_BAD_NULL_ERROR: Column 'purchased_keyword' cannot be null
+

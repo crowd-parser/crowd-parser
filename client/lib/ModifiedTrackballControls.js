@@ -534,8 +534,8 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 			case 1:
 				_state = STATE.TOUCH_PAN;
-        var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
-        var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
+        var x = event.touches[ 0 ].pageX;
+        var y = event.touches[ 0 ].pageY;
         _panStart.copy( getMouseOnScreen( x, y ) );
         _panEnd.copy( _panStart );
 				break;
@@ -571,8 +571,8 @@ THREE.TrackballControls = function ( object, domElement ) {
 		switch ( event.touches.length ) {
 
 			case 1:
-        var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
-        var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
+        var x = event.touches[ 0 ].pageX;
+        var y = event.touches[ 0 ].pageY;
         _panEnd.copy( getMouseOnScreen( x, y ) );
 				break;
 
@@ -600,8 +600,8 @@ THREE.TrackballControls = function ( object, domElement ) {
 		switch ( event.touches.length ) {
 
 			case 1:
-        var x = ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX ) / 2;
-        var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
+        var x = event.touches[ 0 ].pageX;
+        var y = event.touches[ 0 ].pageY;
         _panEnd.copy( getMouseOnScreen( x, y ) );
         _panStart.copy( _panEnd );
 				break;

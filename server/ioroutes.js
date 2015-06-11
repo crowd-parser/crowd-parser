@@ -132,7 +132,7 @@ module.exports = function(io, T) {
         return;
       }
 
-       db.sendTweetPackagesForKeywordToClient(keyword, clientID, function(err, result){});
+       db.sendTweetPackagesForKeywordToClient(keyword, clientID, function(err, result){}, function(){});
       //callback will either return error, or the name of the keyword if it exists
 
     });

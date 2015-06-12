@@ -193,4 +193,32 @@ angular.module('parserApp')
           checkIfPurchased(fb_id);
         });
     };
+  })
+
+  .directive('checkoutInfo', function() {
+    return {
+      restrict: 'E',
+      templateUrl: 'app/dashboard/directive-checkout-info.html'
+    };
+  })
+
+  .directive('stripeCheckoutForm', function() {
+    return {
+      restrict: 'E',
+      templateUrl: 'app/dashboard/directive-stripe-checkout-form.html'
+    };
+  })
+
+  .directive('userDashboard', function() {
+    return {
+      restrict: 'E',
+      templateUrl: 'app/dashboard/directive-user-dashboard.html'
+    };
+  })
+
+  .directive('stripeCheckoutExistingUsers', function() {
+    return {
+      restrict: 'E',
+      templateUrl: 'app/dashboard/directive-stripe-checkout-existing-users.html'
+    };
   });

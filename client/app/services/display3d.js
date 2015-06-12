@@ -2,11 +2,12 @@
 
 angular.module('parserApp.display3dService', [])
 
-
+// ===================================
+// Factory for helper functions
+// ===================================
 .factory('displayHelpers', ['$window', function($window){
 
   var THREE = $window.THREE;
-  var TWEEN = $window.TWEEN;
 
   var makeLoResElement = function (layersSeparated, elData) {
     var elLo = document.createElement( 'div' );
@@ -112,23 +113,29 @@ angular.module('parserApp.display3dService', [])
   };
 }])
 
+// ===================================
+// Main factory service for 3D display
+// ===================================
 .factory('Display3d', ['$document', '$window', 'displayHelpers', 'Emoji', function($document, $window, displayHelpers, Emoji) {
 
   var document = $document[0];
   var THREE = $window.THREE;
   var TWEEN = $window.TWEEN;
 
+  // Important global threejs vars
   var sceneCSS, sceneGL, camera, rendererCSS, rendererGL, controls, prevCameraPosition;
 
   var layersSeparated;
-  var layers; // visible layers
+  var layers;
   var ribbonHeight;
   var scope;
 
+  // Distances to switch LODs
   var lod0Distance = 1000;
   var lod1Distance = 2000;
   var lod2Distance = 5000;
 
+  // Tweets to combine at each LOD
   var lod1Size = 4;
   var lod2Size = 16;
 
@@ -151,6 +158,8 @@ angular.module('parserApp.display3dService', [])
   var xSpacing = 320;
   var xStart = -800;
 
+  // Clear display - want to call this before leaving page or starting a new search
+  // Removes all Three.js objects in each scene and clears them from memory.
   var clear = function () {
     console.log('calling clear');
     if (layers !== undefined) {
@@ -192,9 +201,9 @@ angular.module('parserApp.display3dService', [])
         layer = undefined;
       });
     }
-    console.dir(sceneGL.children);
   };
 
+  // Toggle layer visibility per whatever is checked in the layer menu
   var updateLayers = function (layersVisible) {
     layers.forEach(function (layerObj, i) {
       // if this layer is hidden and should be visible,
@@ -215,9 +224,10 @@ angular.module('parserApp.display3dService', [])
     });
   };
 
+  // Separates layers with animation tweening
   var separateLayers = function () {
     for (var i = 0; i < layers.length; i++) {
-      // tweet opacity webgl
+      // tweet opacity for WebGL tweets
       if (layers[i].visible) {
         new TWEEN.Tween( layers[i].tweetMaterialNeutral )
           .to ({opacity: 0.5}, 1000)
@@ -242,7 +252,7 @@ angular.module('parserApp.display3dService', [])
           } else { // tweet is hidden or LOD merged into another tweet
             //tweet.position.z = frontLayerZ - layerSpacing*i;
           }
-          // tweet opacity css
+          // tweet opacity for CSS tweets
           if (layers[i].visible && tweet.el && tweet.elData.baseBGColor === 'rgba(225,225,225,0.8)') {
             new TWEEN.Tween( {val: 0} )
               .to ( {val: 0.8}, 1000 )
@@ -293,6 +303,7 @@ angular.module('parserApp.display3dService', [])
     }
   };
 
+  // Flatten layers with animation tweening
   var flattenLayers = function () {
 
     for (var i = 0; i < layers.length; i++) {
@@ -356,7 +367,10 @@ angular.module('parserApp.display3dService', [])
           .easing( TWEEN.Easing.Exponential.InOut )
           .start();
       }
+
       layers[i].z = frontLayerZ - 2*i;
+
+      // For front layer, generate a combined title, show it, hide the individual one
       if (i === 0) {
 
         if (layers[i].combinedMesh) {
@@ -399,10 +413,13 @@ angular.module('parserApp.display3dService', [])
     }
   };
 
+  // Toggle on/off autoscroll to right
   var autoScrollToggle = function () {
     neverAutoScroll = !neverAutoScroll;
   };
 
+  // Automatically adjusts ribbon width to full screen width (plus a little more)
+  // Call on init, or camera move
   var adjustRibbonWidth = function() {
     var lastX = 50;
     layers.forEach(function(layer) {
@@ -429,6 +446,7 @@ angular.module('parserApp.display3dService', [])
     });
   };
 
+  // generic function to add event handlers to buttons
   var addButtonEvent = function (buttonId, eventName, callback) {
     var button = document.getElementById( buttonId );
     button.addEventListener( eventName, function ( event ) {
@@ -436,6 +454,7 @@ angular.module('parserApp.display3dService', [])
     }, false);
   };
 
+  // Creates a new div element for a tweet (for close-up tweets)
   var makeTweetElement = function (elData, layerObj) {
 
       var tweet = document.createElement( 'div' );
@@ -500,6 +519,7 @@ angular.module('parserApp.display3dService', [])
     }
   };
 
+  // Adds a new tweet to the display
   var addTweet = function(rawTweet, index, lastTweet) {
 
     layers.forEach(function(layerObj) {
@@ -540,6 +560,7 @@ angular.module('parserApp.display3dService', [])
       elData.text = text;
       elData.username = Emoji.restoreEmojisInTweet(rawTweet.username);
 
+      // tweet position data
       var x = xStart + Math.floor(index / rows) * xSpacing;
       var y = yStart - (index % rows) * ySpacing;
       var z = layerObj.z;
@@ -551,7 +572,10 @@ angular.module('parserApp.display3dService', [])
       var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, x, y, z );
       var layerDistance = displayHelpers.getCameraDistanceFrom( camera, controls.target.x, controls.target.y, layerObj.z );
 
-
+      // Determines what type of tweet to create based on current distance from the camera
+      // For furthest distance (LOD2):
+      // Make a threejs plane geometry for each tweet and group every 16x16 square
+      // of tweets into one mesh object
       if (layerDistance > lod2Distance) {
 
         layerObj.lod = 'lo2';
@@ -606,6 +630,9 @@ angular.module('parserApp.display3dService', [])
 
 
       } else if (layerDistance > lod1Distance) {
+      // For next furthest distance (LOD1):
+      // Make a threejs plane geometry for each tweet and group every 4x4 square
+      // of tweets into one mesh object
 
         layerObj.lod = 'lo1';
         layerObj.lastDisplayedTweet = layerObj.lastDisplayedTweet || -1;
@@ -659,6 +686,8 @@ angular.module('parserApp.display3dService', [])
 
 
       } else if (tweetDistance > lod0Distance) {
+        // For next lod (LO):
+        // Make a threejs planeBuffer geometry for each tweet
         lodLevel = 'lo';
         object = displayHelpers.makeLoResMesh(layersSeparated, elData, layerObj, 'pb');
         object.position.x = x;
@@ -677,6 +706,8 @@ angular.module('parserApp.display3dService', [])
         });
 
       } else {
+        // For closest lod (HI):
+        // Make a CSS 3D div for each tweet
         lodLevel = 'hi';
         tweet = makeTweetElement(elData, layerObj);
 
@@ -701,6 +732,8 @@ angular.module('parserApp.display3dService', [])
 
   };
 
+  // Input: tweet sentiment score
+  // Output: material index for that tweet (pos, neg, neutral)
   var getMatIndexFromScore = function (score) {
     var matIndex;
     if (score > 0) {
@@ -713,6 +746,7 @@ angular.module('parserApp.display3dService', [])
     return matIndex;
   };
 
+  // Merges given array of tweets into one mesh object
   var mergeTweets = function (tweetsToMerge, layer) {
     var combinedGeo = new THREE.Geometry();
     //var combinedMat = [];
@@ -748,9 +782,6 @@ angular.module('parserApp.display3dService', [])
         tweet.obj = undefined;
       }
     }
-    var testMat = new THREE.MeshBasicMaterial({color: 'rgb(0,225,0)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide});
-    testMat.transparent = true;
-    testMat.opacity = 0.25;
     var combinedMesh = new THREE.Mesh(combinedGeo, new THREE.MeshFaceMaterial(combinedMat));
     //var combinedMesh = new THREE.Mesh(combinedGeo, testMat);
     if (!window.combinedMesh) {
@@ -759,6 +790,7 @@ angular.module('parserApp.display3dService', [])
     return combinedMesh;
   };
 
+  // Creates a new empty layer
   var makeTweetLayer = function(layerResultsProp, layerTitle, z) {
     var layerObj = {};
     layerObj.tweets = [];
@@ -766,6 +798,7 @@ angular.module('parserApp.display3dService', [])
     layerObj.title = layerTitle;
     layerObj.z = z;
 
+    // Materials are stored on layer so we don't have to make a new one for each tweet
     layerObj.tweetMaterialNeutral = new THREE.MeshBasicMaterial( { color: 'rgb(225,225,225)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
     layerObj.tweetMaterialNeutral.transparent = true;
     layerObj.tweetMaterialNeutral.opacity = 0.5;
@@ -777,6 +810,8 @@ angular.module('parserApp.display3dService', [])
     layerObj.tweetMaterialNeg = new THREE.MeshBasicMaterial( { color: 'rgb(225,0,0)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
     layerObj.tweetMaterialNeg.transparent = true;
     layerObj.tweetMaterialNeg.opacity = 0.5;
+
+    // Ribbon material and geo
 
     var ribbonMaterial = new THREE.MeshBasicMaterial( { color: 'rgb(0,132,180)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
     ribbonMaterial.transparent = true;
@@ -793,7 +828,7 @@ angular.module('parserApp.display3dService', [])
     layerObj.ribbonMesh = ribbonMesh;
     layerObj.ribbonMaterial = ribbonMaterial;
 
-    // Figure out how to put layer titles back later
+    // Layer titles material and geo (titles are 3D geometry, not CSS)
     var layerTitleMaterial = new THREE.MeshBasicMaterial( { color: 'rgb(0,150,210)', wireframe: false, wireframeLinewidth: 1, side: THREE.DoubleSide } );
     layerTitleMaterial.transparent = true;
     layerTitleMaterial.opacity = 0.5;
@@ -821,6 +856,7 @@ angular.module('parserApp.display3dService', [])
     layers.push(layerObj);
   };
 
+  // Hides everything on a given layer
   var hideLayer = function (layerIndex) {
     // hide tweets
     layers[layerIndex].tweetMaterialNeg.opacity = 0;
@@ -837,6 +873,7 @@ angular.module('parserApp.display3dService', [])
     layers[layerIndex].titleMaterial.opacity = 0;
   };
 
+  // Unhides everything on a given layer
   var showLayer = function (layerIndex) {
     // show tweets
     layers[layerIndex].tweetMaterialNeg.opacity = 0.5;
@@ -851,34 +888,31 @@ angular.module('parserApp.display3dService', [])
         tweet.el.className = tweet.el.className.split(' ')[0];
       }
     });
-    //layers[layerIndex].tweets;
     // show ribbon mesh
     layers[layerIndex].ribbonMaterial.opacity = 0.5;
     // show layer title
     layers[layerIndex].titleMaterial.opacity = 0.5;
   };
 
+  // Renders objects in both scenes (CSS and GL)
+  // Called every tick in animate()
   var render = function() {
     rendererCSS.render( sceneCSS, camera );
     rendererGL.render( sceneGL, camera );
   };
 
-  // TEMP NOTES
-  // 1. If I'm past a certain distance, I can probably LOD the whole layer, or even all layers at once.
-  //    I don't have to ping every tweet.
-  // 2. I should super-low LOD stuff that is off screen.
-  // 3. I should have flatten and separate treat layers differently at that level
+  // Update LODs of tweets that need it
+  // Called every tick in animate()
   var updateTweetLOD = function () {
     for (var layerIndex = 0; layerIndex < layers.length; layerIndex++) {
       for (var t = 0; t < layers[layerIndex].tweets.length; t++) {
         var tweet = layers[layerIndex].tweets[t];
 
-        if (!tweet.obj) {
-        }
+        // If this tweet has an existing obj (it might not at farthest LODs)
+        // Get the current position from it
+        // Otherwise tweet.position should hold the last saved position
         if (tweet.obj) {
           tweet.position.copy(tweet.obj.position);
-          if (tweet.index === 0) {
-          }
         }
         var tweetDistance = displayHelpers.getCameraDistanceFrom( camera, tweet.position.x, tweet.position.y, tweet.position.z );
         var layerDistance = displayHelpers.getCameraDistanceFrom( camera, controls.target.x, controls.target.y, layers[layerIndex].z );
@@ -923,10 +957,13 @@ angular.module('parserApp.display3dService', [])
     }
   };
 
+  // swap an entire layer's LOD
   var swapLayerLOD = function(layer, swapTo) {
+    // Do nothing if layer is already at that LOD
     if (layer.lod === swapTo) {
       return;
     }
+    // Need to make a new LOD holder (or it won't render)
     if (layer.lodHolder) {
       sceneGL.remove(layer.lodHolder);
       layer.lodHolder = undefined;
@@ -937,7 +974,7 @@ angular.module('parserApp.display3dService', [])
       if (!tweet.hidden) {
         swapLOD(tweet, swapTo, layer);
       } else {
-        tweet.lod = swapTo;
+        tweet.lod = swapTo; // hidden tweets just have their data updated to say what lod they should be at when they come back
       }
     }
     layer.lodHolder.position.z = layer.z;
@@ -945,6 +982,7 @@ angular.module('parserApp.display3dService', [])
     layer.lod = swapTo;
   };
 
+  // Swaps LOD for a single tweet
   var swapLOD = function (tweet, swapTo, layer) {
 
 
@@ -1015,7 +1053,7 @@ angular.module('parserApp.display3dService', [])
       tweet.lod = 'lo';
     }
 
-    // 'lo1' = 4 square geom merged into 1
+    // 'lo1' = 4x4 square geom merged into 1
     if (swapTo === 'lo1') { 
       var n = lod1Size;
       if (row % n === 0 && col % n === 0) {
@@ -1050,6 +1088,7 @@ angular.module('parserApp.display3dService', [])
       tweet.lod = 'lo1';
     }
 
+    // 'lo2' = 16x16 square geom merged into 1
     if (swapTo === 'lo2') { 
       var n = lod2Size;
       if (row % n === 0 && col % n === 0) {
@@ -1091,6 +1130,7 @@ angular.module('parserApp.display3dService', [])
     tweet.el = el;
   };
 
+  // Kill a tweet obj (when culling) in a way that frees memory
   var killTweetObj = function (i, layer) {
     layer.lodHolder.remove(layer.tweets[i].obj);
     sceneGL.remove(layer.tweets[i].obj);
@@ -1101,6 +1141,8 @@ angular.module('parserApp.display3dService', [])
     layer.tweets[i].obj = undefined;
   };
 
+  // Checks if this tweet index is the anchor of a obj group
+  // given the current LOD
   var isAnchor = function (i, layer) {
 
     var row = i % rows;
@@ -1123,6 +1165,8 @@ angular.module('parserApp.display3dService', [])
 
   };
 
+  // Given an anchor index, find the other 3 corners of that block
+  // (bottom left, top right, bottom right)
   var blockCorners = function (i, layer) {
     i = +i;
     var n;
@@ -1156,7 +1200,7 @@ angular.module('parserApp.display3dService', [])
     return [corner1, corner2, corner3];
   };
 
-  // get all indexes that are not on screen
+  // Returns objs signifying which tweet indexes are off and on screen.
   var getIndexesOffScreen = function(layer) {
     var offScreen = {};
     var onScreen = {};
@@ -1249,8 +1293,6 @@ angular.module('parserApp.display3dService', [])
     tick++;
 
     // check if camera has moved
-    //if (!camera.position.equals(prevCameraPosition)) {
-    // check if camera has moved more than a certain amount
     if (!camera.position.equals(prevCameraPosition)) {
       // if so, adjust ribbon width so you don't see the left/right ends of the ribbon
       adjustRibbonWidth();
@@ -1333,37 +1375,21 @@ angular.module('parserApp.display3dService', [])
       });
     }
 
-    // if (leftHover) {
-    //   scrollSpeed = baseScrollSpeed;
-    //   camera.position.x -= scrollSpeed;
-    //   controls.target.x -= scrollSpeed;
-    //   // for (var i = 0; i < layers.length; i++) {
-    //   //   layers[i].ribbonMesh.position.x -= scrollSpeed;
-    //   // }
-    // }
     if (rightHover || (rightAutoScroll && !neverAutoScroll)) {
       if (rightHover) {
         scrollSpeed = baseScrollSpeed;
       }
       camera.position.x += scrollSpeed;
       controls.target.x += scrollSpeed;
-      // for (var i = 0; i < layers.length; i++) {
-      //   layers[i].ribbonMesh.position.x += scrollSpeed;
-      //   layers[i].titleObj.position.x -= scrollSpeed;
-      // }
+
     }
     TWEEN.update();
     controls.update();
       render();
-
-    // throttle
-    // code for doing something every x ticks
-    // var freq = 30;
-    // if (tick >= 60/freq) {
-    //   tick = 0;
-    // }
   };
 
+  // Make 4 sentiment layers -
+  // Currently hardcoded, can make more flexible
   var makeLayers = function () {
     var numLayers = 4;
     frontLayerZ = numLayers * layerSpacing;
@@ -1374,6 +1400,7 @@ angular.module('parserApp.display3dService', [])
     scope.layers = layers;
   };
 
+  // Run once on page load
   var init = function(context, passedScope) {
     scope = passedScope;
     console.log(context);
@@ -1387,19 +1414,16 @@ angular.module('parserApp.display3dService', [])
     layers = [];
     layersSeparated = true;
 
-    // overwrite defaults if in mini window
-    if (context === 'mini') {
-      cameraZ = 200;
-      cameraY = 0;
-      rows = 1;
-      ySpacing = 180;
-      layerSpacing = 125;
-    } else if (context === 'macro') {
+    // Overwrite defaults if in macro mode
+    // We currently don't have any other modes but might want to put it
+    // in a container on another page in the future, or something.
+    if (context === 'macro') {
       cameraZ = 5000;
       cameraY = 0;
       rows = 25;
     }
 
+    // Init scenes, camera, renderer
     sceneCSS = new THREE.Scene();
     sceneGL = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, document.getElementById(containerID).clientWidth / height, 10, 40000 );
@@ -1423,9 +1447,8 @@ angular.module('parserApp.display3dService', [])
 
     rendererCSS.setSize( document.getElementById(containerID).clientWidth, document.getElementById(containerID).clientHeight );
     rendererGL.setSize( document.getElementById(containerID).clientWidth, document.getElementById(containerID).clientHeight - 1 );
-    // rendererGL.domElement.style.width = document.getElementById(containerID).clientWidth + 'px';
-    // rendererGL.domElement.style.height = (document.getElementById(containerID).clientHeight - 1) + 'px';
 
+    // Resize display when window resizes
     window.onresize = function () {
       rendererCSS.setSize( document.getElementById(containerID).clientWidth, document.getElementById(containerID).clientHeight );
       rendererGL.setSize( document.getElementById(containerID).clientWidth, document.getElementById(containerID).clientHeight - 1 );
@@ -1433,10 +1456,9 @@ angular.module('parserApp.display3dService', [])
       camera.aspect = document.getElementById(containerID).clientWidth/document.getElementById(containerID).clientHeight;
       camera.updateProjectionMatrix();
       adjustRibbonWidth();
-      // rendererGL.domElement.style.width = document.getElementById(containerID).clientWidth + 'px';
-      // rendererGL.domElement.style.height = (document.getElementById(containerID).clientHeight - 1) + 'px';
     };
 
+    // Initialize control module - mouse and touchscreen controls
     controls = new THREE.TrackballControls( camera, rendererCSS.domElement );
     controls.rotateSpeed = 1;
     controls.maxDistance = 10000;
@@ -1447,6 +1469,7 @@ angular.module('parserApp.display3dService', [])
       xStart = 0 - (displayHelpers.getDisplayWidthAtPoint(camera,0,0,0) / 4);
     }
 
+    // Add flatten/separate button functionality
     addButtonEvent('flatten-separate-3d', 'click', function() {
       if (layersSeparated) {
         flattenLayers();
@@ -1460,6 +1483,8 @@ angular.module('parserApp.display3dService', [])
     initRepeatable(25);
   };
 
+  // This portion of init can be repeated while on the same page
+  // Use for reloading the display on a new search or changing the number of rows
   var initRepeatable = function (numRows) {
 
     layers = [];

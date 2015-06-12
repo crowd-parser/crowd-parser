@@ -1,32 +1,5 @@
-//TODO
-
-//ensure that multiple tweets in pipeline arrays still works correctly
-  //the main pipeline currently does single tweets for stability.
-
-//cache keyword search results for x number of seconds and reuse them
-
-//change all keyword requests to a constant stream, so that
-  //a client can join part way through, and then catch up later, hmm
-
-//add functionality to escape keywords to allow use of @ symbol
-//test ranges inclusivity on all sql "BETWEEN...AND"
-
-//add show actual data in tables, or at least a sub sample;
-
-//add delete tweets button
-
-//only allow stream on production eventually
-
-
-//cleanup live production database
-//run keywords on production
-//run layers on production
-//restart stream
-
-//add loop until feedback system for UI visuals
-
-//add kill all process to admin panel and database.js
-
+//TODO:
+    //USER REQUEST CACHE / SHARED KEYWORD REQUEST STREAM
 
 /*============= DATABASE MODULE WRAPPER for SQL commands =========*/
 
@@ -50,29 +23,27 @@
         executeFullChainForIncomingTweets - <[tweetObjects]> <callback>
 
         //ADD new layer modules in the layers section
-          //function name format matters
+          //function name format for layer modules matters
           //also need to add the layer name to the 'allowed' array;
 */
+
 var config = require('./database-config.js');
 var mysql = require('mysql');
-//stores connection information from non-shared database configuration file
 
-
-//TODO CHANGE THIS TO PROD WHEN LIVE
-//OR FIGURE OUT HOW TO USE LIVE VESUS DEV DEPLOY
 exports.automatically_start_tweet_stream_on_production = true;
-exports.streamQueueAmount = 50;
+exports.streamQueueAmount = 50; //live stream chunk size
 
 //establishes connection to persistent database previously configured
 var connectionLoop = function(){
   exports.db = mysql.createConnection(config);
+
   exports.db.connect(function(err){
     if(err){
       console.log("==============ERROR connecting mysql ", err.stack);
       setTimeout(connectionLoop, 1000);
     }else{
       var del = exports.db._protocol._delegateError;
-      //it's possible this could prevent callbacks to routes if I don't understand this
+
       exports.db._protocol._delegateError = function(err, sequence){
         if(err.fatal) {
           console.trace('fatal error: ' + err.message);
@@ -85,44 +56,38 @@ var connectionLoop = function(){
       console.log("==============CONNECTED as ID ", exports.db.threadId);
       exports.isLive = true;
 
-      //this changes to the database
       exports.changeToDatabase(exports.currDB, function(err){
-         if(err){
+        if(err){
           console.log(err);
-         }
+        }
 
-         //this sets an interval to ping the database with
+         exports.startStayAlive(); //keeps pinging db, fires connection loop on disconnect
 
-         //restart stream in io.routes automatically
-
-         exports.startStayAlive();
-
-           var testIO = function(_exports){
-
-             exports = exports || _exports;
-             if(!exports.io){
-               setTimeout(testIO, 150);
-               return;
-             }
-             if(exports.automatically_start_tweet_stream_on_production && process.env.DATABASE_PROD === "production"){
-                console.log("AUTOMATICALLY ENABLING TWEET STREAM ON PRODUCTION");
-                 exports.io.startTweetDownload();
-             }
-             console.log("=====DATABASE CONNECTED TO IO=========");
-           }.bind(exports);
-
-           testIO();
-
-
-         if(this.notifiersForLive){
-            for(var i = 0; i < this.notifiersForLive.length; i++){
-             this.notifiersForLive[i]();
+         var testIO = function(_exports){
+          //io is set on the wrapper object in ioroutes.js
+           exports = exports || _exports;
+           if(!exports.io){
+             setTimeout(testIO, 150);
+             return;
            }
-           this.notifiersForLive = null;
-         }
-      });
+           if(exports.automatically_start_tweet_stream_on_production && process.env.DATABASE_PROD === "production"){
+            console.log("AUTOMATICALLY ENABLING TWEET STREAM ON PRODUCTION");
+            exports.io.startTweetDownload();
+          }
+          console.log("=====DATABASE CONNECTED TO IO=========");
+        }.bind(exports);
 
-      exports.db.on('close', function(err) {
+        testIO(); //this intervals until io is valid, and then if live and production, starts the tweet stream
+
+        if(this.notifiersForLive){
+          for(var i = 0; i < this.notifiersForLive.length; i++){
+           this.notifiersForLive[i]();
+         }
+         this.notifiersForLive = null;
+       }
+     });
+
+      exports.db.on('close', function(err){
         if(err) {
           console.log("DATABASE CONN CLOSED ERR:", err);
           connectionLoop();
@@ -131,17 +96,16 @@ var connectionLoop = function(){
         }
       });
 
-      exports.db.on('error', function(err) {
-         console.log("MYSQL ERROR CONNECTION", err);
-         if(err.code === 'PROTOCOL_CONNECTION_LOST') {
-            console.log("CONNECTION LOST");
-           connectionLoop();
-         } else {
-            console.log(err);
-            connectionLoop();
-           //throw err;
-         }
-       });
+      exports.db.on('error', function(err){
+        console.log("MYSQL ERROR CONNECTION", err);
+        if(err.code === 'PROTOCOL_CONNECTION_LOST'){
+          console.log("CONNECTION LOST");
+          connectionLoop();
+        }else{
+          console.log(err);
+          connectionLoop();
+        }
+      });
     }
   });
 };
@@ -154,6 +118,7 @@ exports.startStayAlive = function(){
   }
 
   exports.stayAliveId = setTimeout(function(){
+    //simple query to maintain connection
     exports.db.query("SELECT 1", function(err){
       if(err){
         console.log(err);
@@ -168,10 +133,8 @@ exports.startStayAlive = function(){
 
 /*==================================================================*/
 exports.getTableLength = function(tableName, callback){
-   exports.db.query('SELECT COUNT(*) FROM ' + tableName, function(err, rows, fields){
-
+  exports.db.query('SELECT COUNT(*) FROM ' + tableName, function(err, rows, fields){
     callback(err, rows[0]["COUNT(*)"], fields);
-
   });
 };
 
@@ -185,74 +148,66 @@ exports.processLayersForExistingTweets = function(layerNameList, startId, stopId
   exports.getTableLength("tweets", function(err, total){
     stopId = stopId || total;
 
-      var chunk = 10000;
-      var majFuncList = [];
-      total = stopId - startId;
-      console.log("TOTAL TWEETS TO PROCESS", total);
+    var chunk = 10000;
+    var majFuncList = [];
+    total = stopId - startId;
+    console.log("TOTAL TWEETS TO PROCESS", total);
 
-      var recurseThroughIds = function(i){
-        if(i >= stopId){
-          finalCallback();
-          return;
-        }
+    var recurseThroughIds = function(i){
+      if(i >= stopId){
+        finalCallback();
+        return;
+      }
 
-        chunk = Math.min(chunk, stopId - i);
-         exports.db.query("SELECT * FROM tweets WHERE id BETWEEN " + (i + 1) + " AND " + (i+chunk) , function(err, finalArr){
-          console.log("processLayersForExistingTweets 10000 CHUNK");
-          console.log("FIRST ID IN CHUNK",finalArr[0]["id"]);
+      chunk = Math.min(chunk, stopId - i);
+      exports.db.query("SELECT * FROM tweets WHERE id BETWEEN " + (i + 1) + " AND " + (i+chunk) , function(err, finalArr){
 
-          var preBuildForLayerCache = function(finishLayers){
-            exports.genericGetAll('layers', function(err, theLayers, fields){
-             if(err){
-                console.log("BUILD CACHE ERR", err);
-                theLayers = theLayers || [];
-             }
+        var preBuildForLayerCache = function(finishLayers){
+          exports.genericGetAll('layers', function(err, theLayers, fields){
+            if(err){
+              console.log("BUILD CACHE ERR", err);
+              theLayers = theLayers || [];
+            }
 
             theCache.layerList = [];
             for(var i = 0; i < theLayers.length; i++){
               theCache.layerList.push(theLayers[i].layerName);
             }
 
-              finishLayers();
-
-
-            });
-          };
-
-          var finishLayers = function( layerOverrides){
-
-              var eye = i;
-              var funcList = [];
-              var layerOverrides = layerOverrides || theCache.layerList;
-                for(var j = 0; j < layerOverrides.length; j++){
-                  console.log("PROCESSING LAYER: ", layerOverrides[j]);
-                  funcList.push(exports.streamlinedAttemptAtFilterLayers.bind(exports,finalArr,layerOverrides[j]));
-                }
-                //TEST changing this to async chain for putting tweets in db earlier
-                var recurseFinalCB = function(recurseThroughIds,eye,chunk,err,results){
-
-                    console.log("STREAMLINE PAST PROCESSING LAYERS FOR ID: ", eye);
-                    recurseThroughIds(eye+=chunk);
-
-                }.bind(exports, recurseThroughIds, eye, chunk);
-
-                exports.asyncMap(funcList, recurseFinalCB);
-
-          };
-
-          if(layerNameList){
-            finishLayers(layerNameList);
-          }else if(theCache.layerList === undefined || theCache.layerList === null){
-            preBuildForLayerCache(finishLayers);
-          }else{
             finishLayers();
+          });
+        };
+
+        var finishLayers = function( layerOverrides){
+          var eye = i;
+          var funcList = [];
+          var layerOverrides = layerOverrides || theCache.layerList;
+          for(var j = 0; j < layerOverrides.length; j++){
+            console.log("PROCESSING LAYER: ", layerOverrides[j]);
+            funcList.push(exports.streamlinedAttemptAtFilterLayers.bind(exports,finalArr,layerOverrides[j]));
           }
-        });
-      };//end of recurse through ids;
-      //start the whole chain
+          var recurseFinalCB = function(recurseThroughIds,eye,chunk,err,results){
+            console.log("STREAMLINE PAST PROCESSING LAYERS FOR ID: ", eye);
+            recurseThroughIds(eye+=chunk);
+          }.bind(exports, recurseThroughIds, eye, chunk);
+
+          //this all comes down to asyncMap for all layers
+          //then when all layers are done it moves to the next chunk
+          exports.asyncMap(funcList, recurseFinalCB);
+        };
+
+        if(layerNameList){
+          finishLayers(layerNameList);
+        }else if(theCache.layerList === undefined || theCache.layerList === null){
+          preBuildForLayerCache(finishLayers);
+        }else{
+          finishLayers();
+        }
+      });
+    };//end of recurse through ids;
+    //start the whole chain
     recurseThroughIds(startId-1);
   });
-
 };
 
 
@@ -269,120 +224,71 @@ exports.sendTweetPackagesForKeywordToClient = function(keyword,clientID, callbac
     }else{
       callback(false, keyword);
     }
-//========================
-  var startId = 1;
 
+    var startId = 1;
 
-   var tableName = "tweets_containing_"+keyword;
+    var tableName = "tweets_containing_"+keyword;
 
     exports.getTableLength(tableName, function(err, length){
+      //tells the client how many total tweet objects to expect in advance
       exports.io.sockets.in(clientID).emit('tweet keyword response', length);
 
+      exports.genericGetMaxValue(tableName, "id", function(err, maxId){
+        if(err){
+          console.log(err);
+        }
+        var chunk = 1000; //number of tweet objects to process and stream at a time
 
-    exports.genericGetMaxValue(tableName, "id", function(err, maxId){
-      if(err){
-        console.log(err);
-      }
-      var chunk = 1000;
+        if(clientID === undefined){
+          console.log("ERR: clientID is undefined, using 0 by default");
+          clientID = "0";
+        }
 
-
-
-      if(clientID === undefined){
-        console.log("ERR: clientID is undefined, using 1 by default");
-        clientID = "1";
-      }
-
-
-    var recurseThroughIds = function(i){
-            if(i >= maxId){
-              finalCB();
-              return;
-            }
-
-            chunk = Math.min(chunk, maxId - i);
-
-             exports.db.query("SELECT tweet_id FROM " + tableName + " WHERE id BETWEEN " + (i + 1) + " AND " + (i+chunk) , function(err, _finalArr){
-              if(err){
-                console.log(err);
-              }
-
-                var recurseFinalCB = function(recurseThroughIds,err,results){
-
-                    recurseThroughIds();
-
-                }.bind(exports, recurseThroughIds.bind(exports, i + chunk));
-
-
-
-              if(_finalArr.length > 0){
-                var finalArr = [];
-
-                console.log("FIRST ID IN KEYWORD CHUNK OF 1000",_finalArr[0]["tweet_id"]);
-
-                for(var j = 0; j < _finalArr.length; j++){
-                  finalArr.push(_finalArr[j]["tweet_id"]);
-                }
-
-                exports.packageTweetsToSendToClient(finalArr, recurseFinalCB, keyword, clientID);
-              }else{
-                recurseFinalCB();
-              }
-
-            });
-          };//end of recurse through ids;
-          //start the whole chain
-  recurseThroughIds(startId-1);
-
-  });
-  });
- });
-}
-
-//=========================== OLD VERSION ====================
-
-//==================
-/*    var tableName = "tweets_containing_"+keyword;
-
-    exports.getTableLength(tableName, function(clientID, err, length){
-      var chunk = 1000;
-
-      //send length:
-      if(clientID === undefined){
-        console.log("ERR: clientID is undefined, using 1 by default for testing");
-        clientID = "1";
-      }
-      exports.io.sockets.in(clientID).emit('tweet keyword response', length);
-
-
-
-      for(var i = 0; i < length; i+=chunk){
-        chunk = Math.min(chunk, length - i);
-         exports.db.query("SELECT tweet_id FROM " + tableName + " WHERE id BETWEEN " + (i + 1) + " AND " + (i+chunk) , function(err, rows){
-          console.log("PULL 1000 KEYWORD MATCHES");
-
-          var finalArr = [];
-          for(var j = 0; j < rows.length; j++){
-            finalArr.push(rows[j]["tweet_id"]);
+        var recurseThroughIds = function(i){
+          if(i >= maxId){
+            finalCB();
+            return;
           }
 
-          exports.packageTweetsToSendToClient(finalArr, exports.errCB, keyword, clientID);
-        });
-      }
+          //we process in chunks of n, until the remainder is less than n
+          chunk = Math.min(chunk, maxId - i);
 
-    }.bind(exports, clientID));
+          exports.db.query("SELECT tweet_id FROM " + tableName + " WHERE id BETWEEN " + (i + 1) + " AND " + (i+chunk) , function(err, _finalArr){
+            if(err){
+              console.log(err);
+            }
+            //yeah yeah, this is odd, it's been trimmed down from other code
+            //and I'm not changing code right now, just cleaning up.
+            //but it works...binding a function and passing in a bound function to it...
+            //it's just all it does now is execute the function...must have been other stuff in here long ago
+            var recurseFinalCB = function(recurseThroughIds,err,results){
+              recurseThroughIds();
+            }.bind(exports, recurseThroughIds.bind(exports, i + chunk));
 
+            if(_finalArr.length > 0){
+              var finalArr = [];
+              console.log("FIRST ID IN KEYWORD CHUNK OF 1000",_finalArr[0]["tweet_id"]);
+              for(var j = 0; j < _finalArr.length; j++){
+                finalArr.push(_finalArr[j]["tweet_id"]);
+              }
+              exports.packageTweetsToSendToClient(finalArr, recurseFinalCB, keyword, clientID);
+            }else{
+              recurseFinalCB();
+            }
+          });
+        };//end of recurse through ids;
+        //start the whole chain
+        recurseThroughIds(startId-1);
+      });
+    });
   });
-};*/
+}
 
-
+//this creates the objects that are sent to the client, which are packages of tweet data, and layer data
 exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilteredByThisKeyword, ifSoAlsoClientID){
-
-
-  //grab tweets in idRange
-  //var fullPackage = {<anId>:{tweet: obj, layers: {layerName:obj, layerName:obj, layerName: obj},
+// format for client objects: var fullPackage = {<anId>:{tweet: obj, layers: {layerName:obj, layerName:obj, layerName: obj},
   var tweetPackages = {}
   var idList = _idList.join(",");
-
 
   for(var i = 0; i < _idList.length; i++){
     var obj = {tweet:null, layers:{}};
@@ -396,17 +302,11 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
     tweetPackages[_idList[i]] = obj;
   }
 
-
   var getTweetsObjects = function(cb){
-
     exports.db.query('SELECT * FROM tweets WHERE id IN (' + idList + ')', function(err, rows, fields){
-      //now we have the tweets
       if(err){
         console.log(err);
-      }else{
-        //console.log(rows);
       }
-
       for(var i = 0; i < rows.length; i++){
         tweetPackages[rows[i].id]["tweet"] = rows[i];
       }
@@ -416,15 +316,12 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
 
   var getResultObjectForLayer = function(layerName, cb){
     var layerTableName = "layer_"+layerName;
-
     exports.db.query('SELECT * FROM ' + layerTableName + ' WHERE tweet_id IN (' + idList + ')', function(err, rows, fields){
       //this is now the rows for all the tweets in this table
       var finalArr = [];
 
       if(err){
         console.log(err);
-      }else{
-
       }
 
       if(rows){
@@ -434,13 +331,9 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
       }else{
         console.log("WARNING: empty rows object likely means IDs are out of line")
       }
-
       cb(false, true);//no values needed cause we're updating the closed over tweetPackages;
-
     });
   };
-
-
 
   exports.getLayerNames(function(layerNames){
 
@@ -457,13 +350,12 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
         console.log("ERROR: NO SOCKET ON DATABASE WRAPPER");
         return;
       }
-
+      //send keyword requests to specific clientID
       if(typeof previouslyFilteredByThisKeyword === "string"){
-
         exports.io.sockets.in(ifSoAlsoClientID).emit('tweet keyword response', tweetPackages);
-
         console.log("=====KEYWORD EMIT " + ifSoAlsoClientID +"==============");
       }else{
+        //send all tweet packages to stream, any client listening can display
         exports.io.sockets.emit('tweet added', tweetPackages);
         console.log("=============ADDED EMIT==============");
       }
@@ -473,11 +365,8 @@ exports.packageTweetsToSendToClient = function(_idList, finalCB, previouslyFilte
       }
 
     }.bind(exports, finalCB, tweetPackages));
-
   });
-
-
-}
+};
 
 //============ TWEETS ===================
 
@@ -488,7 +377,6 @@ exports.getAllTweets = function(callback){
 exports.getTweetForId = function(id, callback){
   this.db.query("SELECT * FROM tweets WHERE id = " + id, callback);
 };
-
 
 exports.searchForTweetsWithKeyword = function(keyword, callback){
   this.genericGetItemsWithTextColumnContaining(null, "tweets", "text", keyword, callback);
@@ -504,18 +392,13 @@ exports.filterALLTweetsByKeyword = function(keyword, callback){
       callback(err, rows);
       return;
     }
-        //TODO: this needs to set last highest index on keyword table
-        //get highest tweet id and set it as last indexed
-        exports.db.query("SELECT MAX(id) FROM tweets", function(maxErr, maxRows){
-
-          console.log("highest: ", maxRows[0]["MAX(id)"]);
-          console.log(maxRows);
-          exports._setLastIndexedOnKeywordTable(keyword, maxRows[0]["MAX(id)"]);
-          callback(err, rows, fields);
-        });
-
+    exports.db.query("SELECT MAX(id) FROM tweets", function(maxErr, maxRows){
+      console.log("highest: ", maxRows[0]["MAX(id)"]);
+      exports._setLastIndexedOnKeywordTable(keyword, maxRows[0]["MAX(id)"]);
+      callback(err, rows, fields);
+    });
   });
-}
+};
 
 exports.filterTheseTweetsForKeyword = function(tweets, keyword, callback){
   callback = callback || exports.errCB;
@@ -528,48 +411,35 @@ exports.processSingleTweetIDForKeyword = function(id, keyword, callback){
 };
 
 exports.streamlinedAttemptAtFilterLayers = function(tweetArr, layerName, cb){
-
-   var finalArr = [];
-    for(var i = 0; i < tweetArr.length; i++){
-      var rowObj = exports["layer_"+layerName+"_Function"](tweetArr[i]);
-      rowObj.tweet_id = tweetArr[i].id;
-      finalArr.push(rowObj);
-      if(tweetArr[i].id % 500 === 0){
-        console.log("STREAMLINE FILTERING " + tweetArr[i].id + " FOR LAYER: " + layerName);
-      }
-
+  var finalArr = [];
+  for(var i = 0; i < tweetArr.length; i++){
+    var rowObj = exports["layer_"+layerName+"_Function"](tweetArr[i]);
+    rowObj.tweet_id = tweetArr[i].id;
+    finalArr.push(rowObj);
+    if(tweetArr[i].id % 500 === 0){
+      console.log("STREAMLINE FILTERING " + tweetArr[i].id + " FOR LAYER: " + layerName);
     }
-
-    exports.genericAddToTable("layer_"+layerName,finalArr,exports.errCB, cb, true);
-
-
-  };
+  }
+  exports.genericAddToTable("layer_"+layerName,finalArr,exports.errCB, cb, true);
+};
 
 exports.filterTweetObjectsForLayer = function(tweetObj, layerName, callback){
-//hmm
   if(Array.isArray(tweetObj)){
-
     for(var i = 0; i < tweetObj.length; i++){
       var rowObj = exports["layer_"+layerName+"_Function"](tweetObj[i]);
       rowObj.tweet_id = tweetObj[i].id;
       console.log("FILTERING " + tweetObj[i].id + " FOR LAYER: " + layerName);
-      //hmm
-      if(i === tweetObj.length - 1){
-        exports.genericAddToTable("layer_"+layerName,[rowObj],exports.errCB, callback);
-      }else{
-        exports.genericAddToTable("layer_"+layerName,[rowObj],exports.errCB, null);
+        if(i === tweetObj.length - 1){
+          exports.genericAddToTable("layer_"+layerName,[rowObj],exports.errCB, callback);
+        }else{
+          exports.genericAddToTable("layer_"+layerName,[rowObj],exports.errCB, null);
+        }
       }
+    }else{
+      var rowObj = exports["layer_"+layerName+"_Function"](tweetObj);
+      rowObj.tweet_id = tweetObj.id;
+      exports.genericAddToTable("layer_"+layerName,[rowObj],callback, null);
     }
-
-
-  }else{
-    var rowObj = exports["layer_"+layerName+"_Function"](tweetObj);
-    rowObj.tweet_id = tweetObj.id;
-    //console.log(rowObj);
-    //hmm
-    exports.genericAddToTable("layer_"+layerName,[rowObj],callback, null);
-  }
-
 };
 
 exports.setUniqueTweetIdOnAll = function(cb, finalcb){
@@ -582,7 +452,7 @@ exports.setUniqueTweetIdOnAll = function(cb, finalcb){
     exports.asyncMap(funcList, function(){
       exports.getLayerNames(function(list){
         var funcList = [];
-       for(var i = 0; i < list.length; i++){
+        for(var i = 0; i < list.length; i++){
           funcList.push(exports.setColumnToUnique.bind(exports, "layer_"+list[i], "tweet_id"));
         }
         exports.asyncMap(funcList, function(){
@@ -594,17 +464,9 @@ exports.setUniqueTweetIdOnAll = function(cb, finalcb){
   });
 };
 
-
-
-//THIS IS THE WHOLE SHEBANG
-//IT RETURNS AN OBJECT {tweets: tweets, results: results}
-
-
 exports.streamedTweetCache = [];
 
-
 exports.executeFullChainForIncomingTweets = function(tweet, callback){
-
   exports.streamedTweetCache.push(tweet);
 
   if(exports.streamedTweetCache.length < exports.streamQueueAmount){
@@ -625,26 +487,20 @@ exports.executeFullChainForIncomingTweets = function(tweet, callback){
 
     var firstId = rows["insertId"];
     var total = rows["affectedRows"];
-    console.log(firstId);
-
     var newTweetIds = [];
 
     for(var i = firstId; i < (firstId + total); i++){
-
       newTweetIds.push(i);
     }
 
-
     exports.getKeywordNames(function(exports, newTweetIds, theKeywords){
-
       var copyOfKeywordListCache = theKeywords;
       var funcList = [];
       for(var i = 0; i < copyOfKeywordListCache.length; i++){
-          console.log("PROCESSING KEYWORD: ", copyOfKeywordListCache[i]);
-           funcList.push(exports.filterTheseTweetsForKeyword.bind(this, newTweetIds, copyOfKeywordListCache[i]));
+        console.log("PROCESSING KEYWORD: ", copyOfKeywordListCache[i]);
+        funcList.push(exports.filterTheseTweetsForKeyword.bind(this, newTweetIds, copyOfKeywordListCache[i]));
       }
-
-        exports.db.query("SELECT * FROM tweets WHERE id IN (" + newTweetIds + ")", function(err, rows, fields){
+      exports.db.query("SELECT * FROM tweets WHERE id IN (" + newTweetIds + ")", function(err, rows, fields){
           //run new process on tweetObjects
           if(err){
             console.log("PULL ERR: ", err);
@@ -652,26 +508,21 @@ exports.executeFullChainForIncomingTweets = function(tweet, callback){
           var tweets = rows;
           exports.getLayerNames(function(layerNames){
             var funcList = [];
-              for(var j = 0; j < layerNames.length; j++){
-                console.log("PROCESSING LAYER: ", layerNames[j]);
-                funcList.push(exports.streamlinedAttemptAtFilterLayers.bind(exports,tweets,layerNames[j]));
-              }
+            for(var j = 0; j < layerNames.length; j++){
+              console.log("PROCESSING LAYER: ", layerNames[j]);
+              funcList.push(exports.streamlinedAttemptAtFilterLayers.bind(exports,tweets,layerNames[j]));
+            }
+            var recurseFinalCB = function(_exports, newTweetIds){
+              exports = exports || _exports;
+              exports.packageTweetsToSendToClient(newTweetIds, exports.errCB);
+            }.bind(this,exports, newTweetIds);
 
-              var recurseFinalCB = function(_exports, newTweetIds){
-                exports = exports || _exports;
-                  exports.packageTweetsToSendToClient(newTweetIds, exports.errCB);
-              }.bind(this,exports, newTweetIds);
-
-              exports.asyncMap(funcList, recurseFinalCB);
+            exports.asyncMap(funcList, recurseFinalCB);
           });
-
         });
-
-      }.bind(exports, exports, newTweetIds));
-
-    }, true); //this tru here triggers bulk add on generic table add
-
-  };
+    }.bind(exports, exports, newTweetIds));
+  }, true); //this tru here triggers bulk add on generic table add
+};
 
 
 //=========== LAYERS ===================
@@ -685,9 +536,7 @@ exports.layer_Random_Function = function(){return {score: Math.random(), someStu
 exports.layer_Test_Function = function(){return {score:0, testArray12345: [1,2,3,4,5]}};
 exports.layer_Slang_Function = require('../sentiment/slangLayer/slangLayerAnalysis');
 exports.layer_Negation_Function = require('../sentiment/negationLayer/negationLayerAnalysis');
-
 exports.layer_Donottouch_Function = function(){return {score:0, Donottouch: [1,2,3,4,5]}};
-
 
 exports.currentValidLayerNames = {"Base":true, "Emoticons":true, "Random":true, "Test": true, "Negation": true, "Slang": true, "Donottouch": true};
 
@@ -710,14 +559,13 @@ exports.addLayerTable = function(callback){
   theCache.layerList = null;
   this.genericCreateTable("layers",{layerName: "layers", lastHighestIndexed: 0}, function(){
     exports.setColumnToUnique("layers","layerName", function(){
-
       callback();
     });
   });
 };
 
 exports.exampleObjectForLayerResults = function(layerName){
-    return exports["layer_"+layerName+"_Function"](exports.testTweet1);
+  return exports["layer_"+layerName+"_Function"](exports.testTweet1);
 };
 
 exports.addNewLayer = function(layerName, finalCB){
@@ -729,26 +577,23 @@ exports.addNewLayer = function(layerName, finalCB){
   };
 
   exports.addLayerTable(function(){
-
     var result = exports.exampleObjectForLayerResults(layerName);
-      exports.genericAddToTable("layers", {layerName: layerName}, function(err, rows, fields){
+    exports.genericAddToTable("layers", {layerName: layerName}, function(err, rows, fields){
 
-        exports.genericCreateTable(layerTableName,result, function(err,rows){
+      exports.genericCreateTable(layerTableName,result, function(err,rows){
+        if(err){
+          finalCB(null, layerName);
+        }
+        exports.addForeignKey(layerTableName, "tweet_id", "tweets", "id", function(err){
           if(err){
-            finalCB(null, layerName);
+            console.log(err);
           }
-
-          exports.addForeignKey(layerTableName, "tweet_id", "tweets", "id", function(err){
+          console.log("ADDING LAYER", layerTableName);
+          exports.setColumnToUnique(layerTableName,"tweet_id", function(err){
             if(err){
               console.log(err);
             }
-            console.log("ADDING LAYER", layerTableName);
-            exports.setColumnToUnique(layerTableName,"tweet_id", function(err){
-              if(err){
-                console.log(err);
-              }
-              finalCB(null, layerName);
-
+            finalCB(null, layerName);
           });
         });
       });
@@ -757,10 +602,11 @@ exports.addNewLayer = function(layerName, finalCB){
 };
 
 exports._setLastIndexedOnLayerTable = function(layerName, val){
-   if(!layerName || !val){
+  if(!layerName || !val){
     console.log("ERR NO layername");
     return;
   }
+
   exports.db.query("UPDATE layers SET lastHighestIndexed = ? WHERE layerName = ?", [val, layerName], function(err){
     if(err){
       console.log(err);
@@ -777,37 +623,29 @@ exports._setLastIndexedOnKeywordTable = function(keyword, val){
   }
   console.log(keyword + " set highest index " + val);
   exports.db.query("UPDATE keywords SET lastHighestIndexed = ? WHERE keyword = ?", [val, keyword], function(err, rows){
-    console.log("highest val set");
-    console.log("a val: ", rows);
+    //
   });
 };
 
 exports.redoLayer = function(layerName, callback, _finalCB){
-theCache.layerList = null;
-
-
-var layerTableName = "layer_"+layerName;
+  theCache.layerList = null;
+  var layerTableName = "layer_"+layerName;
   exports.genericDropTable(layerTableName, function(){
     exports.addNewLayer(layerName, function(){
       callback(false, true);//this just calls to the client to prevent timeout
-
       //passing a single layer name in
       exports.processLayersForExistingTweets([layerName], null, null, exports.errCB, _finalCB);
-
-        });
     });
-  };
+  });
+};
 
 exports.deleteLayer = function(layerName, cb){
   theCache.layerList = null;
-
-  //exports.db.query("DELETE FROM layers WHERE layerName = ?", [layerName], function(){});
   exports.db.query("DELETE FROM layers WHERE layerName = '" + layerName + "'", function(err, something){
     if(err){
       console.log(err);
     }
   });
-
   exports.genericDropTable("layer_"+layerName, cb);
 };
 
@@ -823,22 +661,22 @@ exports.addKeywordsTable = function(callback){
 };
 
 exports.processAuthorizedUserKeyword = function(keyword, finalCB){
-    if(!keyword || typeof keyword != "string"){
-      console.log("NO KEYWORD");
-      finalCB(true, false);
+  if(!keyword || typeof keyword != "string"){
+    console.log("NO KEYWORD");
+    finalCB(true, false);
+    return;
+  }
+
+  exports.addNewKeyword(keyword, function(){
+   exports.filterALLTweetsByKeyword(keyword,function(err, rows, fields){
+    if(err){
+      console.log(err);
+      finalCB(err, false);
       return;
     }
-
-    exports.addNewKeyword(keyword, function(){
-       exports.filterALLTweetsByKeyword(keyword,function(err, rows, fields){
-          if(err){
-            console.log(err);
-            finalCB(err, false);
-            return;
-          }
-          exports.db.query("UPDATE purchased_keywords SET finished_processing = true WHERE purchased_keyword = ?",[keyword], finalCB );
-      });
-    });
+    exports.db.query("UPDATE purchased_keywords SET finished_processing = true WHERE purchased_keyword = ?",[keyword], finalCB );
+  });
+ });
 };
 
 
@@ -849,74 +687,60 @@ exports.addNewKeyword = function(keyword, callback){
     return;
   }
 
-
   var tableName = "tweets_containing_" + keyword;
-  //tableName = exports.db.escapeId(tableName); //TODO
   var kObj = {keyword: keyword, tableName: tableName, lastHighestIndexed: 0};
 
   this.addKeywordsTable(function(err){
-
     exports.genericAddToTable("keywords", [kObj], function(){
       exports.genericCreateTable(kObj['tableName'], { }, function(err){
         exports.addForeignKey(kObj['tableName'], "tweet_id", "tweets", "id", function(err){
           callback(false, true);
-
-          });
         });
       });
     });
+  });
 };
 
 exports.redoKeyword = function(keyword, callback, _finalCB){
   theCache.keywordList = null;
 
-  //should check caches to ensure not doubling up
   if(!keyword){
     console.log("NO KEYWORD");
     callback(true, false);
     return;
   }
 
-//keyword = exports.db.escapeId(keyword);//TODO
-// exports.genericDescribeTable("purchased_keywords");
-
   this.genericDropTable("tweets_containing_"+keyword, function(){
     exports.addNewKeyword(keyword, function(){
       callback(null, true);
-       exports.filterALLTweetsByKeyword(keyword,function(err, rows, fields){
-          if(err){
-            console.log(err);
-          }
-          if(_finalCB){
-            _finalCB(null, true);
-          }
-
-          });
+      exports.filterALLTweetsByKeyword(keyword,function(err, rows, fields){
+        if(err){
+          console.log(err);
+        }
+        if(_finalCB){
+          _finalCB(null, true);
+        }
+      });
     });
   });
 };
 
 exports.deleteKeyword = function(keyword, callback){
-  //keyword = exports.db.escapeId(keyword); //TOdo
   theCache.keywordList = null;
-
-   exports.db.query("DELETE FROM keywords WHERE keyword = '" + keyword + "'", function(err, something){
+  exports.db.query("DELETE FROM keywords WHERE keyword = '" + keyword + "'", function(err, something){
     if(err){
       console.log();
     }
   });
-
   var tableName = 'tweets_containing_' + keyword;
   this.genericDropTable(tableName, callback);
-
-}
+};
 
 exports.getKeywordNames = function(cb){
   if(theCache.keywordList){
     cb(theCache.keywordList)
   }else{
     this.db.query("SELECT keyword FROM keywords", function(err, rows){
-
       var list = [];
       for(var i = 0; i < rows.length; i++){
         list.push(rows[i]["keyword"]);
@@ -930,16 +754,10 @@ exports.getKeywordNames = function(cb){
 //===========================================
 
 
-
-
 //============== GENERICS ==================
 
 exports.returnTablesWithColumns = function(finalCB){
-
-  //TABLES WITH COLUMNS IS NOW BREAKING. **** START HERE NEXT TO FIX
-
   this.db.query("SHOW TABLES", function(err, rows){
-
     var tableNames = [];
     if(err){
       console.log(err);
@@ -953,27 +771,21 @@ exports.returnTablesWithColumns = function(finalCB){
       }
     }
 
-
     var funcs = [];
     for(var i = 0; i < tableNames.length; i++){
       funcs.push(function(name, cb){
         exports.genericGetTableColumnNames(name, function(err, rows){
-
           var cbArr = [];
           for(var i = 0; i < rows.length; i++){
             cbArr.push(rows[i]["COLUMN_NAME"]);
           }
           cbArr.unshift(name);
-
           cb(null,cbArr);
         });
-
       }.bind(this,tableNames[i]));
     }
     exports.asyncMap(funcs, finalCB );
   });
-
-
 };
 
 exports.genericGetAll = function(tableName, callback){
@@ -982,7 +794,7 @@ exports.genericGetAll = function(tableName, callback){
 
 exports.genericGetTableColumnNames = function(tableName, callback){
 
-    this.db.query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION",[exports.currDB, tableName] , callback);
+  this.db.query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? ORDER BY ORDINAL_POSITION",[exports.currDB, tableName] , callback);
 };
 
 exports.genericGetItemsWithTextColumnContaining = function(lastId, tableName, columnName, string, callback){
@@ -994,7 +806,6 @@ exports.genericGetItemsWithTextColumnContaining = function(lastId, tableName, co
 };
 
 exports.addForeignKey = function(thisTable, thisTableColumn, thatTable, thatTableColumn, callback){
-
   exports.temp.fkObj = {thisTable: thisTable, thisTableColumn: thisTableColumn, thatTable: thatTable, thatTableColumn: thatTableColumn, callback: callback};
   this.db.query("ALTER TABLE " + thisTable + " ADD COLUMN (" + thisTableColumn + " INTEGER)", function(){
     exports.db.query("ALTER TABLE " + exports.temp.fkObj.thisTable + " ADD FOREIGN KEY (" + exports.temp.fkObj.thisTableColumn + ") REFERENCES " + exports.temp.fkObj.thatTable+"("+exports.temp.fkObj.thatTableColumn+")", function(err, rows, fields){
@@ -1005,21 +816,20 @@ exports.addForeignKey = function(thisTable, thisTableColumn, thatTable, thatTabl
 };
 
 exports.setColumnToUnique = function(tableName, columnName, callback){
-
-  //set session old_alter_table=1
+  //this had to chang to not use IGNORE, as no longer supported in MySQL
+  //but for older tables we can manually set the follow and then use IGNORE
+  //"SET session old_alter_table=1"
   this.db.query("ALTER TABLE "+ tableName+" ADD UNIQUE (" +columnName+ "(20))", callback);
 };
-
 
 exports.genericCreateTable = function(tableName, exampleObject, callback){
     var AI = "AUTO_INCREMENT"; //left over from when there were multiple options
     var str = ("CREATE TABLE IF NOT EXISTS " + this.db.escapeId(tableName) + ' (id INTEGER PRIMARY KEY ' + AI + ',');
-    var key;
-    var type;
+     var key;
+     var type;
 
-    exampleObject = this.rearchitectArrWithDeepObjects([exampleObject])[0];
-
-    for(key in exampleObject){
+     exampleObject = this.rearchitectArrWithDeepObjects([exampleObject])[0];
+     for(key in exampleObject){
       if(isNaN(exampleObject[key]) ){
         type = "VARCHAR(200)";
       }else{
@@ -1027,26 +837,27 @@ exports.genericCreateTable = function(tableName, exampleObject, callback){
       }
       str = str + " " + key + " " + type + ',';
     }
-
     str = str.slice(0, -1);
     str = str + ")";
-    console.log("CREATING TABLE: " + tableName);
-    this.db.query(str, function(err, response){
-      if(!err){
-        //console.log("made table", response);
-      }else{
-        console.log();
-      }
-      callback(err, response);
-    });
+  console.log("CREATING TABLE: " + tableName);
+  this.db.query(str, function(err, response){
+  if(!err){
+      //console.log("made table", response);
+    }else{
+      console.log();
+    }
+    callback(err, response);
+  });
 };
 
 
 // ============= HELPERS =================
 
+//this takes the arbitrary data from twitter feed and rebuilds it
+//into a single layer deep javascript object, which chained key names
+//also handles arrays and unexpected values
 exports.rearchitectArrWithDeepObjects = function(arr){
   if(!Array.isArray(arr)){
-    console.log("should have been an array");
     arr = [arr];
   }
   var newArr = [];
@@ -1060,50 +871,50 @@ exports.rearchitectArrWithDeepObjects = function(arr){
   };
 
   var recurse = function(thing, nameSoFar, finalObject){
-
-      if(thing === undefined){
-        tryToPushObject(thing, nameSoFar, finalObject);
-        return;
-      }
-      if(thing === null){
-        tryToPushObject(thing, nameSoFar, finalObject);
-        return;
-      }
-
-      if(typeof thing === "string"){
-        thing = exports.convertToUnicode(thing);
-      }
-
-      if(Array.isArray(thing)){
-        var jArr = JSON.stringify(thing);
-        tryToPushObject(jArr, nameSoFar, finalObject);
-      }else if(typeof thing === 'object'){
-        for(var key in thing){
-          if(nameSoFar === ""){
-            temp = key;
-            if(temp === "id"){
-              temp = "id_original"
-            }
-          }else{
-            temp = nameSoFar.concat("_" + key);
-          }
-          recurse(thing[key], temp, finalObject);
-        }
-      }else{
-         tryToPushObject(thing, nameSoFar, finalObject);
-      }
-    };
-
-    for(var i = 0; i < arr.length; i++){
-      var newObj = {};
-      recurse(arr[i], "", newObj);
-      newArr.push(newObj);
+    if(thing === undefined){
+      tryToPushObject(thing, nameSoFar, finalObject);
+      return;
     }
-    return newArr;
+    if(thing === null){
+      tryToPushObject(thing, nameSoFar, finalObject);
+      return;
+    }
+    if(typeof thing === "string"){
+      thing = exports.convertToUnicode(thing);
+    }
+    if(Array.isArray(thing)){
+      var jArr = JSON.stringify(thing);
+      tryToPushObject(jArr, nameSoFar, finalObject);
+    }else if(typeof thing === 'object'){
+      for(var key in thing){
+        if(nameSoFar === ""){
+          temp = key;
+          if(temp === "id"){
+            temp = "id_original"
+          }
+        }else{
+          temp = nameSoFar.concat("_" + key);
+        }
+        recurse(thing[key], temp, finalObject);
+      }
+    }else{
+     tryToPushObject(thing, nameSoFar, finalObject);
+   }
+ };
+
+ for(var i = 0; i < arr.length; i++){
+  var newObj = {};
+  recurse(arr[i], "", newObj);
+  newArr.push(newObj);
+}
+return newArr;
 };
 
+//asyncChain is no asyncMap, and it exists to ensure that functions happen sequentially, but
+//so that a long set of tasks doesn't lock up any one process
+//first function then calls second function etc, until done and then calls final
 exports.asyncChain = function(funcs, finalCB){
-console.log('FUNCS', funcs[0]);
+  console.log('FUNCS', funcs[0]);
   var finalResults = [];
 
   if(!funcs){
@@ -1140,6 +951,8 @@ console.log('FUNCS', funcs[0]);
 
 };
 
+//And asyncMap does what you expect it to do, fires off all functions
+//stores results in an array, only calls final when all results are done
 exports.asyncMap = function(funcs, finalCB){
   var count = funcs.length;
   var finalResults = [];
@@ -1171,15 +984,18 @@ exports.asyncMap = function(funcs, finalCB){
 };
 
 //=============== ADD STUFF ====================
+
+//I never implemented a full blown database cache layer, this serves to save some
+//lookups that would otherwise be repeated in a number of functions.
 var theCache = {cache: true};
 
 exports.genericAddToTable = function(tableName, _listOfObjects, callbackPerAdd, callbackAtEnd, optBulkAdd){
-var listOfObjects;
-if(!Array.isArray(_listOfObjects)){
-  listOfObjects = [_listOfObjects];
-}else{
-  listOfObjects = _listOfObjects;
-}
+  var listOfObjects;
+  if(!Array.isArray(_listOfObjects)){
+    listOfObjects = [_listOfObjects];
+  }else{
+    listOfObjects = _listOfObjects;
+  }
 
   callbackPerAdd = callbackPerAdd || this.errCB;
   listOfObjects = exports.rearchitectArrWithDeepObjects(listOfObjects);
@@ -1192,20 +1008,17 @@ if(!Array.isArray(_listOfObjects)){
 
     var tableColumns = []; //TODO this should get cached / memoized basically
     for(var i = 0; i < rows.length; i++){
-        if(rows[i]['COLUMN_NAME'] === "id"){
-          continue;
-        }
-        tableColumns.push( "`" + rows[i]['COLUMN_NAME'] + "`");
+      if(rows[i]['COLUMN_NAME'] === "id"){
+        continue;
+      }
+      tableColumns.push( "`" + rows[i]['COLUMN_NAME'] + "`");
     }
-
     startAdding(tableColumns);
   });
 
   var startAdding = function(holder){
-
     var insertStr = "INSERT INTO " + tableName + ' (';
     for(var i = 0; i < holder.length; i++){
-
       insertStr = insertStr + holder[i] + ", ";
     }
     insertStr = insertStr.slice(0, -2);
@@ -1219,80 +1032,75 @@ if(!Array.isArray(_listOfObjects)){
 
     exports.doAddingMessage(count);
 
-      insertStr = insertStr += '(';
-      for (var i = 0; i < listOfObjects.length; i++) {
-        queryStr = "";
-          for(var j = 0; j < holder.length; j++){
-            temp = listOfObjects[i][holder[j]];
-            if(temp === undefined || (isNaN(temp) && typeof temp !== "string")){
-              queryStr = queryStr + '""' + ", ";
-            }else{
-              queryStr = queryStr + temp + ", ";
-            }
-          }
-
-
-        queryStr = queryStr.slice(0, -2);
-        queryStr = queryStr + ' )';
-
-
-
-        if(!optBulkAdd){
-          queryStr = insertStr + queryStr;
-              exports.db.query(queryStr, function(err, rows, fields){
-                //this returns ids of added object, not the whole object
-                if(err){
-                  console.log();
-                }else{
-                  console.log("SUCCESS: ADDING: ", rows.insertId)
-                }
-                var theseIds = [];
-                if(rows){
-                  theseIds.push(rows.insertId);
-                  allIds.push(rows.insertId);
-                }
-                count--;
-
-                exports.doAddingMessage(count, 25);
-                callbackPerAdd(err, theseIds);
-                if(count <= 0){
-
-                  if(callbackAtEnd){
-                    callbackAtEnd(err, allIds);
-                  }else{
-
-                  }
-                }
-              });
-          }else{
-            if(i === 0){
-              bulkQueryString += insertStr + queryStr + ",";
-            }else if(i < listOfObjects.length - 1){
-              bulkQueryString += "(" + queryStr + ",";
-            }else{
-              //last one
-              bulkQueryString += "(" + queryStr;
-            }
-
-          }
-      }//for loop done
-      if(optBulkAdd){
-        console.log("ABOUT TO ADD BULK TO DATABASE");
-        exports.db.query(bulkQueryString, function(err, rows, fields){
-          callbackAtEnd(err, rows);
-          if(err){
-            console.log("BUILD ADD ERR:", err);
-          }else{
-            console.log("==========SUCCESS FINISHED CHUNK OF BULK ADD===========");
-          }
-        });
+    insertStr = insertStr += '(';
+    for (var i = 0; i < listOfObjects.length; i++) {
+      queryStr = "";
+      for(var j = 0; j < holder.length; j++){
+        temp = listOfObjects[i][holder[j]];
+        if(temp === undefined || (isNaN(temp) && typeof temp !== "string")){
+          queryStr = queryStr + '""' + ", ";
+        }else{
+          queryStr = queryStr + temp + ", ";
+        }
       }
 
+      queryStr = queryStr.slice(0, -2);
+      queryStr = queryStr + ' )';
+
+      if(!optBulkAdd){
+        queryStr = insertStr + queryStr;
+        exports.db.query(queryStr, function(err, rows, fields){
+          //this returns ids of added object, not the whole object
+          if(err){
+            console.log();
+          }else{
+            console.log("SUCCESS: ADDING: ", rows.insertId)
+          }
+          var theseIds = [];
+          if(rows){
+            theseIds.push(rows.insertId);
+            allIds.push(rows.insertId);
+          }
+          count--;
+
+          exports.doAddingMessage(count, 25);
+          callbackPerAdd(err, theseIds);
+          if(count <= 0){
+
+            if(callbackAtEnd){
+              callbackAtEnd(err, allIds);
+            }else{
+
+            }
+          }
+        });
+      }else{
+        if(i === 0){
+          bulkQueryString += insertStr + queryStr + ",";
+        }else if(i < listOfObjects.length - 1){
+          bulkQueryString += "(" + queryStr + ",";
+        }else{
+          //last one
+          bulkQueryString += "(" + queryStr;
+        }
+      }
+    }//for loop done
+
+    if(optBulkAdd){
+      console.log("ABOUT TO ADD BULK TO DATABASE");
+      exports.db.query(bulkQueryString, function(err, rows, fields){
+        callbackAtEnd(err, rows);
+        if(err){
+          console.log("BUILD ADD ERR:", err);
+        }else{
+          console.log("==========SUCCESS FINISHED CHUNK OF BULK ADD===========");
+        }
+      });
+    }
   };
 };
 
 exports.genericGetMaxValue = function(tableName, columnName, cb ){
-
   exports.db.query("SELECT MAX("+columnName+") FROM "+tableName, function(err, maxRows){
     if(err){
       console.log(err);
@@ -1300,7 +1108,6 @@ exports.genericGetMaxValue = function(tableName, columnName, cb ){
     console.log("MAX ID for " + tableName +" "+ columnName +": " + maxRows[0]["MAX(id)"]);
     cb(err, maxRows[0]["MAX(id)"]);
   });
-
 };
 
 
@@ -1311,10 +1118,11 @@ exports.genericGetMaxValue = function(tableName, columnName, cb ){
 // =============== MAINTENANCE ==================
 exports.temp = {};
 
+//this is used as a deafult error check, or if no cb gets passed in to some functions
 exports.errCB = function(err){if(err)console.log(err)};
 
 exports.doAddingMessage = function(count, moduloVal){
-  return; //TODO hacking this out for now
+  return; //enble this for further debugging on entries added in genericadd
   moduloVal = moduloVal || 1;
 
   if(count % moduloVal === 0){
@@ -1323,7 +1131,6 @@ exports.doAddingMessage = function(count, moduloVal){
 };
 
 exports.genericDropTable = function(tableName, callback){
-
   exports.getCurrentDatabaseName( function(dbName){
 
     if(dbName === 'production'){
@@ -1351,7 +1158,6 @@ exports.getCurrentDatabaseName = function(cb){
       cb(null);
       return;
     }
-
     cb(rows[0]["DATABASE()"]);
   });
 };
@@ -1367,23 +1173,22 @@ exports.createDatabase = function(name, callback){
       return;
     }
     exports.changeToDatabase(name, function(){
-       exports.genericCreateTable('tweets', exports.testTweet1, function(err){
-        exports.setColumnToUnique('tweets', 'id_str', function(){
-          exports.addKeywordsTable(function(){
-            exports.addLayerTable(function(){
-                exports.genericCreateTable('admin', {username:"", password:""}, function(){
-                  console.log("CREATE ADMIN")
-                  callback(null, name);
-                  exports.addAdmin(null, function(){
-                    console.log("ADD ADMIN DONE")
-                  });
-
-                });
+     exports.genericCreateTable('tweets', exports.testTweet1, function(err){
+      exports.setColumnToUnique('tweets', 'id_str', function(){
+        exports.addKeywordsTable(function(){
+          exports.addLayerTable(function(){
+            exports.genericCreateTable('admin', {username:"", password:""}, function(){
+              console.log("CREATE ADMIN")
+              callback(null, name);
+              exports.addAdmin(null, function(){
+                console.log("ADD ADMIN DONE")
+              });
             });
           });
         });
       });
     });
+   });
   });
 };
 
@@ -1398,7 +1203,6 @@ exports.changeToDatabase = function(name, callback){
       console.log(err);
       callback(err, null);
     }
-
   });
 };
 
@@ -1415,6 +1219,8 @@ exports.genericDropDatabase = exports.deleteDatabase = function(name, callback){
   });
 };
 
+//in high latency environments, or other modules that need the pipe to be open before
+//sending requests, they can subscribe to be notified when the pipe is available.
 exports.tellMeWhenDatabaseIsLive = function(callback){
   console.log("==========ASKED FOR CALLBACK==============");
   if(this.isLive){
@@ -1438,8 +1244,8 @@ exports.genericDescribeTable = function(name, callback){
   });
 };
 
+//test function to add a block of 5000 tweets to the database
 exports.ADDALLTHETWEETS = function(callback){
-
   this.getCurrentDatabaseName(function(name){
     if(name === 'production'){
       console.log("can't use test data on production database");
@@ -1451,52 +1257,39 @@ exports.ADDALLTHETWEETS = function(callback){
       var length = Math.min(ALL_THE_TEST_TWEETS.length, 1000);
       for(var i = 0; i < length; i++){
         var eye = i;
-          //[{tweet: tweetObj, layers:[layer1resultObj, layer2resultObj}]
           setTimeout(function(i){
-          this.executeFullChainForIncomingTweets(ALL_THE_TEST_TWEETS[i], function(err, status, fields) {
+            this.executeFullChainForIncomingTweets(ALL_THE_TEST_TWEETS[i], function(err, status, fields) {
               if (err) {
                 console.log(err);
                 return;
               } else {
                 console.log("SEND TWEET TO CLIENT ID", status);
-                // exports.packageTweetsToSendToClient(ids);
-                //now this is just returning ids that were added
-                //now we use the function that passes tweet with layer data to the client
-                //TODO; ***
-
-                //exports.io.emit('tweet added', container);
-
-
               }
-           });
-        }.bind(exports,eye),i * 16);
+            });
+          }.bind(exports,eye),i * 16);
         }
       }
-  });
+    });
 };
 
 
 exports.ADDTHEFIVETESTTWEETS = function(callback, finalCB){
   finalCB = finalCB || function(){console.log("FINISH ADD FIVE")};
   this.getCurrentDatabaseName(function(name){
-      if(name === 'production'){
-        console.log("can't use test data on production database");
-        callback(false, null);
-        return;
-      }else{
-        callback(false, true);
-        for(var i = 1; i < 6; i++){
-          var eye = i;
-          //[{tweet: tweetObj, layers:[layer1resultObj, layer2resultObj}]
-
+    if(name === 'production'){
+      console.log("can't use test data on production database");
+      callback(false, null);
+      return;
+    }else{
+      callback(false, true);
+      for(var i = 1; i < 6; i++){
+        var eye = i;
           setTimeout(function(finalCB, i){
-
             this.executeFullChainForIncomingTweets([this["testTweet" + i]],finalCB );
-
-        }.bind(exports, finalCB ,eye),0);
+          }.bind(exports, finalCB ,eye),0);
+        }
       }
-    }
-  });
+    });
 };
 
 exports.testTweet1 = {"created_at":"Wed May 20 23:13:04 +0000 2015","id":601163762242981900,"id_str":"601163762242981888","text":"@LanaeBeau_TY 😥😥😥 suck sad happy frowing you are awesome obama yay","source":"<a href=\"http://twitter.com/download/android\" rel=\"nofollow\">Twitter for Android</a>","truncated":false,"in_reply_to_status_id":601160439414857700,"in_reply_to_status_id_str":"601160439414857728","in_reply_to_user_id":277764780,"in_reply_to_user_id_str":"277764780","in_reply_to_screen_name":"LanaeBeau_TY","user":{"id":3252488177,"id_str":"3252488177","name":"●○●○♡","screen_name":"2411Clark","location":"","url":null,"description":"I'm dope just follow .","protected":false,"verified":false,"followers_count":7,"friends_count":29,"listed_count":0,"favourites_count":11,"statuses_count":40,"created_at":"Wed May 13 19:04:37 +0000 2015","utc_offset":null,"time_zone":null,"geo_enabled":false,"lang":"en","contributors_enabled":false,"is_translator":false,"profile_background_color":"C0DEED","profile_background_image_url":"http://abs.twimg.com/images/themes/theme1/bg.png","profile_background_image_url_https":"https://abs.twimg.com/images/themes/theme1/bg.png","profile_background_tile":false,"profile_link_color":"0084B4","profile_sidebar_border_color":"C0DEED","profile_sidebar_fill_color":"DDEEF6","profile_text_color":"333333","profile_use_background_image":true,"profile_image_url":"http://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_image_url_https":"https://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_banner_url":"https://pbs.twimg.com/profile_banners/3252488177/1431961882","default_profile":true,"default_profile_image":false,"following":null,"follow_request_sent":null,"notifications":null},"geo":null,"coordinates":null,"place":null,"contributors":null,"retweet_count":0,"favorite_count":0,"entities":{"hashtags":[],"trends":[],"urls":[],"user_mentions":[{"screen_name":"LanaeBeau_TY","name":"tyisha.","id":277764780,"id_str":"277764780","indices":[0,13]}],"symbols":[]},"favorited":false,"retweeted":false,"possibly_sensitive":false,"filter_level":"low","lang":"en","timestamp_ms":"1432163584658"};
@@ -1505,11 +1298,9 @@ exports.testTweet3 = {"created_at":"Wed May 20 23:16:04 +0000 2015","id":6011637
 exports.testTweet4 = {"created_at":"Wed May 20 23:17:04 +0000 2015","id":601163762242981903,"id_str":"601163762242981881","text":"@LanaeBeau_TY Hilary Clinton is the best","source":"<a href=\"http://twitter.com/download/android\" rel=\"nofollow\">Twitter for Android</a>","truncated":false,"in_reply_to_status_id":601160439414857700,"in_reply_to_status_id_str":"601160439414857728","in_reply_to_user_id":277764780,"in_reply_to_user_id_str":"277764780","in_reply_to_screen_name":"LanaeBeau_TY","user":{"id":3252488177,"id_str":"3252488177","name":"●○●○♡","screen_name":"2411Clark","location":"","url":null,"description":"I'm dope just follow .","protected":false,"verified":false,"followers_count":7,"friends_count":29,"listed_count":0,"favourites_count":11,"statuses_count":40,"created_at":"Wed May 13 19:04:37 +0000 2015","utc_offset":null,"time_zone":null,"geo_enabled":false,"lang":"en","contributors_enabled":false,"is_translator":false,"profile_background_color":"C0DEED","profile_background_image_url":"http://abs.twimg.com/images/themes/theme1/bg.png","profile_background_image_url_https":"https://abs.twimg.com/images/themes/theme1/bg.png","profile_background_tile":false,"profile_link_color":"0084B4","profile_sidebar_border_color":"C0DEED","profile_sidebar_fill_color":"DDEEF6","profile_text_color":"333333","profile_use_background_image":true,"profile_image_url":"http://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_image_url_https":"https://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_banner_url":"https://pbs.twimg.com/profile_banners/3252488177/1431961882","default_profile":true,"default_profile_image":false,"following":null,"follow_request_sent":null,"notifications":null},"geo":null,"coordinates":null,"place":null,"contributors":null,"retweet_count":0,"favorite_count":0,"entities":{"hashtags":[],"trends":[],"urls":[],"user_mentions":[{"screen_name":"LanaeBeau_TY","name":"tyisha.","id":277764780,"id_str":"277764780","indices":[0,13]}],"symbols":[]},"favorited":false,"retweeted":false,"possibly_sensitive":false,"filter_level":"low","lang":"en","timestamp_ms":"1432163584658"};
 exports.testTweet5 = {"created_at":"Wed May 20 23:16:04 +0000 2015","id":601163762242981904,"id_str":"601163762242981882","text":"@LanaeBeau_TY the worst person is Hilary Clinton","source":"<a href=\"http://twitter.com/download/android\" rel=\"nofollow\">Twitter for Android</a>","truncated":false,"in_reply_to_status_id":601160439414857700,"in_reply_to_status_id_str":"601160439414857728","in_reply_to_user_id":277764780,"in_reply_to_user_id_str":"277764780","in_reply_to_screen_name":"LanaeBeau_TY","user":{"id":3252488177,"id_str":"3252488177","name":"●○●○♡","screen_name":"2411Clark","location":"","url":null,"description":"I'm dope just follow .","protected":false,"verified":false,"followers_count":7,"friends_count":29,"listed_count":0,"favourites_count":11,"statuses_count":40,"created_at":"Wed May 13 19:04:37 +0000 2015","utc_offset":null,"time_zone":null,"geo_enabled":false,"lang":"en","contributors_enabled":false,"is_translator":false,"profile_background_color":"C0DEED","profile_background_image_url":"http://abs.twimg.com/images/themes/theme1/bg.png","profile_background_image_url_https":"https://abs.twimg.com/images/themes/theme1/bg.png","profile_background_tile":false,"profile_link_color":"0084B4","profile_sidebar_border_color":"C0DEED","profile_sidebar_fill_color":"DDEEF6","profile_text_color":"333333","profile_use_background_image":true,"profile_image_url":"http://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_image_url_https":"https://pbs.twimg.com/profile_images/600318202212519937/4Qidlfxo_normal.jpg","profile_banner_url":"https://pbs.twimg.com/profile_banners/3252488177/1431961882","default_profile":true,"default_profile_image":false,"following":null,"follow_request_sent":null,"notifications":null},"geo":null,"coordinates":null,"place":null,"contributors":null,"retweet_count":0,"favorite_count":0,"entities":{"hashtags":[],"trends":[],"urls":[],"user_mentions":[{"screen_name":"LanaeBeau_TY","name":"tyisha.","id":277764780,"id_str":"277764780","indices":[0,13]}],"symbols":[]},"favorited":false,"retweeted":false,"possibly_sensitive":false,"filter_level":"low","lang":"en","timestamp_ms":"1432163584658"};
 
-
-//this is called in app.js after the database module is exported
-//it processes the debug commands at the top of the file, we'll remove it in production
 exports.trigger = function(){
-//moved into connection loop
+//other modules had been told to call it after importing, but all that functionality now exists
+//in the connection loop.
 
 };
 

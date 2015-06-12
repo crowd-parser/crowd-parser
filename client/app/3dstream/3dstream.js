@@ -3,29 +3,27 @@
 angular.module('parserApp')
   .controller('3dStreamCtrl', function ($scope, $state, $location, $timeout, $http, Twitter, Display3d, Modal) {
     var socket = Twitter.socket;
-    $scope.tweetData = [];
+    $scope.tweetData = []; // stores data of all tweets in display
     $scope.tweetCount = 0;
-    $scope.autoScroll = 'ON';
-    $scope.numTweetsToGet = 50;
-    $scope.receivingTweets = 'OFF';
-    $scope.clientID = undefined;
-    $scope.showKeywordMenu = false;
-    $scope.showLayerMenu = false;
-    $scope.layers = [];
-    $scope.radio = {};
-    $scope.layersVisible = {};
-    $scope.gettingKeywordTweets = false;
-    $scope.keywordTimeout = false;
-    $scope.flattenText = 'Flatten';
-    $scope.allKeywords = [];
-    $scope.wordLookup = {};
-    $scope.keywordStreamCount = {
+    $scope.autoScroll = 'ON'; // scrolls right automatically if tweets are offscreen right
+    $scope.numTweetsToGet = 100; // Applies to REST request button
+    $scope.receivingTweets = 'OFF'; // Toggles receiving tweets from live stream
+    $scope.clientID = undefined; // For getting a private "room" for socket communication with server
+    $scope.showKeywordMenu = false; // Toggle keyword menu dropdown
+    $scope.showLayerMenu = false; // Toggle layer menu dropdown
+    $scope.layers = []; // Stores layer data from factory
+    $scope.layersVisible = {}; // Tracks layer visibility toggled in menu
+    $scope.gettingKeywordTweets = false; // Tracks when finished getting keyword tweets from server
+    $scope.flattenText = 'Flatten'; // Flatten/Separate button text toggle
+    $scope.allKeywords = []; // Stores keyword data from DB
+    $scope.wordLookup = {}; // Prevents duplicate keywords
+    $scope.keywordStreamCount = { // For displaying how many keywords we have received
       received: 0,
       expected: 0,
     };
     var liveStreamStarted = false;
     var expectedKeywordTweets = 0;
-    var runFakeTweets = false;
+    var runFakeTweets = false; // For testing
     var intervalID;
     var timeoutPromise;
 
@@ -420,17 +418,6 @@ angular.module('parserApp')
       }
     });
 
-    // =====================================
-    // Used to stop tweet streams, but all of those have been deprecated except
-    // live stream from DB, and toggling for that is handled in startLiveStream
-    // =====================================
-    // $scope.stopTweets = function () {
-    //   //socket.emit('twitter stop continuous stream');
-    //   $scope.receivingTweets = 'OFF';
-    //   // if (intervalID) {
-    //   //   clearInterval(intervalID);
-    //   // }
-    // };
 
     // =====================================
     // CODE FOR LIVE STREAM FROM TWITTER API
@@ -576,13 +563,6 @@ angular.module('parserApp')
       }
       
     };
-
-    // $scope.fullScreen = function () {
-    //   $scope.tweetData = [];
-    //   $scope.tweetCount = 0;
-    //   $scope.stopTweets();
-    //   $location.path('/3dstream');
-    // };
 
 
   });

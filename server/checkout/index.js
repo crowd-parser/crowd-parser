@@ -7,32 +7,9 @@ var fs = require('fs');
 
 var db = require('../database/database');
 
-// var params = {
-//   id: null,
-//   fb_id: '298792385',
-//   name: 'Michael Cheng',
-//   email: 'test@test.com',
-//   number_of_keywords: 5
-// };
-
-// var params2 = {
-//   id: null,
-//   purchasing_user: 1,
-//   purchased_keyword: 'lebron'
-// }
-
-// db.db.query('USE production', function(err, response) {
-
-//   db.db.query('INSERT INTO purchased_keywords SET ?', params2, function(err, response) {
-//     console.log(err,response);
-//   });
-// });
-
-
-// Set your secret key: remember to change this to your live secret key in production
-// See your keys here https://dashboard.stripe.com/account/apikeys
 var stripe = require("stripe")("sk_live_CFGeujb4KYZXrHWeYZo8ZyK2");
 
+// Handles errors and writes them to a file to review later
 var handleError = function(res, err, message) {
 
   console.log(message, err);
@@ -51,14 +28,17 @@ var handleError = function(res, err, message) {
   });
 };
 
+// Route for when a user purchases keywords
 router.post('/purchase', function(req, res, next) {
 
+  // Check to make sure user is authenticated with Facebook login
   if (req.body.fbToken !== req.session.fbToken) {
     
     console.log('Token does not match!');
     res.send('Token does not match!');
   } else {
 
+    // Parameters for making a charge through Stripe
     var params = {
       id: null,
       fb_id: req.body.purchaseDetails.fb_id,
@@ -67,6 +47,7 @@ router.post('/purchase', function(req, res, next) {
       number_of_keywords: req.body.purchaseDetails.number_of_keywords
     }
 
+    // Customize the charge amount depending on how many keywords the user selects
     var chargeAmount;
 
     if (params.number_of_keywords === 1) {
@@ -79,6 +60,7 @@ router.post('/purchase', function(req, res, next) {
 
     var stripeToken = req.body.stripeToken;
 
+    // Creates the Stripe charge
     var charge = stripe.charges.create({
       amount: chargeAmount, // amount in cents, again
       currency: "usd",
@@ -98,6 +80,7 @@ router.post('/purchase', function(req, res, next) {
             handleError(res, err, 'Error switching to database!');
           } else {
 
+            // Check if user already exists if the database. If so, keyword count will be increased for existing user.
             db.db.query('SELECT * FROM purchasing_users WHERE fb_id=' + params.fb_id, function(err, response) {
 
               if (err) {
@@ -106,6 +89,7 @@ router.post('/purchase', function(req, res, next) {
 
                 if (response.length > 0) {
 
+                  // If user already exists in the database, simply increase the keyword count based on the purchase
                   db.db.query('UPDATE purchasing_users SET number_of_keywords=number_of_keywords+' + params.number_of_keywords + ' WHERE purchasing_users.fb_id=' + params.fb_id, function(err, response) {
 
                     if (err) {
@@ -118,6 +102,7 @@ router.post('/purchase', function(req, res, next) {
                   });
                 } else {
 
+                  // If user does not exist in the database, insert the user with the number of keywords purchased
                   db.db.query('INSERT INTO purchasing_users SET ?', params, function(err, response) {
 
                     if (err) {
@@ -139,6 +124,8 @@ router.post('/purchase', function(req, res, next) {
   }
 });
 
+// Checks if user is a purchasing user. Used for display purposes.
+// If user has purchased, dashboard is shown instead
 router.post('/checkIfPurchased', function(req, res) {
 
   var fb_id = req.body.fb_id;
@@ -149,6 +136,7 @@ router.post('/checkIfPurchased', function(req, res) {
   });
 });
 
+// Gets the user's keywords to be displayed on the dashboard
 router.get('/getUserKeywords/:id', function(req, res) {
 
   var id = req.params.id;
@@ -165,34 +153,43 @@ router.get('/getUserKeywords/:id', function(req, res) {
   });
 });
 
+// Used when user purchases keyword. Function that processes user keyword is run externally
+// because it takes some time for keywords to be processed and we want to be 
+// able to return a quick response to the user after the keyword request
 var addUserKeyword = {
   status: false,
   keyword: ''
 };
 
+// Route for when a user wants to add a keyword to the database
 router.post('/userAddKeyword', function(req, res) {
 
+  // Make sure user is authenticated
   if (req.body.fbToken !== req.session.fbToken) {
     
     console.log('Token does not match!');
     res.send('Token does not match!');
   } else {
 
+    // Make sure proper information is sent
     if (!req.body.id || !req.body.keyword) {
       res.send('Error! Missing ID/keyword.');
     }
 
+    // Get the current number of keywords the user has remaining
     db.db.query('SELECT number_of_keywords FROM purchasing_users WHERE id=' + req.body.id, function(err, response) {
 
       if (err) {
 
         handleError(res, err, 'Error getting user\'s number of keywords from database!');
       } else {
-        console.log(response);
+        
+        // Check if the user has run out of keywords to add
         if (response[0].number_of_keywords <= 0) {
           res.send('Out of keywords! Please purchase more to add new keywords.');
         } else {
 
+          // Add the keyword the user requests into the purchased_keywords table
           var params = {
             id: null,
             purchasing_user: req.body.id,
@@ -206,6 +203,7 @@ router.post('/userAddKeyword', function(req, res) {
               handleError(res, err, 'Error inserting keyword into database!');
             } else {
 
+              // Update the number of keywords the user has remaining
               db.db.query('UPDATE purchasing_users SET number_of_keywords=number_of_keywords-1 WHERE purchasing_users.id=' + params.purchasing_user, function(err, response) {
 
                 if (err) {
@@ -213,6 +211,7 @@ router.post('/userAddKeyword', function(req, res) {
                   handleError(res, err, 'Error updating user keyword count!');
                 } else {
 
+                  // Modify the object that will cause the process keywords function to be called
                   addUserKeyword.status = true;
                   addUserKeyword.keyword = params.purchased_keyword;
 
@@ -227,15 +226,19 @@ router.post('/userAddKeyword', function(req, res) {
   }
 });
 
+// Checks every three seconds to see if a user has added a keyword
+// If so, process the keyword, which will take some time
 setInterval(function() {
 
   if (addUserKeyword.status) {
 
     var keyword = addUserKeyword.keyword;
 
+    // Reset the object that handles processing keywords
     addUserKeyword.status = false;
     addUserKeyword.keyword = '';
 
+    // Process the user-requested keyword across our database of tweets
     db.processAuthorizedUserKeyword(keyword, function(err, response) {
 
       if (err) {
@@ -260,6 +263,7 @@ setInterval(function() {
   }
 }, 3000);
 
+// Gets user keywords with their names to display on the 3D  and stats page
 router.get('/getAllUserKeywordsWithNames', function(req, res) {
 
   db.db.query('SELECT purchasing_users.name, purchased_keywords.purchased_keyword FROM purchasing_users JOIN purchased_keywords ON purchasing_users.id=purchased_keywords.purchasing_user', function(err, response) {
@@ -274,6 +278,7 @@ router.get('/getAllUserKeywordsWithNames', function(req, res) {
   });
 });
 
+// Saves the user's Facebook login authentication token for security
 router.post('/saveToken', function(req, res) {
 
   req.session.fbToken = req.body.fbToken;

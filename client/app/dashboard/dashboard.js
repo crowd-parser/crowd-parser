@@ -86,6 +86,8 @@ angular.module('parserApp')
 
     // Stripe checkout form. Displayed when user is logged in, but not a purchasing user
     $scope.stripeCallback = function (code, result) {
+      
+      // Make sure the Stripe purchase form is correctly completed
       if ($scope.purchasingEmail !== $scope.repeatPurchasingEmail) {
 
         $('.stripe-error').html('');
@@ -117,15 +119,19 @@ angular.module('parserApp')
           var name;
           var email;
 
+          // If the user has already purchased keywords, name and email are not included in the form and will be retrieved from the database
           if ($scope.purchasingUserDetails) {
 
             name = $scope.purchasingUserDetails.name || $scope.purchasingUsername;
             email = $scope.purchasingUserDetails.email || $scope.purchasingEmail;
           } else {
+
+            // Get name and email inputs if user has not purchased before
             name = $scope.purchasingUsername;
             email = $scope.purchasingEmail;
           }
 
+          // Create the Stripe purchase
           var purchaseDetails = {
             fb_id: fb_id,
             name: name,
@@ -153,11 +159,13 @@ angular.module('parserApp')
       }
     };
 
+    // Used for selecting how many keywords a user wants to purchase
     $scope.selectOption = function(number) {
 
       $scope.selectedOption = number;
     };
 
+    // Used for when a user enters a keyword to add to the database
     $scope.userKeywordSubmit = function() {
 
       if ($scope.userKeywordInput === undefined) {

@@ -5,7 +5,9 @@
 
 <img src="http://i288.photobucket.com/albums/ll175/michaelcheng429/crowdparserlogogh_zpshipsbtrg.png">
 
-[Roadmap for upcoming plans/features](https://github.com/voyage-and-bay/voyage-and-bay)
+[Deployed App: Crowd Parser](http://crowdparser.org)
+
+[Roadmap for upcoming plans/features](https://github.com/crowd-parser/crowd-parser/issues)
 
 Crowd Parser uses AngularJS and threejs for the front-end, Node/Express for the back-end, MySql for the database, and Mocha/Chai/Karma for testing.
 

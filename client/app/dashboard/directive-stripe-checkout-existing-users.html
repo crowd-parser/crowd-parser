@@ -1,0 +1,34 @@
+<form stripe-form="stripeCallback" class="stripe-form" ng-show="purchasingUserDetails.number_of_keywords <= 0" onsubmit="return false">
+
+    <div class="alert alert-warning">
+      Out of keywords! Would<br>
+      you like to purchase more?
+    </div>
+
+    <h2>Purchase Keywords</h2>
+
+    <div class="purchase-options" ng-init="selectedOption;">
+      <div class="purchase-option" ng-class="{'active-option':selectedOption === 1}" ng-click="selectOption(1, $('.option-1'))" onclick="return false">
+        <h3>1 <br>keyword</h3>
+        <h4>$2</h4>
+      </div><!--
+      --><div class="purchase-option option-5" ng-class="{'active-option':selectedOption === 5}" ng-click="selectOption(5, this)" onclick="return false">
+        <h3>5 <br>keywords</h3>
+        <h4>$8</h4>
+      </div><!--
+      --><div class="purchase-option ten-keywords option-10" ng-class="{'active-option':selectedOption === 10}" ng-click="selectOption(10, this)" onclick="return false">
+        <h3>10 <br>keywords</h3>
+        <h4>$15</h4>
+      </div>
+    </div>
+
+    <input class="form-control stripe-input card-input" ng-model="number" placeholder="0000 0000 0000 0000" payments-format="card" payments-validate="card" /><br>
+    <input class="form-control stripe-input expiry-input" ng-model="expiry" placeholder="MM/YY" payments-format="expiry" payments-validate="expiry" /><!--
+    --><input class="form-control stripe-input cvc-input" ng-model="cvc" placeholder="CVC" payments-format="cvc" payments-format="cvc" required />
+
+    <div class="alert alert-danger stripe-error" style="display: none"></div>
+
+    <button type="submit" class="btn btn-primary stripe-submit">secure checkout</button>
+
+    <img src="assets/images/stripe-secure.png" alt="stripe-secure">
+  </form>

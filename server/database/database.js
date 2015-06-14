@@ -124,10 +124,11 @@ exports.startStayAlive = function(){
         console.log(err);
         connectionLoop();
       }else{
+        console.log("db tick");
         exports.startStayAlive();
       }
-    }, 5000);
-  });
+    });
+  }, 5000);
 };
 
 
